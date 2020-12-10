@@ -1,0 +1,101 @@
+{
+  "name": "@aave-tech/safety-module-v2",
+  "version": "1.0.0",
+  "description": "Safety Module for the Aave Protocol",
+  "files": [
+    "/contracts/**/*.sol"
+  ],
+  "scripts": {
+    "run-env": "npm run load:npm && npm i && tail -f /dev/null",
+    "hardhat": "hardhat",
+    "hardhat-kovan": "hardhat --network kovan",
+    "hardhat-ropsten": "hardhat --network ropsten",
+    "hardhat-main": "hardhat --network main",
+    "hardhat help": "hardhat help",
+    "compile": "SKIP_LOAD=true hardhat compile",
+    "compile:force": "npm run compile -- --force",
+    "compile:force:quiet": "npm run compile:force -- --quiet",
+    "test": "npm run compile:force:quiet && hardhat test",
+    "test-pei": "npm run test test/__setup.spec.ts test/AaveIncentivesController/*.spec.ts",
+    "test-psi": "npm run test test/__setup.spec.ts test/StakedAave/stakedAave-basic.spec.ts test/StakedAave/stakedAave-redeem.spec.ts test/StakedAave/stakedAave-transfers.spec.ts",
+    "test-delegate": "npm run test test/__setup.spec.ts test/StakedAaveV2/delegate.spec.ts",
+    "coverage": "SKIP_LOAD=true npx hardhat typechain && node --max_old_space_size=6144 node_modules/.bin/hardhat coverage",
+    "dev:deployment": "hardhat dev-deployment",
+    "ropsten:deployment": "npm run hardhat-ropsten -- common-deployment --verify",
+    "kovan:deployment": "npm run hardhat-kovan -- common-deployment --verify",
+    "main:deployment": "npm run hardhat-main -- common-deployment --verify",
+    "dev:prettier": "prettier --write .",
+    "ci:clean": "rm -rf types/ cache/ artifacts/",
+    "load:npm": "npm config set @aave-tech:registry https://gitlab.com/api/v4/projects/19392283/packages/npm/ && npm config set '//gitlab.com/api/v4/packages/npm/:_authToken' ${GITLAB_ACCESS_TOKEN} && npm config set '//gitlab.com/api/v4/projects/19392283/packages/npm/:_authToken' ${GITLAB_ACCESS_TOKEN}"
+  },
+  "devDependencies": {
+    "@aave-tech/aave-token": "^1.0.1-beta-8de8658d.0",
+    "@nomiclabs/hardhat-ethers": "^2.0.1",
+    "@nomiclabs/hardhat-etherscan": "^2.1.0",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@openzeppelin/contracts": "3.1.0",
+    "@typechain/ethers-v5": "^4.0.0",
+    "@types/chai": "4.2.11",
+    "@types/lowdb": "1.0.9",
+    "@types/mocha": "7.0.2",
+    "@types/node": "14.0.5",
+    "bignumber.js": "9.0.0",
+    "chai": "4.2.0",
+    "chai-bignumber": "3.0.0",
+    "eth-sig-util": "^3.0.0",
+    "ethereum-waffle": "^3.2.1",
+    "ethereumjs-util": "^7.0.7",
+    "ethers": "^5.0.8",
+    "hardhat": "^2.0.4",
+    "hardhat-typechain": "^0.3.3",
+    "husky": "^4.2.5",
+    "lowdb": "1.0.0",
+    "moment": "^2.27.0",
+    "prettier": "^2.0.5",
+    "prettier-plugin-solidity": "^1.0.0-beta.1",
+    "pretty-quick": "^2.0.1",
+    "solidity-coverage": "^0.7.13",
+    "ts-generator": "^0.1.1",
+    "ts-node": "^9.1.0",
+    "tslint": "^6.1.2",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.3.0",
+    "typechain": "^3.0.0",
+    "typescript": "^4.1.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
+  "author": "Aave",
+  "contributors": [
+    {
+      "name": "Ernesto Boado",
+      "email": "ernesto@aave.com"
+    },
+    {
+      "name": "Emilio Frangella",
+      "email": "emilio@aave.com"
+    },
+    {
+      "name": "Andrey Kozlov",
+      "email": "andrey@aave.com"
+    },
+    {
+      "name": "David Racero",
+      "email": "david.k@aave.com"
+    },
+    {
+      "name": "Hadrien Charlanes",
+      "email": "hadrien@aave.com"
+    }
+  ],
+  "license": "AGPLv3",
+  "dependencies": {
+    "tmp-promise": "^3.0.2"
+  },
+  "publishConfig": {
+    "@aave-tech:registry": "https://gitlab.com/api/v4/projects/19657530/packages/npm/"
+  }
+}

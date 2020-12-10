@@ -1,0 +1,18 @@
+version: '3.5'
+
+services:
+  contracts-env:
+    build:
+      context: ./
+    working_dir: /src
+    command: npm run run-env
+    env_file:
+      - .env
+    volumes:
+      - ./:/src
+    environment:
+      MNEMONIC: ${MNEMONIC}
+      ETHERSCAN_KEY: ${ETHERSCAN_KEY}
+      INFURA_KEY: ${INFURA_KEY}
+      ETHERSCAN_NETWORK: ${ETHERSCAN_NETWORK}
+      GITLAB_ACCESS_TOKEN: ${GITLAB_ACCESS_TOKEN}
