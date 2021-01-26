@@ -2,10 +2,10 @@
 pragma solidity 0.7.5;
 pragma experimental ABIEncoderV2;
 
-import {ERC20} from '@aave-tech/aave-token/contracts/open-zeppelin/ERC20.sol';
+import {ERC20} from '@aave/aave-token/contracts/open-zeppelin/ERC20.sol';
 
 import {IERC20} from '../interfaces/IERC20.sol';
-import {IStakedAave} from '../interfaces/IStakedAave.sol';
+import {ISlashableStakeToken} from '../interfaces/ISlashableStakeToken.sol';
 import {ITransferHook} from '../interfaces/ITransferHook.sol';
 
 import {DistributionTypes} from '../lib/DistributionTypes.sol';
@@ -22,7 +22,7 @@ import {GovernancePowerWithSnapshot} from '../lib/GovernancePowerWithSnapshot.so
  * @author Aave
  **/
 contract StakedTokenV2 is
-  IStakedAave,
+  ISlashableStakeToken,
   GovernancePowerWithSnapshot,
   VersionedInitializable,
   AaveDistributionManager
@@ -43,6 +43,14 @@ contract StakedTokenV2 is
   /// @notice Address to pull from the rewards, needs to have approved this contract
   address public immutable REWARDS_VAULT;
 
+  bytes public constant EIP712_REVISION = bytes('1');
+  bytes32 internal constant EIP712_DOMAIN = keccak256(
+    'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
+  );
+  bytes32 public constant PERMIT_TYPEHASH = keccak256(
+    'Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'
+  );
+
   mapping(address => uint256) public stakerRewardsToClaim;
   mapping(address => uint256) public stakersCooldowns;
 
@@ -56,22 +64,34 @@ contract StakedTokenV2 is
   mapping(address => address) internal _propositionPowerDelegates;
 
   bytes32 public DOMAIN_SEPARATOR;
-  bytes public constant EIP712_REVISION = bytes('1');
-  bytes32 internal constant EIP712_DOMAIN =
-    keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');
-  bytes32 public constant PERMIT_TYPEHASH =
-    keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
 
   /// @dev owner => next valid nonce to submit with permit()
   mapping(address => uint256) public _nonces;
 
-  event Staked(address indexed from, address indexed onBehalfOf, uint256 amount);
-  event Redeem(address indexed from, address indexed to, uint256 amount);
+  address internal slashingAdmin;
+
+  event Staked(
+    address indexed from,
+    address indexed onBehalfOf,
+    uint256 amount,
+    uint256 sharesMinted
+  );
+  event Redeem(
+    address indexed from,
+    address indexed to,
+    uint256 amountOfShares,
+    uint256 underlyingRedeemed
+  );
 
   event RewardsAccrued(address user, uint256 amount);
   event RewardsClaimed(address indexed from, address indexed to, uint256 amount);
 
   event Cooldown(address indexed user);
+
+  modifier onlySlashingAdmin {
+    require(msg.sender == slashingAdmin, 'CALLER_NOT_ADMIN');
+    _;
+  }
 
   constructor(
     IERC20 stakedToken,
@@ -121,8 +141,12 @@ contract StakedTokenV2 is
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
     uint256 balanceOfUser = balanceOf(onBehalfOf);
 
-    uint256 accruedRewards =
-      _updateUserAssetInternal(onBehalfOf, address(this), balanceOfUser, totalSupply());
+    uint256 accruedRewards = _updateUserAssetInternal(
+      onBehalfOf,
+      address(this),
+      balanceOfUser,
+      totalSupply()
+    );
     if (accruedRewards != 0) {
       emit RewardsAccrued(onBehalfOf, accruedRewards);
       stakerRewardsToClaim[onBehalfOf] = stakerRewardsToClaim[onBehalfOf].add(accruedRewards);
@@ -130,10 +154,12 @@ contract StakedTokenV2 is
 
     stakersCooldowns[onBehalfOf] = getNextCooldownTimestamp(0, amount, onBehalfOf, balanceOfUser);
 
-    _mint(onBehalfOf, amount);
+    uint256 sharesToMint = amount.mul(1e18).div(exchangeRate());
+    _mint(onBehalfOf, sharesToMint);
+
     IERC20(STAKED_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
 
-    emit Staked(msg.sender, onBehalfOf, amount);
+    emit Staked(msg.sender, onBehalfOf, amount, sharesToMint);
   }
 
   /**
@@ -159,15 +185,17 @@ contract StakedTokenV2 is
 
     _updateCurrentUnclaimedRewards(msg.sender, balanceOfMessageSender, true);
 
+    uint256 underlyingToRedeem = amountToRedeem.mul(exchangeRate()).div(1e18);
+
     _burn(msg.sender, amountToRedeem);
 
     if (balanceOfMessageSender.sub(amountToRedeem) == 0) {
       stakersCooldowns[msg.sender] = 0;
     }
 
-    IERC20(STAKED_TOKEN).safeTransfer(to, amountToRedeem);
+    IERC20(STAKED_TOKEN).safeTransfer(to, underlyingToRedeem);
 
-    emit Redeem(msg.sender, to, amountToRedeem);
+    emit Redeem(msg.sender, to, amountToRedeem, underlyingToRedeem);
   }
 
   /**
@@ -188,8 +216,11 @@ contract StakedTokenV2 is
    * @param amount Amount to stake
    **/
   function claimRewards(address to, uint256 amount) external override {
-    uint256 newTotalRewards =
-      _updateCurrentUnclaimedRewards(msg.sender, balanceOf(msg.sender), false);
+    uint256 newTotalRewards = _updateCurrentUnclaimedRewards(
+      msg.sender,
+      balanceOf(msg.sender),
+      false
+    );
     uint256 amountToClaim = (amount == type(uint256).max) ? newTotalRewards : amount;
 
     stakerRewardsToClaim[msg.sender] = newTotalRewards.sub(amountToClaim, 'INVALID_AMOUNT');
@@ -197,6 +228,22 @@ contract StakedTokenV2 is
     REWARD_TOKEN.safeTransferFrom(REWARDS_VAULT, to, amountToClaim);
 
     emit RewardsClaimed(msg.sender, to, amountToClaim);
+  }
+
+  /**
+   * @dev Calculates the exchange rate between the amount of STAKED_TOKEN and the the StakeToken total supply.
+   * Slashing will reduce the exchange rate. Supplying STAKED_TOKEN to the stake contract
+   * can replenish the slashed STAKED_TOKEN and bring the exchange rate back to 1
+   **/
+
+  function exchangeRate() public override view returns (uint256) {
+    uint256 currentSupply = totalSupply();
+
+    if (currentSupply == 0) {
+      return 1e18; //initial exchange rate is 1:1
+    }
+
+    return STAKED_TOKEN.balanceOf(address(this)).mul(1e18).div(totalSupply());
   }
 
   /**
@@ -247,8 +294,12 @@ contract StakedTokenV2 is
     uint256 userBalance,
     bool updateStorage
   ) internal returns (uint256) {
-    uint256 accruedRewards =
-      _updateUserAssetInternal(user, address(this), userBalance, totalSupply());
+    uint256 accruedRewards = _updateUserAssetInternal(
+      user,
+      address(this),
+      userBalance,
+      totalSupply()
+    );
     uint256 unclaimedRewards = stakerRewardsToClaim[user].add(accruedRewards);
 
     if (accruedRewards != 0) {
@@ -286,16 +337,16 @@ contract StakedTokenV2 is
       return 0;
     }
 
-    uint256 minimalValidCooldownTimestamp =
-      block.timestamp.sub(COOLDOWN_SECONDS).sub(UNSTAKE_WINDOW);
+    uint256 minimalValidCooldownTimestamp = block.timestamp.sub(COOLDOWN_SECONDS).sub(
+      UNSTAKE_WINDOW
+    );
 
     if (minimalValidCooldownTimestamp > toCooldownTimestamp) {
       toCooldownTimestamp = 0;
     } else {
-      uint256 fromCooldownTimestamp =
-        (minimalValidCooldownTimestamp > fromCooldownTimestamp)
-          ? block.timestamp
-          : fromCooldownTimestamp;
+      uint256 fromCooldownTimestamp = (minimalValidCooldownTimestamp > fromCooldownTimestamp)
+        ? block.timestamp
+        : fromCooldownTimestamp;
 
       if (fromCooldownTimestamp < toCooldownTimestamp) {
         return toCooldownTimestamp;
@@ -317,8 +368,9 @@ contract StakedTokenV2 is
    * @return The rewards
    */
   function getTotalRewardsBalance(address staker) external view returns (uint256) {
-    DistributionTypes.UserStakeInput[] memory userStakeInputs =
-      new DistributionTypes.UserStakeInput[](1);
+
+      DistributionTypes.UserStakeInput[] memory userStakeInputs
+     = new DistributionTypes.UserStakeInput[](1);
     userStakeInputs[0] = DistributionTypes.UserStakeInput({
       underlyingAsset: address(this),
       stakedByUser: balanceOf(staker),
@@ -331,7 +383,7 @@ contract StakedTokenV2 is
    * @dev returns the revision of the implementation contract
    * @return The revision
    */
-  function getRevision() internal pure override returns (uint256) {
+  function getRevision() internal override pure returns (uint256) {
     return REVISION;
   }
 
@@ -359,14 +411,13 @@ contract StakedTokenV2 is
     //solium-disable-next-line
     require(block.timestamp <= deadline, 'INVALID_EXPIRATION');
     uint256 currentValidNonce = _nonces[owner];
-    bytes32 digest =
-      keccak256(
-        abi.encodePacked(
-          '\x19\x01',
-          DOMAIN_SEPARATOR,
-          keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
-        )
-      );
+    bytes32 digest = keccak256(
+      abi.encodePacked(
+        '\x19\x01',
+        DOMAIN_SEPARATOR,
+        keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
+      )
+    );
 
     require(owner == ecrecover(digest, v, r, s), 'INVALID_SIGNATURE');
     _nonces[owner] = currentValidNonce.add(1);
@@ -430,8 +481,8 @@ contract StakedTokenV2 is
 
   function _getDelegationDataByType(DelegationType delegationType)
     internal
-    view
     override
+    view
     returns (
       mapping(address => mapping(uint256 => Snapshot)) storage, //snapshots
       mapping(address => uint256) storage, //snapshots count
@@ -468,10 +519,9 @@ contract StakedTokenV2 is
     bytes32 r,
     bytes32 s
   ) public {
-    bytes32 structHash =
-      keccak256(
-        abi.encode(DELEGATE_BY_TYPE_TYPEHASH, delegatee, uint256(delegationType), nonce, expiry)
-      );
+    bytes32 structHash = keccak256(
+      abi.encode(DELEGATE_BY_TYPE_TYPEHASH, delegatee, uint256(delegationType), nonce, expiry)
+    );
     bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR, structHash));
     address signatory = ecrecover(digest, v, r, s);
     require(signatory != address(0), 'INVALID_SIGNATURE');

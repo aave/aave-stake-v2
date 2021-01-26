@@ -6,7 +6,7 @@
     "/contracts/**/*.sol"
   ],
   "scripts": {
-    "run-env": "npm run load:npm && npm i && tail -f /dev/null",
+    "run-env": "npm i && tail -f /dev/null",
     "hardhat": "hardhat",
     "hardhat-kovan": "hardhat --network kovan",
     "hardhat-ropsten": "hardhat --network ropsten",
@@ -29,7 +29,7 @@
     "load:npm": "npm config set @aave-tech:registry https://gitlab.com/api/v4/projects/19392283/packages/npm/ && npm config set '//gitlab.com/api/v4/packages/npm/:_authToken' ${GITLAB_ACCESS_TOKEN} && npm config set '//gitlab.com/api/v4/projects/19392283/packages/npm/:_authToken' ${GITLAB_ACCESS_TOKEN}"
   },
   "devDependencies": {
-    "@aave-tech/aave-token": "^1.0.1-beta-8de8658d.0",
+    "@aave/aave-token": "^1.0.4",
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-etherscan": "^2.1.0",
     "@nomiclabs/hardhat-waffle": "^2.0.1",

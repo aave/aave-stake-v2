@@ -6,7 +6,7 @@ import {ITransferHook} from '../interfaces/ITransferHook.sol';
 import {SafeMath} from '../lib/SafeMath.sol';
 import {
   GovernancePowerDelegationERC20
-} from '@aave-tech/aave-token/contracts/token/base/GovernancePowerDelegationERC20.sol';
+} from '@aave/aave-token/contracts/token/base/GovernancePowerDelegationERC20.sol';
 
 /**
  * @title ERC20WithSnapshot
