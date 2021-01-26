@@ -13,4 +13,9 @@ interface ISlashableStakeToken {
   function claimRewards(address to, uint256 amount) external;
 
   function exchangeRate() external view returns(uint256);
+
+  function setCooldownPause(bool paused) external returns(bool);
+
+  function slash(uint256 amount) external;
+ 
 }

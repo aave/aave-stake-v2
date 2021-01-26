@@ -69,6 +69,7 @@ contract StakedTokenV2 is
   mapping(address => uint256) public _nonces;
 
   address internal slashingAdmin;
+  address internal cooldownPauseAdmin;
 
   event Staked(
     address indexed from,
@@ -88,8 +89,18 @@ contract StakedTokenV2 is
 
   event Cooldown(address indexed user);
 
+  event CooldownPauseSet(bool pause);
+  
+  event Slashed(uint256 amount);
+
+
   modifier onlySlashingAdmin {
-    require(msg.sender == slashingAdmin, 'CALLER_NOT_ADMIN');
+    require(msg.sender == slashingAdmin, 'CALLER_NOT_SLASHING_ADMIN');
+    _;
+  }
+
+    modifier onlyCooldownAdmin {
+    require(msg.sender == cooldownAdmin, 'CALLER_NOT_COOLDOWN_ADMIN');
     _;
   }
 
