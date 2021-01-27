@@ -3,6 +3,7 @@ import { eContractid, tEthereumAddress } from './types';
 import { MintableErc20 } from '../types/MintableErc20';
 import { StakedAave } from '../types/StakedAave';
 import { StakedAaveV2 } from '../types/StakedAaveV2';
+import {StakedTokenV3 } from '../types/StakedTokenV3';
 import { Ierc20Detailed } from '../types/Ierc20Detailed';
 import { InitializableAdminUpgradeabilityProxy } from '../types/InitializableAdminUpgradeabilityProxy';
 import { AaveIncentivesController } from '../types/AaveIncentivesController';
@@ -83,6 +84,45 @@ export const deployStakedAaveV2 = async (
     ZERO_ADDRESS, // gov address
   ];
   const instance = await deployContract<StakedAaveV2>(id, args);
+  if (verify) {
+    await verifyContract(id, instance.address, args);
+  }
+  return instance;
+};
+
+
+export const deployStakedAaveV2 = async (
+  [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+  ]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    tEthereumAddress,
+    tEthereumAddress,
+    string
+  ],
+  verify?: boolean
+) => {
+  const id = eContractid.StakedAaveV3;
+  const args: string[] = [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    ZERO_ADDRESS, // gov address
+  ];
+  const instance = await deployContract<StakedAaveV3>(id, args);
   if (verify) {
     await verifyContract(id, instance.address, args);
   }

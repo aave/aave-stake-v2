@@ -14,8 +14,14 @@ interface ISlashableStakeToken {
 
   function exchangeRate() external view returns(uint256);
 
-  function setCooldownPause(bool paused) external returns(bool);
+  function setCooldownPause(bool paused) external;
 
-  function slash(uint256 amount) external;
- 
+  function slash(address destination, uint256 amount) external;
+
+  function getCooldownPauseAdmin() external view returns(address);
+  function setCooldownPauseAdmin(address admin) external;
+
+  function getSlashingAdmin() external view returns(address);
+  function setSlashingAdmin(address admin) external;
+  
 }
