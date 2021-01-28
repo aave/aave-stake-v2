@@ -71,7 +71,7 @@ contract StakedTokenV3 is
   mapping(address => uint256) public _nonces;
 
   //maximum percentage of the underlying that can be slashed in a single realization event 
-  uint256 internal _maxSlashPercentage; 
+  uint256 internal _maxSlashablePercentage; 
 
   //entity authorized to execute the slash. Typically the Aave governance executor
   address internal _slashingAdmin;
@@ -279,7 +279,7 @@ contract StakedTokenV3 is
 
     uint256 balance = IERC20(STAKED_TOKEN).balanceOf(address(this));
 
-    uint256 maxSlashable = balance.percentMul(_maxSlashPercentage);
+    uint256 maxSlashable = balance.percentMul(_maxSlashablePercentage);
 
     require(amount <= maxSlashable, "INVALID_SLASHING_AMOUNT");
 
@@ -312,17 +312,42 @@ contract StakedTokenV3 is
   * @dev sets the admin of the slashing pausing function
   * @param admin the new admin
   */ 
-  function setSlashingAdmin(address admin) external override {
+  function setSlashingAdmin(address admin) external override onlySlashingAdmin {
     _slashingAdmin = admin;
   }
 
-    /**
+  /**
+  * @dev returns true if the unstake cooldown is paused
+  */ 
+  function getCooldownPaused() external override view returns(bool) {
+    return  _cooldownPaused;
+  }
+
+  /**
   * @dev sets the state of the cooldown pause
   * @param paused true if the cooldown needs to be paused, false otherwise
   */ 
-  function setCooldownPause(bool paused) external override {
+  function setCooldownPause(bool paused) external override onlyCooldownAdmin {
     _cooldownPaused = paused;
   }
+
+  /**
+  * @dev sets the admin of the slashing pausing function
+  * @param percentage the new maximum slashable percentage
+  */ 
+  function setMaxSlashablePercentage(uint256 percentage) external override onlySlashingAdmin {
+    require(percentage <= PercentageMath.PERCENTAGE_FACTOR, "INVALID_SLASHING_PERCENTAGE");
+
+    _maxSlashablePercentage = percentage;
+  }
+
+  /**
+  * @dev returns the current maximum slashable percentage of the stake
+  */ 
+  function getMaxSlashablePercentage() external override view returns(uint256) {
+    return _maxSlashablePercentage;
+  }
+
 
   /**
    * @dev Internal ERC20 _transfer of the tokenized staked tokens

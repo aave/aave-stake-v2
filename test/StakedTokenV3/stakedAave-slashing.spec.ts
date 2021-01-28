@@ -24,10 +24,8 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
 
   let stakeV3 : StakedAaveV3;
 
-  it('Updates the instance of stakedAave to v3', async () => {
+  it('Deploys StakedAaveV3', async () => {
     const {
-      stakedAave,
-      stakedAaveV2,
       aaveToken,
       users
     } = testEnv;
@@ -48,13 +46,18 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
         (1000 * 60 * 60).toString(),
       ]);
 
+
+      //initialize the stake instance
+
+      await stakeV3.initialize(users[0].address, users[1].address);
+
   });
 
   it('Verifies that the initial exchange rate is 1:1', async () => {
 
     const currentExchangeRate = await stakeV3.exchangeRate();
 
-    // Stake token tests
+    
     expect(currentExchangeRate.toString()).to.be.equal(
       WAD
     );
@@ -72,11 +75,68 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     
     const currentExchangeRate = await stakeV3.exchangeRate();
 
-    // Stake token tests
+    
     expect(currentExchangeRate.toString()).to.be.equal(
       WAD
     );
   });
 
+  it('Sets the slashing percentage to 30%', async () => {
+    const {
+      aaveToken,
+      users
+    } = testEnv;
 
+
+    await stakeV3.connect(users[0].signer).setMaxSlashablePercentage("3000");
+
+    const currentSlashingPercentage = await stakeV3.getMaxSlashablePercentage();
+
+
+    expect(currentSlashingPercentage.toString()).to.be.equal("3000");
+  });
+
+  it('Executes a slash of 20% of the asset', async () => {
+    const {
+      aaveToken,
+      users
+    } = testEnv;
+
+    const fundsReceiver =  users[3].address;
+
+    const userBalanceBeforeSlash = new BigNumber((await aaveToken.balanceOf(fundsReceiver)).toString());
+
+
+    const currentStakeBalance = new BigNumber((await aaveToken.balanceOf(stakeV3.address)).toString());
+
+    const amountToSlash = currentStakeBalance.times(0.2).toFixed(0);
+
+    await stakeV3.connect(users[0].signer).slash(fundsReceiver, amountToSlash);
+
+    const newStakeBalance = new BigNumber((await aaveToken.balanceOf(stakeV3.address)).toString()); 
+
+    const userBalanceAfterSlash = new BigNumber((await aaveToken.balanceOf(fundsReceiver)).toString()); 
+        
+    expect(newStakeBalance.toString()).to.be.equal(currentStakeBalance.minus(amountToSlash).toFixed(0));
+    expect(userBalanceAfterSlash.toString()).to.be.equal(userBalanceBeforeSlash.plus(amountToSlash).toFixed(0));
+  });
+
+
+  it('Tries to slash with an account that is not the slashing admin', async () => {
+    const {
+      users
+    } = testEnv;
+
+    
+    await expect(stakeV3.slash(users[2].address, "1")).to.be.revertedWith("CALLER_NOT_SLASHING_ADMIN");
+  });
+
+  it('Tries to pause the cooldown with an account that is not the cooldown admin', async () => {
+    const {
+      users
+    } = testEnv;
+
+    
+    await expect(stakeV3.connect(users[3].signer).setCooldownPause(true)).to.be.revertedWith("CALLER_NOT_COOLDOWN_ADMIN");
+  });
 });

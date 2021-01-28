@@ -8,7 +8,7 @@ import {SafeMath} from '../lib/SafeMath.sol';
 import {IERC20} from '../interfaces/IERC20.sol';
 import {IAToken} from '../interfaces/IAToken.sol';
 import {IAaveIncentivesController} from '../interfaces/IAaveIncentivesController.sol';
-import {IStakedAave} from '../interfaces/IStakedAave.sol';
+import {IStakedToken} from '../interfaces/IStakedToken.sol';
 import {VersionedInitializable} from '../utils/VersionedInitializable.sol';
 import {AaveDistributionManager} from './AaveDistributionManager.sol';
 
@@ -25,7 +25,7 @@ contract AaveIncentivesController is
   using SafeMath for uint256;
   uint256 public constant REVISION = 1;
 
-  IStakedAave public immutable PSM;
+  IStakedToken public immutable PSM;
 
   IERC20 public immutable REWARD_TOKEN;
   address public immutable REWARDS_VAULT;
@@ -39,7 +39,7 @@ contract AaveIncentivesController is
   constructor(
     IERC20 rewardToken,
     address rewardsVault,
-    IStakedAave psm,
+    IStakedToken psm,
     uint256 extraPsmReward,
     address emissionManager,
     uint128 distributionDuration
