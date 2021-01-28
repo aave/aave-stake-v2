@@ -3,7 +3,7 @@ import { eContractid, tEthereumAddress } from './types';
 import { MintableErc20 } from '../types/MintableErc20';
 import { StakedAave } from '../types/StakedAave';
 import { StakedAaveV2 } from '../types/StakedAaveV2';
-import {StakedTokenV3 } from '../types/StakedTokenV3';
+import {StakedAaveV3 } from '../types/StakedAaveV3';
 import { Ierc20Detailed } from '../types/Ierc20Detailed';
 import { InitializableAdminUpgradeabilityProxy } from '../types/InitializableAdminUpgradeabilityProxy';
 import { AaveIncentivesController } from '../types/AaveIncentivesController';
@@ -91,7 +91,7 @@ export const deployStakedAaveV2 = async (
 };
 
 
-export const deployStakedAaveV2 = async (
+export const deployStakedAaveV3 = async (
   [
     stakedToken,
     rewardsToken,

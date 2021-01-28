@@ -22,7 +22,8 @@ export enum eContractid {
   ATokenMock = 'ATokenMock',
   StakedAaveV2 = 'StakedAaveV2',
   DoubleTransferHelper = 'DoubleTransferHelper',
-  StakedTokenV3 = 'StakedTokenV3'
+  StakedTokenV3 = 'StakedTokenV3',
+  StakedAaveV3 = 'StakedAaveV3'
 }
 
 export type tEthereumAddress = string;
