@@ -13,6 +13,7 @@ import { waitForTx, increaseTime } from '../../../helpers/misc-utils';
 import { SignerWithAddress } from '../../helpers/make-suite';
 import { StakedAaveV2 } from '../../../types/StakedAaveV2';
 import { solidity } from 'ethereum-waffle';
+import { StakedAaveV3 } from '../../../types/StakedAaveV3';
 
 chai.use(solidity);
 
@@ -22,18 +23,18 @@ type AssetConfig = {
 };
 
 export const compareRewardsAtAction = async (
-  stakedAaveV2: StakedAaveV2,
+  stakedAave: StakedAaveV2 | StakedAaveV3,
   userAddress: string,
   actions: () => Promise<ContractTransaction>[],
   shouldReward?: boolean,
   assetConfig?: AssetConfig
 ): Promise<void> => {
-  const underlyingAsset = stakedAaveV2.address;
+  const underlyingAsset = stakedAave.address;
   // To prevent coverage to fail, add 5 seconds per comparisson.
   await increaseTime(5);
 
   const rewardsBalanceBefore = BigNumber.from(
-    await (await stakedAaveV2.getTotalRewardsBalance(userAddress)).toString()
+    await (await stakedAave.getTotalRewardsBalance(userAddress)).toString()
   );
 
   // Configure assets of stake token
@@ -44,25 +45,25 @@ export const compareRewardsAtAction = async (
       }
     : {
         emissionPerSecond: '100',
-        totalStaked: await stakedAaveV2.totalSupply(),
+        totalStaked: await stakedAave.totalSupply(),
         underlyingAsset,
       };
-  await stakedAaveV2.configureAssets([assetConfiguration]);
+  await stakedAave.configureAssets([assetConfiguration]);
 
-  const userBalance = await stakedAaveV2.balanceOf(userAddress);
+  const userBalance = await stakedAave.balanceOf(userAddress);
   // Get index before actions
-  const userIndexBefore = await getUserIndex(stakedAaveV2, userAddress, underlyingAsset);
+  const userIndexBefore = await getUserIndex(stakedAave, userAddress, underlyingAsset);
 
   // Dispatch actions that can or not update the user index
   const receipts: ethers.ContractReceipt[] = await Promise.all(
     await actions().map(async (action) => waitForTx(await action))
   );
   // Get index after actions
-  const userIndexAfter = await getUserIndex(stakedAaveV2, userAddress, underlyingAsset);
+  const userIndexAfter = await getUserIndex(stakedAave, userAddress, underlyingAsset);
 
   // Compare calculated JS rewards versus Solidity user rewards
   const rewardsBalanceAfter = BigNumber.from(
-    await (await stakedAaveV2.getTotalRewardsBalance(userAddress)).toString()
+    await (await stakedAave.getTotalRewardsBalance(userAddress)).toString()
   );
   const expectedAccruedRewards = getRewards(userBalance, userIndexAfter, userIndexBefore);
 

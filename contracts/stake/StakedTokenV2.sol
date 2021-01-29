@@ -30,9 +30,9 @@ contract StakedTokenV2 is
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
-  /// @dev Start of Storage layout from StakedToken v1
-  uint256 public constant REVISION = 2;
-
+  function REVISION() public virtual pure returns(uint256) {
+    return 2;
+  }
   IERC20 public immutable STAKED_TOKEN;
   IERC20 public immutable REWARD_TOKEN;
   uint256 public immutable COOLDOWN_SECONDS;
@@ -98,7 +98,7 @@ contract StakedTokenV2 is
   /**
    * @dev Called by the proxy contract
    **/
-  function initialize() external initializer {
+  function initialize() external virtual initializer {
     uint256 chainId;
 
     //solium-disable-next-line
@@ -117,7 +117,7 @@ contract StakedTokenV2 is
     );
   }
 
-  function stake(address onBehalfOf, uint256 amount) external override {
+  function stake(address onBehalfOf, uint256 amount) external override virtual {
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
     uint256 balanceOfUser = balanceOf(onBehalfOf);
 
@@ -141,7 +141,7 @@ contract StakedTokenV2 is
    * @param to Address to redeem to
    * @param amount Amount to redeem
    **/
-  function redeem(address to, uint256 amount) external override {
+  function redeem(address to, uint256 amount) external override virtual {
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
     //solium-disable-next-line
     uint256 cooldownStartTimestamp = stakersCooldowns[msg.sender];
@@ -331,8 +331,8 @@ contract StakedTokenV2 is
    * @dev returns the revision of the implementation contract
    * @return The revision
    */
-  function getRevision() internal pure override returns (uint256) {
-    return REVISION;
+  function getRevision() internal virtual pure override returns (uint256) {
+    return REVISION();
   }
 
   /**

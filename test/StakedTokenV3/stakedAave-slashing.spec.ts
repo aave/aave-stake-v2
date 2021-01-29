@@ -3,20 +3,18 @@ import {
   COOLDOWN_SECONDS,
   UNSTAKE_WINDOW,
   MAX_UINT_AMOUNT,
-  STAKED_AAVE_NAME,
-  STAKED_AAVE_SYMBOL,
-  STAKED_AAVE_DECIMALS,
   WAD,
 } from '../../helpers/constants';
 import { waitForTx, timeLatest, advanceBlock, increaseTimeAndMine } from '../../helpers/misc-utils';
 import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
-import { InitializableAdminUpgradeabilityProxy } from '../../types/InitializableAdminUpgradeabilityProxy';
-import { eContractid } from '../../helpers/types';
 import { getContract, getEthersSigners } from '../../helpers/contracts-helpers';
 import { deployStakedAaveV3, getStakedAaveProxy } from '../../helpers/contracts-accessors';
 import { StakedTokenV3 } from '../../types/StakedTokenV3';
 import { StakedAaveV3 } from '../../types/StakedAaveV3';
+import { getUserIndex } from '../DistributionManager/data-helpers/asset-user-data';
+import { getRewards } from '../DistributionManager/data-helpers/base-math';
+import { compareRewardsAtAction } from '../StakedAaveV2/data-helpers/reward';
 
 const { expect } = require('chai');
 
@@ -41,12 +39,165 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
       (1000 * 60 * 60).toString(),
     ]);
 
+    await aaveToken.connect(rewardsVault).approve(stakeV3.address, MAX_UINT_AMOUNT);
+
     //initialize the stake instance
 
-    await stakeV3.initialize(users[0].address, users[1].address);
+    await stakeV3['initialize(address,address,uint256)'](
+      users[0].address,
+      users[1].address,
+      '2000'
+    );
+
+    const slashingAdmin = await stakeV3.getSlashingAdmin();
+    const cooldownAdmin = await stakeV3.getCooldownPauseAdmin();
+
+    expect(slashingAdmin).to.be.equal(users[0].address);
+    expect(cooldownAdmin).to.be.equal(users[1].address);
   });
 
-  it('Verifies that the initial exchange rate is 1:1', async () => {
+  it('Reverts trying to stake 0 amount', async () => {
+    const {
+      users: [, staker],
+    } = testEnv;
+    const amount = '0';
+
+    await expect(
+      stakeV3.connect(staker.signer).stake(staker.address, amount)
+    ).to.be.revertedWith('INVALID_ZERO_AMOUNT');
+  });
+
+  it('User 1 stakes 10 AAVE: receives 10 stkAAVE, StakedAave balance of AAVE is 10 and his rewards to claim are 0', async () => {
+    const {
+      aaveToken,
+      users: [, staker],
+    } = testEnv;
+    const amount = ethers.utils.parseEther('10');
+
+    const saveBalanceBefore = new BigNumber(
+      (await stakeV3.balanceOf(staker.address)).toString()
+    );
+
+    // Prepare actions for the test case
+    const actions = () => [
+      aaveToken.connect(staker.signer).approve(stakeV3.address, amount),
+      stakeV3.connect(staker.signer).stake(staker.address, amount),
+    ];
+
+    // Check rewards
+    await compareRewardsAtAction(stakeV3, staker.address, actions);
+
+    // Stake token tests
+    expect((await stakeV3.balanceOf(staker.address)).toString()).to.be.equal(
+      saveBalanceBefore.plus(amount.toString()).toString()
+    );
+    expect((await aaveToken.balanceOf(stakeV3.address)).toString()).to.be.equal(
+      saveBalanceBefore.plus(amount.toString()).toString()
+    );
+    expect((await stakeV3.balanceOf(staker.address)).toString()).to.be.equal(amount);
+    expect((await aaveToken.balanceOf(stakeV3.address)).toString()).to.be.equal(amount);
+  });
+
+  it('User 1 stakes 10 AAVE more: his total SAAVE balance increases, StakedAave balance of Aave increases and his reward until now get accumulated', async () => {
+    const {
+      aaveToken,
+      users: [, staker],
+    } = testEnv;
+    const amount = ethers.utils.parseEther('10');
+
+    const saveBalanceBefore = new BigNumber(
+      (await stakeV3.balanceOf(staker.address)).toString()
+    );
+    const actions = () => [
+      aaveToken.connect(staker.signer).approve(stakeV3.address, amount),
+      stakeV3.connect(staker.signer).stake(staker.address, amount),
+    ];
+
+    // Checks rewards
+    await compareRewardsAtAction(stakeV3, staker.address, actions, true);
+
+    // Extra test checks
+    expect((await stakeV3.balanceOf(staker.address)).toString()).to.be.equal(
+      saveBalanceBefore.plus(amount.toString()).toString()
+    );
+    expect((await aaveToken.balanceOf(stakeV3.address)).toString()).to.be.equal(
+      saveBalanceBefore.plus(amount.toString()).toString()
+    );
+  });
+
+  it('User 1 claim half rewards', async () => {
+    const {
+      aaveToken,
+      users: [, staker],
+    } = testEnv;
+    // Increase time for bigger rewards
+    await increaseTimeAndMine(1000);
+
+    const halfRewards = (await stakeV3.stakerRewardsToClaim(staker.address)).div(2);
+    const saveUserBalance = await aaveToken.balanceOf(staker.address);
+
+    await stakeV3.connect(staker.signer).claimRewards(staker.address, halfRewards);
+
+    const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
+    expect(userBalanceAfterActions.eq(saveUserBalance.add(halfRewards))).to.be.ok;
+  });
+
+
+  it('User 1 tries to claim higher reward than current rewards balance', async () => {
+    const {
+      aaveToken,
+      users: [, staker],
+    } = testEnv;
+
+    const saveUserBalance = await aaveToken.balanceOf(staker.address);
+
+    // Try to claim more amount than accumulated
+    await expect(
+      stakeV3
+        .connect(staker.signer)
+        .claimRewards(staker.address, ethers.utils.parseEther('10000'))
+    ).to.be.revertedWith('INVALID_AMOUNT');
+
+    const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
+    expect(userBalanceAfterActions.eq(saveUserBalance)).to.be.ok;
+  });
+
+  it('User 1 claim all rewards', async () => {
+    const {
+      stakedAaveV2,
+      aaveToken,
+      users: [, staker],
+    } = testEnv;
+
+    const userAddress = staker.address;
+    const underlyingAsset = stakedAaveV2.address;
+
+    const userBalance = await stakedAaveV2.balanceOf(userAddress);
+    const userAaveBalance = await aaveToken.balanceOf(userAddress);
+    const userRewards = await stakedAaveV2.stakerRewardsToClaim(userAddress);
+    // Get index before actions
+    const userIndexBefore = await getUserIndex(stakedAaveV2, userAddress, underlyingAsset);
+
+    // Claim rewards
+    await expect(stakedAaveV2.connect(staker.signer).claimRewards(staker.address, MAX_UINT_AMOUNT));
+
+    // Get index after actions
+    const userIndexAfter = await getUserIndex(stakedAaveV2, userAddress, underlyingAsset);
+
+    const expectedAccruedRewards = getRewards(
+      userBalance,
+      userIndexAfter,
+      userIndexBefore
+    ).toString();
+    const userAaveBalanceAfterAction = (await aaveToken.balanceOf(userAddress)).toString();
+
+    expect(userAaveBalanceAfterAction).to.be.equal(
+      userAaveBalance.add(userRewards).add(expectedAccruedRewards).toString()
+    );
+  });
+
+
+   it('Verifies that the initial exchange rate is 1:1', async () => {
     const currentExchangeRate = await stakeV3.exchangeRate();
 
     expect(currentExchangeRate.toString()).to.be.equal(WAD);
@@ -65,16 +216,6 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     const currentExchangeRate = await stakeV3.exchangeRate();
 
     expect(currentExchangeRate.toString()).to.be.equal(WAD);
-  });
-
-  it('Sets the slashing percentage to 30%', async () => {
-    const { aaveToken, users } = testEnv;
-
-    await stakeV3.connect(users[0].signer).setMaxSlashablePercentage('3000');
-
-    const currentSlashingPercentage = await stakeV3.getMaxSlashablePercentage();
-
-    expect(currentSlashingPercentage.toString()).to.be.equal('3000');
   });
 
   it('Executes a slash of 20% of the asset', async () => {
@@ -142,8 +283,7 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     const exchangeRateAfterRedeem = new BigNumber((await stakeV3.exchangeRate()).toString());
 
     const expectedUserBalanceAfterRedeem = userBalanceBeforeRedeem.plus(
-      exchangeRateBeforeRedeem
-        .times(amountToRedeem).div(10 ** 18)
+      exchangeRateBeforeRedeem.times(amountToRedeem).div(10 ** 18)
     );
 
     expect(userBalanceAfterRedeem.toString()).to.be.equal(
@@ -156,7 +296,6 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
       'Invalid exchange rate after redeem'
     );
   });
-
 
   it('Stakes 1 AAVE more - expected to receive 1.25 stkAAVE', async () => {
     const {
@@ -175,13 +314,16 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     await aaveToken.connect(staker.signer).approve(stakeV3.address, amountToStake.toString());
     await stakeV3.connect(staker.signer).stake(staker.address, amountToStake.toString());
 
-    const userBalanceAfterStake= new BigNumber(
+    const userBalanceAfterStake = new BigNumber(
       (await stakeV3.balanceOf(staker.address)).toString()
     );
     const exchangeRateAfterStake = new BigNumber((await stakeV3.exchangeRate()).toString());
 
     const expectedUserBalanceAfterStake = userBalanceBeforeStake.plus(
-      amountToStake.times(10 ** 18).div(exchangeRateBeforeStake).toFixed(0)
+      amountToStake
+        .times(10 ** 18)
+        .div(exchangeRateBeforeStake)
+        .toFixed(0)
     );
 
     expect(userBalanceAfterStake.toString()).to.be.equal(
@@ -210,4 +352,127 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
       'CALLER_NOT_COOLDOWN_ADMIN'
     );
   });
+
+  it('Tries to change the slash admin not being the slash admin', async () => {
+    const { users } = testEnv;
+
+    await expect(stakeV3.setSlashingAdmin(users[2].address)).to.be.revertedWith(
+      'CALLER_NOT_SLASHING_ADMIN'
+    );
+  });
+
+  it('Tries to change the cooldown admin not being the cooldown admin', async () => {
+    const { users } = testEnv;
+
+    await expect(
+      stakeV3.connect(users[3].signer).setCooldownPauseAdmin(users[3].address)
+    ).to.be.revertedWith('CALLER_NOT_COOLDOWN_ADMIN');
+  });
+
+  it('Changes the slashing admin', async () => {
+    const { users } = testEnv;
+
+    await stakeV3.connect(users[0].signer).setSlashingAdmin(users[3].address);
+
+    const newAdmin = await stakeV3.getSlashingAdmin();
+
+    expect(newAdmin).to.be.equal(users[3].address);
+  });
+
+  it('Changes the cooldown admin', async () => {
+    const { users } = testEnv;
+
+    await stakeV3.connect(users[1].signer).setCooldownPauseAdmin(users[3].address);
+
+    const newAdmin = await stakeV3.getCooldownPauseAdmin();
+
+    expect(newAdmin).to.be.equal(users[3].address);
+  });
+
+  it('Pauses the cooldown', async () => {
+    const { users } = testEnv;
+
+    await stakeV3.connect(users[3].signer).setCooldownPause(true);
+
+    const cooldownPaused = await stakeV3.getCooldownPaused();
+
+    expect(cooldownPaused).to.be.equal(true);
+  });
+
+  it('Checks that users cannot redeem even during the unstake window', async () => {
+    const {
+      users: [, staker],
+    } = testEnv;
+
+    //activates cooldown
+    await stakeV3.connect(staker.signer).cooldown();
+
+    //moves forward to enter the unstake window
+    const cooldownActivationTimestamp = await timeLatest();
+
+    await advanceBlock(
+      cooldownActivationTimestamp.plus(new BigNumber(COOLDOWN_SECONDS).plus(1000)).toNumber()
+    );
+
+    await expect(stakeV3.redeem(staker.address, '1000')).to.be.revertedWith(
+      'INSUFFICIENT_COOLDOWN'
+    );
+  });
+
+  it('Checks that initialize cannot be called', async () => {
+    const {
+      users: [, staker],
+    } = testEnv;
+
+    await expect(stakeV3['initialize()']()).to.be.revertedWith('DEPRECATED');
+  });
+
+  it('Sets the slashing percentage to 30%', async () => {
+    const { users } = testEnv;
+
+    await stakeV3.connect(users[3].signer).setMaxSlashablePercentage('3000');
+
+    const currentSlashingPercentage = await stakeV3.getMaxSlashablePercentage();
+
+    expect(currentSlashingPercentage.toString()).to.be.equal('3000');
+  });
+
+  it('Sets an invalid slashing percentage', async () => {
+    const { users } = testEnv;
+
+    await expect(
+      stakeV3.connect(users[3].signer).setMaxSlashablePercentage('20000')
+    ).to.be.revertedWith('INVALID_SLASHING_PERCENTAGE');
+  });
+
+  it('Tried to slash for a percentage bigger than the max percentage', async () => {
+    const { aaveToken, users } = testEnv;
+
+    const fundsReceiver = users[3].address;
+
+    const userBalanceBeforeSlash = new BigNumber(
+      (await aaveToken.balanceOf(fundsReceiver)).toString()
+    );
+
+    const currentStakeBalance = new BigNumber(
+      (await aaveToken.balanceOf(stakeV3.address)).toString()
+    );
+
+    const amountToSlash = currentStakeBalance.times(0.4).toFixed(0);
+
+    await expect(
+      stakeV3.connect(users[3].signer).slash(fundsReceiver, amountToSlash)
+    ).to.be.revertedWith('INVALID_SLASHING_AMOUNT');
+  });
+
+  it('Reverts trying to redeem 0 amount', async () => {
+    const { users: [, staker] } = testEnv;
+
+    const amount = '0';
+
+    await expect(
+      stakeV3.connect(staker.signer).redeem(staker.address, amount)
+    ).to.be.revertedWith('INVALID_ZERO_AMOUNT');
+  });
+
 });
