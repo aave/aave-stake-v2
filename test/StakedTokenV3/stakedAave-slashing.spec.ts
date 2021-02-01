@@ -1,10 +1,5 @@
 import { makeSuite, TestEnv } from '../helpers/make-suite';
-import {
-  COOLDOWN_SECONDS,
-  UNSTAKE_WINDOW,
-  MAX_UINT_AMOUNT,
-  WAD,
-} from '../../helpers/constants';
+import { COOLDOWN_SECONDS, UNSTAKE_WINDOW, MAX_UINT_AMOUNT, WAD } from '../../helpers/constants';
 import { waitForTx, timeLatest, advanceBlock, increaseTimeAndMine } from '../../helpers/misc-utils';
 import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
@@ -17,6 +12,9 @@ import { getRewards } from '../DistributionManager/data-helpers/base-math';
 import { compareRewardsAtAction } from '../StakedAaveV2/data-helpers/reward';
 
 const { expect } = require('chai');
+
+const SLASHING_ADMIN = 0;
+const COOLDOWN_ADMIN = 1;
 
 makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
   let stakeV3: StakedAaveV3;
@@ -49,8 +47,8 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
       '2000'
     );
 
-    const slashingAdmin = await stakeV3.getSlashingAdmin();
-    const cooldownAdmin = await stakeV3.getCooldownPauseAdmin();
+    const slashingAdmin = await stakeV3.getAdmin(SLASHING_ADMIN); //slash admin
+    const cooldownAdmin = await stakeV3.getAdmin(COOLDOWN_ADMIN); //cooldown admin
 
     expect(slashingAdmin).to.be.equal(users[0].address);
     expect(cooldownAdmin).to.be.equal(users[1].address);
@@ -62,9 +60,9 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     } = testEnv;
     const amount = '0';
 
-    await expect(
-      stakeV3.connect(staker.signer).stake(staker.address, amount)
-    ).to.be.revertedWith('INVALID_ZERO_AMOUNT');
+    await expect(stakeV3.connect(staker.signer).stake(staker.address, amount)).to.be.revertedWith(
+      'INVALID_ZERO_AMOUNT'
+    );
   });
 
   it('User 1 stakes 10 AAVE: receives 10 stkAAVE, StakedAave balance of AAVE is 10 and his rewards to claim are 0', async () => {
@@ -74,9 +72,7 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     } = testEnv;
     const amount = ethers.utils.parseEther('10');
 
-    const saveBalanceBefore = new BigNumber(
-      (await stakeV3.balanceOf(staker.address)).toString()
-    );
+    const saveBalanceBefore = new BigNumber((await stakeV3.balanceOf(staker.address)).toString());
 
     // Prepare actions for the test case
     const actions = () => [
@@ -105,9 +101,7 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     } = testEnv;
     const amount = ethers.utils.parseEther('10');
 
-    const saveBalanceBefore = new BigNumber(
-      (await stakeV3.balanceOf(staker.address)).toString()
-    );
+    const saveBalanceBefore = new BigNumber((await stakeV3.balanceOf(staker.address)).toString());
     const actions = () => [
       aaveToken.connect(staker.signer).approve(stakeV3.address, amount),
       stakeV3.connect(staker.signer).stake(staker.address, amount),
@@ -142,7 +136,6 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     expect(userBalanceAfterActions.eq(saveUserBalance.add(halfRewards))).to.be.ok;
   });
 
-
   it('User 1 tries to claim higher reward than current rewards balance', async () => {
     const {
       aaveToken,
@@ -153,9 +146,7 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
 
     // Try to claim more amount than accumulated
     await expect(
-      stakeV3
-        .connect(staker.signer)
-        .claimRewards(staker.address, ethers.utils.parseEther('10000'))
+      stakeV3.connect(staker.signer).claimRewards(staker.address, ethers.utils.parseEther('10000'))
     ).to.be.revertedWith('INVALID_AMOUNT');
 
     const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
@@ -196,8 +187,7 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     );
   });
 
-
-   it('Verifies that the initial exchange rate is 1:1', async () => {
+  it('Verifies that the initial exchange rate is 1:1', async () => {
     const currentExchangeRate = await stakeV3.exchangeRate();
 
     expect(currentExchangeRate.toString()).to.be.equal(WAD);
@@ -356,8 +346,8 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
   it('Tries to change the slash admin not being the slash admin', async () => {
     const { users } = testEnv;
 
-    await expect(stakeV3.setSlashingAdmin(users[2].address)).to.be.revertedWith(
-      'CALLER_NOT_SLASHING_ADMIN'
+    await expect(stakeV3.setPendingAdmin(SLASHING_ADMIN, users[2].address)).to.be.revertedWith(
+      'CALLER_NOT_ROLE_ADMIN'
     );
   });
 
@@ -365,29 +355,66 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     const { users } = testEnv;
 
     await expect(
-      stakeV3.connect(users[3].signer).setCooldownPauseAdmin(users[3].address)
-    ).to.be.revertedWith('CALLER_NOT_COOLDOWN_ADMIN');
+      stakeV3.connect(users[3].signer).setPendingAdmin(COOLDOWN_ADMIN, users[3].address)
+    ).to.be.revertedWith('CALLER_NOT_ROLE_ADMIN');
   });
 
-  it('Changes the slashing admin', async () => {
+  it('Changes the pending slashing admin', async () => {
     const { users } = testEnv;
 
-    await stakeV3.connect(users[0].signer).setSlashingAdmin(users[3].address);
+    await stakeV3.connect(users[0].signer).setPendingAdmin(SLASHING_ADMIN, users[3].address);
 
-    const newAdmin = await stakeV3.getSlashingAdmin();
+    const newPendingAdmin = await stakeV3.getPendingAdmin(SLASHING_ADMIN);
+
+    expect(newPendingAdmin).to.be.equal(users[3].address);
+  });
+
+  it('Tries to claim the pending slashing admin not being the pending admin', async () => {
+    const { users } = testEnv;
+
+    await expect(
+      stakeV3.connect(users[0].signer).claimRoleAdmin(SLASHING_ADMIN)
+    ).to.be.revertedWith('CALLER_NOT_PENDING_ROLE_ADMIN');
+  });
+
+  it('Claim the slashing admin role', async () => {
+    const { users } = testEnv;
+
+    await stakeV3.connect(users[3].signer).claimRoleAdmin(SLASHING_ADMIN);
+
+    const newAdmin = await stakeV3.getAdmin(SLASHING_ADMIN);
 
     expect(newAdmin).to.be.equal(users[3].address);
   });
 
-  it('Changes the cooldown admin', async () => {
+  it('Changes the cooldown pending admin', async () => {
     const { users } = testEnv;
 
-    await stakeV3.connect(users[1].signer).setCooldownPauseAdmin(users[3].address);
+    await stakeV3.connect(users[1].signer).setPendingAdmin(COOLDOWN_ADMIN, users[3].address);
 
-    const newAdmin = await stakeV3.getCooldownPauseAdmin();
+    const newPendingAdmin = await stakeV3.getPendingAdmin(COOLDOWN_ADMIN);
+
+    expect(newPendingAdmin).to.be.equal(users[3].address);
+  });
+
+  it('Tries to claim the pending cooldown admin not being the pending admin', async () => {
+    const { users } = testEnv;
+
+    await expect(
+      stakeV3.connect(users[0].signer).claimRoleAdmin(COOLDOWN_ADMIN)
+    ).to.be.revertedWith('CALLER_NOT_PENDING_ROLE_ADMIN');
+  });
+
+  it('Claim the cooldown admin role', async () => {
+    const { users } = testEnv;
+
+    await stakeV3.connect(users[3].signer).claimRoleAdmin(COOLDOWN_ADMIN);
+
+    const newAdmin = await stakeV3.getAdmin(COOLDOWN_ADMIN);
 
     expect(newAdmin).to.be.equal(users[3].address);
   });
+
 
   it('Pauses the cooldown', async () => {
     const { users } = testEnv;
@@ -466,13 +493,14 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
   });
 
   it('Reverts trying to redeem 0 amount', async () => {
-    const { users: [, staker] } = testEnv;
+    const {
+      users: [, staker],
+    } = testEnv;
 
     const amount = '0';
 
-    await expect(
-      stakeV3.connect(staker.signer).redeem(staker.address, amount)
-    ).to.be.revertedWith('INVALID_ZERO_AMOUNT');
+    await expect(stakeV3.connect(staker.signer).redeem(staker.address, amount)).to.be.revertedWith(
+      'INVALID_ZERO_AMOUNT'
+    );
   });
-
 });

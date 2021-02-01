@@ -18,6 +18,7 @@ import {StakedTokenV2} from './StakedTokenV2.sol';
 import {VersionedInitializable} from '../utils/VersionedInitializable.sol';
 import {AaveDistributionManager} from './AaveDistributionManager.sol';
 import {GovernancePowerWithSnapshot} from '../lib/GovernancePowerWithSnapshot.sol';
+import {RoleManager} from '../utils/RoleManager.sol';
 
 /**
  * @title StakedToken
@@ -25,12 +26,16 @@ import {GovernancePowerWithSnapshot} from '../lib/GovernancePowerWithSnapshot.so
  * @author Aave
  **/
 contract StakedTokenV3 is StakedTokenV2,
-  ISlashableStakeToken
+  ISlashableStakeToken,
+  RoleManager
 {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
   using PercentageMath for uint256;
 
+  uint256 public constant SLASH_ADMIN_ROLE = 0;
+  uint256 public constant COOLDOWN_ADMIN_ROLE = 1;
+  
   function REVISION() public virtual override pure returns(uint256) {
     return 3;
   }
@@ -38,22 +43,15 @@ contract StakedTokenV3 is StakedTokenV2,
  
   //maximum percentage of the underlying that can be slashed in a single realization event 
   uint256 internal _maxSlashablePercentage; 
-
-  //entity authorized to execute the slash. Typically the Aave governance executor
-  address internal _slashingAdmin;
-
-  //entity authorized to pause the cooldown and redeem functionality in case a realization event occurs
-  address internal _cooldownPauseAdmin;
-  
   bool _cooldownPaused;
 
   modifier onlySlashingAdmin {
-    require(msg.sender == _slashingAdmin, 'CALLER_NOT_SLASHING_ADMIN');
+    require(msg.sender == getAdmin(SLASH_ADMIN_ROLE), 'CALLER_NOT_SLASHING_ADMIN');
     _;
   }
 
     modifier onlyCooldownAdmin {
-    require(msg.sender == _cooldownPauseAdmin, 'CALLER_NOT_COOLDOWN_ADMIN');
+    require(msg.sender == getAdmin(COOLDOWN_ADMIN_ROLE), 'CALLER_NOT_COOLDOWN_ADMIN');
     _;
   }
 
@@ -116,11 +114,25 @@ contract StakedTokenV3 is StakedTokenV2,
       )
     );
 
-    _slashingAdmin = slashingAdmin;
-    _cooldownPauseAdmin = cooldownPauseAdmin;
+    address[] memory adminsAddresses = new address[](2);
+    uint256[] memory adminsRoles = new uint256[](2);
+
+    adminsAddresses[0] = slashingAdmin;
+    adminsAddresses[1] = cooldownPauseAdmin;
+
+    adminsRoles[0] = SLASH_ADMIN_ROLE;
+    adminsRoles[1] = COOLDOWN_ADMIN_ROLE;
+
+    _initAdmins(adminsRoles, adminsAddresses);
+
     _maxSlashablePercentage = maxSlashablePercentage;
   }
 
+  /**
+  * @dev allows a user to stake STAKED_TOKEN 
+  * @param onBehalfOf address of the user that will receive stake token shares 
+  * @param amount the amount to be staked
+  **/
   function stake(address onBehalfOf, uint256 amount) external override(IStakedToken,StakedTokenV2) {
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
     uint256 balanceOfUser = balanceOf(onBehalfOf);
@@ -213,38 +225,6 @@ contract StakedTokenV3 is StakedTokenV2,
     require(amount <= maxSlashable, "INVALID_SLASHING_AMOUNT");
 
     IERC20(STAKED_TOKEN).safeTransfer(destination, amount);
-  }
-
-  /**
-  * @dev returns the admin of the cooldown pausing function
-  */ 
-  function getCooldownPauseAdmin() external override view returns(address) {
-    return _cooldownPauseAdmin;
-  }
-
-  /**
-  * @dev sets the admin of the cooldown pausing function
-  * @param admin the new admin
-  */ 
-  function setCooldownPauseAdmin(address admin) external override onlyCooldownAdmin {
-    _cooldownPauseAdmin = admin;    
-    emit CooldownPauseAdminChanged(admin);
-  }
-
-  /**
-  * @dev returns the admin of the slashing pausing function
-  */ 
-  function getSlashingAdmin() external override view returns(address) {
-    return  _slashingAdmin;
-  }
-
-  /**
-  * @dev sets the admin of the slashing pausing function
-  * @param admin the new admin
-  */ 
-  function setSlashingAdmin(address admin) external override onlySlashingAdmin {
-    _slashingAdmin = admin;
-    emit SlashingAdminChanged(admin);
   }
 
   /**
