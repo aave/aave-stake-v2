@@ -1,16 +1,16 @@
-import {MAX_UINT_AMOUNT, PSM_STAKER_PREMIUM, RANDOM_ADDRESSES} from '../../helpers/constants';
+import { MAX_UINT_AMOUNT, PSM_STAKER_PREMIUM, RANDOM_ADDRESSES } from '../../helpers/constants';
 
-const {expect} = require('chai');
+const { expect } = require('chai');
 
-import {makeSuite} from '../helpers/make-suite';
-import {BigNumber} from 'ethers';
-import {waitForTx, increaseTimeAndMine} from '../../helpers/misc-utils';
-import {comparatorEngine, eventChecker} from '../helpers/comparator-engine';
-import {getUserIndex} from '../DistributionManager/data-helpers/asset-user-data';
-import {assetDataComparator, getAssetsData} from '../DistributionManager/data-helpers/asset-data';
-import {getBlockTimestamp} from '../../helpers/contracts-helpers';
-import {getRewards} from '../DistributionManager/data-helpers/base-math';
-import {fail} from 'assert';
+import { makeSuite } from '../helpers/make-suite';
+import { BigNumber } from 'ethers';
+import { waitForTx, increaseTimeAndMine } from '../../helpers/misc-utils';
+import { comparatorEngine, eventChecker } from '../helpers/comparator-engine';
+import { getUserIndex } from '../DistributionManager/data-helpers/asset-user-data';
+import { assetDataComparator, getAssetsData } from '../DistributionManager/data-helpers/asset-data';
+import { getBlockTimestamp } from '../../helpers/contracts-helpers';
+import { getRewards } from '../DistributionManager/data-helpers/base-math';
+import { fail } from 'assert';
 
 type ScenarioAction = {
   caseName: string;
@@ -80,7 +80,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
     let amountToClaim = _amountToClaim;
     it(caseName, async () => {
       await increaseTimeAndMine(100);
-      const {aaveIncentivesController, stakedAave, aaveToken, aDaiMock} = testEnv;
+      const { aaveIncentivesController, stakedAave, aaveToken, aDaiMock } = testEnv;
 
       const distributionEndTimestamp = await aaveIncentivesController.DISTRIBUTION_END();
       const userAddress = await aaveIncentivesController.signer.getAddress();
@@ -92,7 +92,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
       // update emissionPerSecond in advance to not affect user calculations
       if (emissionPerSecond) {
         await aaveIncentivesController.configureAssets([
-          {emissionPerSecond, underlyingAsset, totalStaked},
+          { emissionPerSecond, underlyingAsset, totalStaked },
         ]);
       }
 
@@ -111,7 +111,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         underlyingAsset
       );
       const assetDataBefore = (
-        await getAssetsData(aaveIncentivesController, [{underlyingAsset}])
+        await getAssetsData(aaveIncentivesController, [{ underlyingAsset }])
       )[0];
 
       const claimRewardsReceipt = await waitForTx(
@@ -131,7 +131,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         underlyingAsset
       );
       const assetDataAfter = (
-        await getAssetsData(aaveIncentivesController, [{underlyingAsset}])
+        await getAssetsData(aaveIncentivesController, [{ underlyingAsset }])
       )[0];
 
       const unclaimedRewardsAfter = await aaveIncentivesController.getUserUnclaimedRewards(
@@ -168,7 +168,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         );
         await comparatorEngine(
           ['emissionPerSecond', 'index', 'lastUpdateTimestamp'],
-          {underlyingAsset, totalStaked},
+          { underlyingAsset, totalStaked },
           assetDataBefore,
           assetDataAfter,
           actionBlockTimestamp,
@@ -180,7 +180,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
 
       // ------- Distribution Manager tests START -----
       await assetDataComparator(
-        {underlyingAsset, totalStaked},
+        { underlyingAsset, totalStaked },
         assetDataBefore,
         assetDataAfter,
         actionBlockTimestamp,
@@ -231,7 +231,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         'claimed amount are wrong'
       );
       if (expectedAccruedRewards !== '0') {
-        const rewardsAccruedEvent = eventsEmitted.find(({event}) => event === 'RewardsAccrued');
+        const rewardsAccruedEvent = eventsEmitted.find(({ event }) => event === 'RewardsAccrued');
         // Expect event to exist
         expect(rewardsAccruedEvent).to.be.ok;
         if (rewardsAccruedEvent) {
@@ -244,7 +244,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         }
       }
       if (expectedClaimedAmount.gt(0)) {
-        const rewardsClaimedEvent = eventsEmitted.find(({event}) => event === 'RewardsClaimed');
+        const rewardsClaimedEvent = eventsEmitted.find(({ event }) => event === 'RewardsClaimed');
         // Expect event to exist
         expect(rewardsClaimedEvent).to.be.ok;
         if (rewardsClaimedEvent) {

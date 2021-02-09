@@ -4,7 +4,7 @@ import FileSync from 'lowdb/adapters/FileSync';
 import { WAD } from './constants';
 import { Wallet, ContractTransaction } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { iParamsPerNetwork, eEthereumNetwork } from './types';
+import { iParamsPerNetwork, eEthereumNetwork, tEthereumAddress } from './types';
 
 export const toWad = (value: string | number) => new BigNumber(value).times(WAD).toFixed();
 
@@ -62,4 +62,13 @@ export const increaseTime = async (secondsToIncrease: number) =>
 export const increaseTimeAndMine = async (secondsToIncrease: number) => {
   await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
   await DRE.ethers.provider.send('evm_mine', []);
+};
+
+export const impersonateAccountsHardhat = async (accounts: tEthereumAddress[]) => {
+  for (const account of accounts) {
+    await DRE.network.provider.request({
+      method: 'hardhat_impersonateAccount',
+      params: [account],
+    });
+  }
 };

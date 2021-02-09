@@ -22,6 +22,13 @@ export enum eContractid {
   ATokenMock = 'ATokenMock',
   StakedAaveV2 = 'StakedAaveV2',
   DoubleTransferHelper = 'DoubleTransferHelper',
+  ICRPFactory = 'ICRPFactory',
+  StakedTokenV2 = 'StakedTokenV2',
+  StakedTokenV3 = 'StakedTokenV3',
+  IConfigurableRightsPool = 'IConfigurableRightsPool',
+  IBPool = 'IBPool',
+  IControllerAaveEcosystemReserve = 'IControllerAaveEcosystemReserve',
+  MockSelfDestruct = 'SelfdestructTransfer',
 }
 
 export type tEthereumAddress = string;

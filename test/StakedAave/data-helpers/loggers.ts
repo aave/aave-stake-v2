@@ -1,6 +1,6 @@
-import {tEthereumAddress} from '../../../helpers/types';
-import {MintableErc20} from '../../../types/MintableErc20';
-import {StakedAave} from '../../../types/StakedAave';
+import { tEthereumAddress } from '../../../helpers/types';
+import { MintableErc20 } from '../../../types/MintableErc20';
+import { StakedAave } from '../../../types/StakedAave';
 
 export const logAaveTokenBalanceOf = async (
   account: tEthereumAddress,

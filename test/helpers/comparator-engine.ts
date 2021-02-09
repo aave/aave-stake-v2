@@ -1,6 +1,6 @@
-import {BigNumber, Event} from 'ethers';
+import { BigNumber, Event } from 'ethers';
 
-const {expect} = require('chai');
+const { expect } = require('chai');
 
 interface CustomFieldLogic<Update, State> {
   fieldName: keyof State;
@@ -14,7 +14,7 @@ interface CustomFieldLogic<Update, State> {
 
 export interface CompareRules<Update, State> {
   fieldsEqualToInput?: (keyof State)[];
-  fieldsEqualToAnother?: {fieldName: keyof State; equalTo: keyof Update}[];
+  fieldsEqualToAnother?: { fieldName: keyof State; equalTo: keyof Update }[];
   fieldsWithCustomLogic?: CustomFieldLogic<Update, State>[];
 }
 
@@ -55,7 +55,7 @@ export async function comparatorEngine<Input extends object, State extends objec
     );
   }
 
-  for (const {fieldName, equalTo} of fieldsEqualToAnother) {
+  for (const { fieldName, equalTo } of fieldsEqualToAnother) {
     // @ts-ignore
     expect(stateAfter[fieldName].toString()).to.be.equal(
       // @ts-ignore
@@ -64,7 +64,7 @@ export async function comparatorEngine<Input extends object, State extends objec
     );
   }
 
-  for (const {fieldName, logic} of fieldsWithCustomLogic) {
+  for (const { fieldName, logic } of fieldsWithCustomLogic) {
     const logicOutput = logic(updateInput, stateBefore, stateAfter, actionBlockTimestamp);
     const equalTo = logicOutput instanceof Promise ? await logicOutput : logicOutput;
     // @ts-ignore

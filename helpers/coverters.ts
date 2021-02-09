@@ -1,9 +1,9 @@
-import {ethers} from 'ethers';
+import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
 
-import {tEthereumAddress} from './types';
-import {MOCK_ETH_ADDRESS} from './constants';
-import {getIErc20Detailed} from './contracts-accessors';
+import { tEthereumAddress } from './types';
+import { MOCK_ETH_ADDRESS } from './constants';
+import { getIErc20Detailed } from './contracts-accessors';
 
 export const convertToCurrencyDecimals = async (tokenAddress: tEthereumAddress, amount: string) => {
   const isEth = tokenAddress === MOCK_ETH_ADDRESS;

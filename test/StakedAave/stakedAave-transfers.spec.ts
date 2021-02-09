@@ -1,14 +1,14 @@
-import {makeSuite, TestEnv} from '../helpers/make-suite';
-import {ethers} from 'ethers';
-import {compareRewardsAtAction, compareRewardsAtTransfer} from './data-helpers/reward';
-import {timeLatest, increaseTimeAndMine, increaseTime} from '../../helpers/misc-utils';
-import {COOLDOWN_SECONDS, UNSTAKE_WINDOW} from '../../helpers/constants';
+import { makeSuite, TestEnv } from '../helpers/make-suite';
+import { ethers } from 'ethers';
+import { compareRewardsAtAction, compareRewardsAtTransfer } from './data-helpers/reward';
+import { timeLatest, increaseTimeAndMine, increaseTime } from '../../helpers/misc-utils';
+import { COOLDOWN_SECONDS, UNSTAKE_WINDOW } from '../../helpers/constants';
 
-const {expect} = require('chai');
+const { expect } = require('chai');
 
 makeSuite('StakedAave. Transfers', (testEnv: TestEnv) => {
   it('User 1 stakes 50 AAVE', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const staker = users[1];
 
@@ -21,7 +21,7 @@ makeSuite('StakedAave. Transfers', (testEnv: TestEnv) => {
   });
 
   it('User 1 transfers 50 SAAVE to User 5', async () => {
-    const {stakedAave, users} = testEnv;
+    const { stakedAave, users } = testEnv;
     const amount = ethers.utils.parseEther('50').toString();
     const sender = users[1];
     const receiver = users[5];
@@ -30,14 +30,14 @@ makeSuite('StakedAave. Transfers', (testEnv: TestEnv) => {
   });
 
   it('User 5 transfers 50 SAAVE to himself', async () => {
-    const {stakedAave, users} = testEnv;
+    const { stakedAave, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const sender = users[5];
     await compareRewardsAtTransfer(stakedAave, sender, sender, amount, true, true);
   });
 
   it('User 5 transfers 50 SAAVE to user 2, with rewards not enabled', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const sender = users[5];
     const receiver = users[2];
@@ -52,7 +52,7 @@ makeSuite('StakedAave. Transfers', (testEnv: TestEnv) => {
   });
 
   it('User 4 stakes and transfers 50 SAAVE to user 2, with rewards not enabled', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const sender = users[3];
     const receiver = users[2];
@@ -72,7 +72,7 @@ makeSuite('StakedAave. Transfers', (testEnv: TestEnv) => {
     await compareRewardsAtTransfer(stakedAave, sender, receiver, amount, false, false, assetConfig);
   });
   it('Activate cooldown of User2, transfer entire amount from User2 to User3, cooldown of User2 should be reset', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const sender = users[2];
     const receiver = users[3];
 
@@ -101,7 +101,7 @@ makeSuite('StakedAave. Transfers', (testEnv: TestEnv) => {
   });
 
   it('Transfer balance from User 3 to user 2 cooldown  of User 2 should be reset if User3 cooldown expired', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('10');
     const sender = users[3];
     const receiver = users[2];
@@ -116,8 +116,8 @@ makeSuite('StakedAave. Transfers', (testEnv: TestEnv) => {
     await stakedAave.connect(sender.signer).cooldown();
 
     // Then enable cooldown for receiver
-    await aaveToken.connect(receiver.signer).approve(stakedAave.address, amount)
-    await stakedAave.connect(receiver.signer).stake(receiver.address, amount)
+    await aaveToken.connect(receiver.signer).approve(stakedAave.address, amount);
+    await stakedAave.connect(receiver.signer).stake(receiver.address, amount);
     await stakedAave.connect(receiver.signer).cooldown();
     const receiverCooldown = await stakedAave.stakersCooldowns(sender.address);
 
@@ -134,7 +134,7 @@ makeSuite('StakedAave. Transfers', (testEnv: TestEnv) => {
   });
 
   it('Transfer balance from User 3 to user 2, cooldown of User 2 should be the same if User3 cooldown is less than User2 cooldown', async () => {
-    const {stakedAave, users} = testEnv;
+    const { stakedAave, users } = testEnv;
     const amount = ethers.utils.parseEther('10');
     const sender = users[3];
     const receiver = users[2];
@@ -151,9 +151,7 @@ makeSuite('StakedAave. Transfers', (testEnv: TestEnv) => {
 
     // Enable enable cooldown for receiver
     await stakedAave.connect(receiver.signer).cooldown();
-    const receiverCooldown = await (
-      await stakedAave.stakersCooldowns(receiver.address)
-    ).toString();
+    const receiverCooldown = await (await stakedAave.stakersCooldowns(receiver.address)).toString();
 
     // Transfer staked aave from sender to receiver, it will also transfer the cooldown status from sender to the receiver
     await compareRewardsAtTransfer(stakedAave, sender, receiver, amount, false, false, assetConfig);

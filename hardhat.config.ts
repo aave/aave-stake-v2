@@ -13,7 +13,7 @@ import fs from 'fs';
 export const BUIDLEREVM_CHAIN_ID = 31337;
 
 const DEFAULT_BLOCK_GAS_LIMIT = 12500000;
-const DEFAULT_GAS_PRICE = 50000000000; // 50 gwei
+const DEFAULT_GAS_PRICE = 100 * 1000 * 1000 * 1000; // 75 gwei
 const HARDFORK = 'istanbul';
 const INFURA_KEY = process.env.INFURA_KEY || '';
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
@@ -22,6 +22,7 @@ const MNEMONIC = process.env.MNEMONIC || '';
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
 const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
+const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '11633164');
 
 // Prevent to load scripts before compilation and typechain
 if (!SKIP_LOAD) {
@@ -39,7 +40,7 @@ require(`${path.join(__dirname, 'tasks/misc')}/set-dre.ts`);
 
 const mainnetFork = MAINNET_FORK
   ? {
-      blockNumber: 11366117,
+      blockNumber: FORKING_BLOCK,
       url: ALCHEMY_KEY
         ? `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`
         : `https://main.infura.io/v3/${INFURA_KEY}`,
@@ -68,11 +69,22 @@ const getCommonNetworkConfig = (networkName: eEthereumNetwork, networkId: number
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.7.5',
-    settings: {
-      optimizer: { enabled: true, runs: 200 },
-      evmVersion: 'istanbul',
-    },
+    compilers: [
+      {
+        version: '0.6.12',
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          evmVersion: 'istanbul',
+        },
+      },
+      {
+        version: '0.7.5',
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          evmVersion: 'istanbul',
+        },
+      },
+    ],
   },
   typechain: {
     outDir: 'types',
