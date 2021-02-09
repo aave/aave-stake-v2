@@ -1,5 +1,5 @@
-import {makeSuite, TestEnv} from '../helpers/make-suite';
-import {COOLDOWN_SECONDS, UNSTAKE_WINDOW} from '../../helpers/constants';
+import { makeSuite, TestEnv } from '../helpers/make-suite';
+import { COOLDOWN_SECONDS, UNSTAKE_WINDOW } from '../../helpers/constants';
 import {
   waitForTx,
   advanceBlock,
@@ -7,14 +7,14 @@ import {
   increaseTime,
   increaseTimeAndMine,
 } from '../../helpers/misc-utils';
-import {ethers} from 'ethers';
+import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
 
-const {expect} = require('chai');
+const { expect } = require('chai');
 
 makeSuite('StakedAave. Redeem', (testEnv: TestEnv) => {
   it('Reverts trying to redeem 0 amount', async () => {
-    const {stakedAave, users} = testEnv;
+    const { stakedAave, users } = testEnv;
 
     const amount = '0';
     const staker = users[1];
@@ -25,7 +25,7 @@ makeSuite('StakedAave. Redeem', (testEnv: TestEnv) => {
   });
 
   it('User 1 stakes 50 AAVE', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const staker = users[1];
 
@@ -34,7 +34,7 @@ makeSuite('StakedAave. Redeem', (testEnv: TestEnv) => {
   });
 
   it('User 1 tries to redeem without activating the cooldown first', async () => {
-    const {stakedAave, users} = testEnv;
+    const { stakedAave, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const staker = users[1];
 
@@ -44,7 +44,7 @@ makeSuite('StakedAave. Redeem', (testEnv: TestEnv) => {
   });
 
   it('User 1 activates the cooldown, but is not able to redeem before the COOLDOWN_SECONDS passed', async () => {
-    const {stakedAave, users} = testEnv;
+    const { stakedAave, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const staker = users[1];
 
@@ -79,7 +79,7 @@ makeSuite('StakedAave. Redeem', (testEnv: TestEnv) => {
   });
 
   it('User 1 activates the cooldown again, and tries to redeem a bigger amount that he has staked, receiving the balance', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('1000');
     const staker = users[1];
 
@@ -104,7 +104,7 @@ makeSuite('StakedAave. Redeem', (testEnv: TestEnv) => {
   });
 
   it('User 1 activates the cooldown again, and redeems within the unstake period', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const staker = users[1];
 
@@ -129,7 +129,7 @@ makeSuite('StakedAave. Redeem', (testEnv: TestEnv) => {
   });
 
   it('User 4 stakes 50 AAVE, activates the cooldown and redeems half of the amount', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const staker = users[5];
 
@@ -155,7 +155,7 @@ makeSuite('StakedAave. Redeem', (testEnv: TestEnv) => {
   });
 
   it('User 5 stakes 50 AAVE, activates the cooldown and redeems with rewards not enabled', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const staker = users[5];
 

@@ -1,10 +1,10 @@
-const {expect} = require('chai');
+const { expect } = require('chai');
 
-import {makeSuite, TestEnv} from '../helpers/make-suite';
-import {RANDOM_ADDRESSES} from '../../helpers/constants';
-import {increaseTime, waitForTx} from '../../helpers/misc-utils';
-import {getBlockTimestamp} from '../../helpers/contracts-helpers';
-import {CompareRules, eventChecker} from '../helpers/comparator-engine';
+import { makeSuite, TestEnv } from '../helpers/make-suite';
+import { RANDOM_ADDRESSES } from '../../helpers/constants';
+import { increaseTime, waitForTx } from '../../helpers/misc-utils';
+import { getBlockTimestamp } from '../../helpers/contracts-helpers';
+import { CompareRules, eventChecker } from '../helpers/comparator-engine';
 import {
   AssetData,
   assetDataComparator,
@@ -120,7 +120,7 @@ const configureAssetScenarios: ScenarioAction[] = [
 makeSuite('AaveIncentivesController configureAssets', (testEnv: TestEnv) => {
   // custom checks
   it('Tries to submit config updates not from emission manager', async () => {
-    const {aaveIncentivesController, users} = testEnv;
+    const { aaveIncentivesController, users } = testEnv;
     await expect(
       aaveIncentivesController.connect(users[2].signer).configureAssets([])
     ).to.be.revertedWith('ONLY_EMISSION_MANAGER');
@@ -128,9 +128,9 @@ makeSuite('AaveIncentivesController configureAssets', (testEnv: TestEnv) => {
 
   // mutate compatible scenarios
   // TODO: add events emission
-  for (const {assets, caseName, compareRules, customTimeMovement} of configureAssetScenarios) {
+  for (const { assets, caseName, compareRules, customTimeMovement } of configureAssetScenarios) {
     it(caseName, async () => {
-      const {aaveIncentivesController} = testEnv;
+      const { aaveIncentivesController } = testEnv;
       const distributionEndTimestamp = await aaveIncentivesController.DISTRIBUTION_END();
 
       const assetConfigsUpdate: AssetUpdateData[] = [];
@@ -140,7 +140,7 @@ makeSuite('AaveIncentivesController configureAssets', (testEnv: TestEnv) => {
           throw new Error('to many assets to test');
         }
         const underlyingAsset = RANDOM_ADDRESSES[i];
-        assetConfigsUpdate.push({...assetConfig, underlyingAsset});
+        assetConfigsUpdate.push({ ...assetConfig, underlyingAsset });
       });
 
       const assetsConfigBefore = await getAssetsData(aaveIncentivesController, assetConfigsUpdate);

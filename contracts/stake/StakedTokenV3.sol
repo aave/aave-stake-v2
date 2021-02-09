@@ -17,11 +17,11 @@ import {AaveDistributionManager} from './AaveDistributionManager.sol';
 import {GovernancePowerWithSnapshot} from '../lib/GovernancePowerWithSnapshot.sol';
 
 /**
- * @title StakedToken
+ * @title StakedToken V3
  * @notice Contract to stake Aave token, tokenize the position and get rewards, inheriting from a distribution manager contract
  * @author Aave
  **/
-contract StakedTokenV2 is
+contract StakedTokenV3 is
   IStakedAave,
   GovernancePowerWithSnapshot,
   VersionedInitializable,
@@ -31,7 +31,7 @@ contract StakedTokenV2 is
   using SafeERC20 for IERC20;
 
   /// @dev Start of Storage layout from StakedToken v1
-  uint256 public constant REVISION = 2;
+  uint256 public constant REVISION = 1;
 
   IERC20 public immutable STAKED_TOKEN;
   IERC20 public immutable REWARD_TOKEN;
@@ -98,7 +98,11 @@ contract StakedTokenV2 is
   /**
    * @dev Called by the proxy contract
    **/
-  function initialize() external initializer {
+  function initialize(
+    string calldata name,
+    string calldata symbol,
+    uint8 decimals
+  ) external initializer {
     uint256 chainId;
 
     //solium-disable-next-line
@@ -109,12 +113,17 @@ contract StakedTokenV2 is
     DOMAIN_SEPARATOR = keccak256(
       abi.encode(
         EIP712_DOMAIN,
-        keccak256(bytes(name())),
+        keccak256(bytes(super.name())),
         keccak256(EIP712_REVISION),
         chainId,
         address(this)
       )
     );
+    if (REVISION == 1) {
+      _name = name;
+      _symbol = symbol;
+      _setupDecimals(decimals);
+    }
   }
 
   function stake(address onBehalfOf, uint256 amount) external override {

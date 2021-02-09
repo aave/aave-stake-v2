@@ -1,14 +1,14 @@
-import {fail} from 'assert';
-const {expect} = require('chai');
+import { fail } from 'assert';
+const { expect } = require('chai');
 
-import {increaseTime, waitForTx, increaseTimeAndMine} from '../../helpers/misc-utils';
-import {makeSuite} from '../helpers/make-suite';
-import {eventChecker} from '../helpers/comparator-engine';
-import {getBlockTimestamp} from '../../helpers/contracts-helpers';
+import { increaseTime, waitForTx, increaseTimeAndMine } from '../../helpers/misc-utils';
+import { makeSuite } from '../helpers/make-suite';
+import { eventChecker } from '../helpers/comparator-engine';
+import { getBlockTimestamp } from '../../helpers/contracts-helpers';
 
-import {getUserIndex} from '../DistributionManager/data-helpers/asset-user-data';
-import {assetDataComparator, getAssetsData} from '../DistributionManager/data-helpers/asset-data';
-import {getRewards} from '../DistributionManager/data-helpers/base-math';
+import { getUserIndex } from '../DistributionManager/data-helpers/asset-user-data';
+import { assetDataComparator, getAssetsData } from '../DistributionManager/data-helpers/asset-data';
+import { getRewards } from '../DistributionManager/data-helpers/base-math';
 
 type ScenarioAction = {
   caseName: string;
@@ -61,14 +61,14 @@ makeSuite('AaveIncentivesController handleAction tests', (testEnv) => {
     it(caseName, async () => {
       await increaseTimeAndMine(100);
 
-      const {aaveIncentivesController, users, aDaiMock} = testEnv;
+      const { aaveIncentivesController, users, aDaiMock } = testEnv;
       const userAddress = users[1].address;
       const underlyingAsset = aDaiMock.address;
 
       // update emissionPerSecond in advance to not affect user calculations
       if (emissionPerSecond) {
         await aaveIncentivesController.configureAssets([
-          {emissionPerSecond, underlyingAsset, totalStaked: totalSupply},
+          { emissionPerSecond, underlyingAsset, totalStaked: totalSupply },
         ]);
       }
 
@@ -83,7 +83,7 @@ makeSuite('AaveIncentivesController handleAction tests', (testEnv) => {
         underlyingAsset
       );
       const assetDataBefore = (
-        await getAssetsData(aaveIncentivesController, [{underlyingAsset}])
+        await getAssetsData(aaveIncentivesController, [{ underlyingAsset }])
       )[0];
 
       if (customTimeMovement) {
@@ -102,7 +102,7 @@ makeSuite('AaveIncentivesController handleAction tests', (testEnv) => {
         underlyingAsset
       );
       const assetDataAfter = (
-        await getAssetsData(aaveIncentivesController, [{underlyingAsset}])
+        await getAssetsData(aaveIncentivesController, [{ underlyingAsset }])
       )[0];
 
       const expectedAccruedRewards = getRewards(
@@ -117,7 +117,7 @@ makeSuite('AaveIncentivesController handleAction tests', (testEnv) => {
 
       // ------- Distribution Manager tests START -----
       await assetDataComparator(
-        {underlyingAsset, totalStaked: totalSupply},
+        { underlyingAsset, totalStaked: totalSupply },
         assetDataBefore,
         assetDataAfter,
         actionBlockTimestamp,
@@ -129,8 +129,10 @@ makeSuite('AaveIncentivesController handleAction tests', (testEnv) => {
         'user index are not correctly updated'
       );
       if (!assetDataAfter.index.eq(assetDataBefore.index)) {
-        const eventAssetUpdated = eventsEmitted.find(({event}) => event === 'AssetIndexUpdated');
-        const eventUserIndexUpdated = eventsEmitted.find(({event}) => event === 'UserIndexUpdated');
+        const eventAssetUpdated = eventsEmitted.find(({ event }) => event === 'AssetIndexUpdated');
+        const eventUserIndexUpdated = eventsEmitted.find(
+          ({ event }) => event === 'UserIndexUpdated'
+        );
 
         if (!eventAssetUpdated) {
           fail('missing AssetIndexUpdated event');
@@ -156,7 +158,7 @@ makeSuite('AaveIncentivesController handleAction tests', (testEnv) => {
         'rewards balance are incorrect'
       );
       if (expectedAccruedRewards !== '0') {
-        const eventAssetUpdated = eventsEmitted.find(({event}) => event === 'RewardsAccrued');
+        const eventAssetUpdated = eventsEmitted.find(({ event }) => event === 'RewardsAccrued');
         if (!eventAssetUpdated) {
           fail('missing RewardsAccrued event');
         }

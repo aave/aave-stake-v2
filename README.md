@@ -1,4 +1,4 @@
-# Aave Incentives contracts (v1 and v2)
+# Aave Incentives contracts
 
 Sets of smart contracts to enable stake of Aave-related assets and rewards distribution based on them.
 
@@ -92,16 +92,19 @@ This contract allows to do the following:
 - **Claim of user rewards**: by `claimRewards()` function, transferring to the user the AAVE rewards. If the user tries to claim his rewards with the `StakedAave` as target, a bonus will applied on the rewards accumulated from his activity on the protocol, and the `stake()` function on the `StakedAave` will be called.
 - **Query information about users**: mainly about the state of their rewards.
 
-## Audits v1
+## Audits
 
 The Solidity code in this repository has undergone 2 traditional smart contracts' audits by Consensys Diligence and Certik. The reports are:
 
 - Consensys Diligence
 - Certik
 
-## Audits v2
+## Current Mainnet contracts (25/09/2020)
 
-The new StakedAaveV2 implementation has been audited by Peckshield and property checked by Certora.
+[MAIN]
+
+- **StakedAave proxy** [0x4da27a545c0c5b758a6ba100e3a049001de870f5](https://etherscan.io/address/0x4da27a545c0c5b758a6ba100e3a049001de870f5)
+- **StakedAave implementation** [0x74a7a4e7566a2f523986e500ce35b20d343f6741](https://etherscan.io/address/0x74a7a4e7566a2f523986e500ce35b20d343f6741)
 
 ## Credits
 
