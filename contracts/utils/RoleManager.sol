@@ -10,6 +10,9 @@ contract RoleManager {
   mapping(uint256 => address) private _admins;
   mapping(uint256 => address) private _pendingAdmins;
 
+  event PendingAdminChanged(address indexed newPendingAdmin);
+  event RoleClaimed(address indexed newAdming, uint256 role);
+
   modifier onlyRoleAdmin(uint256 role) {
     require(_admins[role] == msg.sender, 'CALLER_NOT_ROLE_ADMIN');
     _;
@@ -43,6 +46,7 @@ contract RoleManager {
   **/
   function setPendingAdmin(uint256 role, address newPendingAdmin) public onlyRoleAdmin(role) {
     _pendingAdmins[role] = newPendingAdmin;
+    emit PendingAdminChanged(newPendingAdmin);
   }
 
   /**
@@ -51,6 +55,7 @@ contract RoleManager {
   **/
   function claimRoleAdmin(uint256 role) external onlyPendingRoleAdmin(role) {
     _admins[role] = msg.sender;
+    emit RoleClaimed(msg.sender, role);
   }
 
   function _initAdmins(uint256[] memory roles, address[] memory admins) internal {
@@ -59,6 +64,7 @@ contract RoleManager {
     for (uint256 i = 0; i < roles.length; i++) {
       require(_admins[i] == address(0), 'ADMIN_ALREADY_INITIALIZED');
       _admins[roles[i]] = admins[i];
+      emit RoleClaimed(admins[i], roles[i]);
     }
   }
 }

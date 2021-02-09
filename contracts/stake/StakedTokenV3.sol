@@ -40,7 +40,6 @@ contract StakedTokenV3 is StakedTokenV2,
     return 3;
   }
  
- 
   //maximum percentage of the underlying that can be slashed in a single realization event 
   uint256 internal _maxSlashablePercentage; 
   bool _cooldownPaused;
@@ -58,7 +57,9 @@ contract StakedTokenV3 is StakedTokenV2,
 
   event Staked(address indexed from, address indexed onBehalfOf, uint256 amount, uint256 sharesMinted);
   event Redeem(address indexed from, address indexed to, uint256 amount, uint256 underlyingTransferred);
-  event CooldownPauseSet(bool pause);
+  event CooldownPauseChanged(bool pause);
+  event MaxSlashablePercentageChanged(uint256 newPercentage);
+  event Slashed(address indexed destination, uint256 amount);
   event CooldownPauseAdminChanged(address indexed newAdmin);
   event SlashingAdminChanged(address indexed newAdmin);
 
@@ -237,6 +238,8 @@ contract StakedTokenV3 is StakedTokenV2,
     require(amount <= maxSlashable, "INVALID_SLASHING_AMOUNT");
 
     IERC20(STAKED_TOKEN).safeTransfer(destination, amount);
+
+    emit Slashed(destination, amount);
   }
 
   /**
@@ -252,6 +255,7 @@ contract StakedTokenV3 is StakedTokenV2,
   */ 
   function setCooldownPause(bool paused) external override onlyCooldownAdmin {
     _cooldownPaused = paused;
+    emit CooldownPauseChanged(paused);
   }
 
   /**
@@ -262,6 +266,7 @@ contract StakedTokenV3 is StakedTokenV2,
     require(percentage <= PercentageMath.PERCENTAGE_FACTOR, "INVALID_SLASHING_PERCENTAGE");
 
     _maxSlashablePercentage = percentage;
+    emit MaxSlashablePercentageChanged(percentage);
   }
 
   /**
