@@ -1,4 +1,4 @@
-import {makeSuite, TestEnv} from '../helpers/make-suite';
+import { makeSuite, TestEnv } from '../helpers/make-suite';
 import {
   COOLDOWN_SECONDS,
   UNSTAKE_WINDOW,
@@ -7,19 +7,19 @@ import {
   STAKED_AAVE_SYMBOL,
   STAKED_AAVE_DECIMALS,
 } from '../../helpers/constants';
-import {waitForTx, timeLatest, advanceBlock, increaseTimeAndMine} from '../../helpers/misc-utils';
-import {ethers} from 'ethers';
+import { waitForTx, timeLatest, advanceBlock, increaseTimeAndMine } from '../../helpers/misc-utils';
+import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
-import {compareRewardsAtAction} from './data-helpers/reward';
-import {getUserIndex} from '../DistributionManager/data-helpers/asset-user-data';
-import {getRewards} from '../DistributionManager/data-helpers/base-math';
-import {logAaveTokenBalanceOf} from './data-helpers/loggers';
+import { compareRewardsAtAction } from './data-helpers/reward';
+import { getUserIndex } from '../DistributionManager/data-helpers/asset-user-data';
+import { getRewards } from '../DistributionManager/data-helpers/base-math';
+import { logAaveTokenBalanceOf } from './data-helpers/loggers';
 
-const {expect} = require('chai');
+const { expect } = require('chai');
 
 makeSuite('StakedAave. Basics', (testEnv: TestEnv) => {
   it('Initial configuration after initialize() is correct', async () => {
-    const {stakedAave, aaveToken, rewardsVault} = testEnv;
+    const { stakedAave, aaveToken, rewardsVault } = testEnv;
 
     expect(await stakedAave.name()).to.be.equal(STAKED_AAVE_NAME);
     expect(await stakedAave.symbol()).to.be.equal(STAKED_AAVE_SYMBOL);
@@ -189,7 +189,7 @@ makeSuite('StakedAave. Basics', (testEnv: TestEnv) => {
   });
 
   it('User 6 stakes 50 AAVE, with the rewards not enabled', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('50');
     const sixStaker = users[5];
 
@@ -220,7 +220,7 @@ makeSuite('StakedAave. Basics', (testEnv: TestEnv) => {
   });
 
   it('User 6 stakes 30 AAVE more, with the rewards not enabled', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount = ethers.utils.parseEther('30');
     const staker = users[1];
     const sixStaker = users[5];
@@ -249,7 +249,7 @@ makeSuite('StakedAave. Basics', (testEnv: TestEnv) => {
   });
 
   it('Validates staker cooldown with stake() while being on valid unstake window', async () => {
-    const {stakedAave, aaveToken, users} = testEnv;
+    const { stakedAave, aaveToken, users } = testEnv;
     const amount1 = ethers.utils.parseEther('50');
     const amount2 = ethers.utils.parseEther('20');
     const staker = users[4];

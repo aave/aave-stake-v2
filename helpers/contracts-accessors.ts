@@ -4,6 +4,13 @@ import { MintableErc20 } from '../types/MintableErc20';
 import { StakedAave } from '../types/StakedAave';
 import { StakedAaveV2 } from '../types/StakedAaveV2';
 import {StakedAaveV3 } from '../types/StakedAaveV3';
+import { IcrpFactory } from '../types/IcrpFactory'; // Configurable right pool factory
+import { IConfigurableRightsPool } from '../types/IConfigurableRightsPool';
+import { IControllerAaveEcosystemReserve } from '../types/IControllerAaveEcosystemReserve';
+import { SelfdestructTransfer } from '../types/SelfdestructTransfer';
+import { IbPool } from '../types/IbPool'; // Balance pool
+import { StakedTokenV2 } from '../types/StakedTokenV2';
+import { StakedTokenV3 } from '../types/StakedTokenV3';
 import { Ierc20Detailed } from '../types/Ierc20Detailed';
 import { InitializableAdminUpgradeabilityProxy } from '../types/InitializableAdminUpgradeabilityProxy';
 import { AaveIncentivesController } from '../types/AaveIncentivesController';
@@ -14,6 +21,7 @@ import { getDb, DRE } from './misc-utils';
 import { DoubleTransferHelper } from '../types/DoubleTransferHelper';
 import { zeroAddress } from 'ethereumjs-util';
 import { ZERO_ADDRESS } from './constants';
+import { Signer } from 'ethers';
 
 export const deployStakedAave = async (
   [
@@ -47,7 +55,7 @@ export const deployStakedAave = async (
   ];
   const instance = await deployContract<StakedAave>(id, args);
   if (verify) {
-    await verifyContract(id, instance.address, args);
+    await verifyContract(instance.address, args);
   }
   return instance;
 };
@@ -85,7 +93,107 @@ export const deployStakedAaveV2 = async (
   ];
   const instance = await deployContract<StakedAaveV2>(id, args);
   if (verify) {
-    await verifyContract(id, instance.address, args);
+    await verifyContract(instance.address, args);
+  }
+  return instance;
+};
+
+export const deployStakedTokenV2 = async (
+  [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    string,
+    string,
+    tEthereumAddress
+  ],
+  verify?: boolean,
+  signer?: Signer
+) => {
+  const id = eContractid.StakedTokenV2;
+  const args: string[] = [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ];
+  const instance = await deployContract<StakedTokenV2>(id, args, '', signer);
+  if (verify) {
+    await verifyContract(instance.address, args);
+  }
+  return instance;
+};
+
+export const deployStakedTokenV3 = async (
+  [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    string,
+    string,
+    tEthereumAddress
+  ],
+  verify?: boolean,
+  signer?: Signer
+) => {
+  const id = eContractid.StakedTokenV3;
+  const args: string[] = [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ];
+  const instance = await deployContract<StakedTokenV3>(id, args, '', signer);
+  if (verify) {
+    await verifyContract(instance.address, args);
   }
   return instance;
 };
@@ -124,7 +232,7 @@ export const deployStakedAaveV3 = async (
   ];
   const instance = await deployContract<StakedAaveV3>(id, args);
   if (verify) {
-    await verifyContract(id, instance.address, args);
+    await verifyContract(instance.address, args);
   }
   return instance;
 };
@@ -152,7 +260,7 @@ export const deployAaveIncentivesController = async (
   const instance = await deployContract<AaveIncentivesController>(id, args);
   await instance.deployTransaction.wait();
   if (verify) {
-    await verifyContract(id, instance.address, args);
+    await verifyContract(instance.address, args);
   }
   return instance;
 };
@@ -160,13 +268,21 @@ export const deployAaveIncentivesController = async (
 export const deployMintableErc20 = async ([name, symbol, decimals]: [string, string, number]) =>
   await deployContract<MintableErc20>(eContractid.MintableErc20, [name, symbol, decimals]);
 
-export const deployInitializableAdminUpgradeabilityProxy = async (verify?: boolean) => {
+export const deployInitializableAdminUpgradeabilityProxy = async (
+  verify?: boolean,
+  signer?: Signer
+) => {
   const id = eContractid.InitializableAdminUpgradeabilityProxy;
   const args: string[] = [];
-  const instance = await deployContract<InitializableAdminUpgradeabilityProxy>(id, args);
+  const instance = await deployContract<InitializableAdminUpgradeabilityProxy>(
+    id,
+    args,
+    '',
+    signer
+  );
   await instance.deployTransaction.wait();
   if (verify) {
-    await verifyContract(id, instance.address, args);
+    await verifyContract(instance.address, args);
   }
   return instance;
 };
@@ -183,7 +299,7 @@ export const deployDoubleTransferHelper = async (aaveToken: tEthereumAddress, ve
   const instance = await deployContract<DoubleTransferHelper>(id, args);
   await instance.deployTransaction.wait();
   if (verify) {
-    await verifyContract(id, instance.address, args);
+    await verifyContract(instance.address, args);
   }
   return instance;
 };
@@ -208,6 +324,21 @@ export const getStakedAaveImpl = async (address?: tEthereumAddress) => {
   );
 };
 
+export const getStakedTokenV2 = async (address?: tEthereumAddress) => {
+  return await getContract<StakedTokenV2>(
+    eContractid.StakedTokenV2,
+    address ||
+      (await getDb().get(`${eContractid.StakedTokenV2}.${DRE.network.name}`).value()).address
+  );
+};
+export const getStakedTokenV3 = async (address?: tEthereumAddress) => {
+  return await getContract<StakedTokenV3>(
+    eContractid.StakedTokenV2,
+    address ||
+      (await getDb().get(`${eContractid.StakedTokenV2}.${DRE.network.name}`).value()).address
+  );
+};
+
 export const getAaveIncentivesController = getContractFactory<AaveIncentivesController>(
   eContractid.AaveIncentivesController
 );
@@ -215,3 +346,28 @@ export const getAaveIncentivesController = getContractFactory<AaveIncentivesCont
 export const getIErc20Detailed = getContractFactory<Ierc20Detailed>(eContractid.IERC20Detailed);
 
 export const getATokenMock = getContractFactory<ATokenMock>(eContractid.ATokenMock);
+
+export const getCRPFactoryContract = (address: tEthereumAddress) =>
+  getContract<IcrpFactory>(eContractid.ICRPFactory, address);
+
+export const getCRPContract = (address: tEthereumAddress) =>
+  getContract<IConfigurableRightsPool>(eContractid.IConfigurableRightsPool, address);
+
+export const getBpool = (address: tEthereumAddress) =>
+  getContract<IbPool>(eContractid.IBPool, address);
+
+export const getERC20Contract = (address: tEthereumAddress) =>
+  getContract<MintableErc20>(eContractid.MintableErc20, address);
+
+export const getController = (address: tEthereumAddress) =>
+  getContract<IControllerAaveEcosystemReserve>(
+    eContractid.IControllerAaveEcosystemReserve,
+    address
+  );
+
+export const deploySelfDestruct = async () => {
+  const id = eContractid.MockSelfDestruct;
+  const instance = await deployContract<SelfdestructTransfer>(id, []);
+  await instance.deployTransaction.wait();
+  return instance;
+};

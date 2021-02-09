@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js';
-import {BigNumberValue, valueToZDBigNumber} from './bignumber';
+import { BigNumberValue, valueToZDBigNumber } from './bignumber';
 
 export function getLinearCumulatedRewards(
   emissionPerSecond: BigNumberValue,

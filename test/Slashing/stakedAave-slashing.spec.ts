@@ -41,10 +41,13 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
 
     //initialize the stake instance
 
-    await stakeV3['initialize(address,address,uint256)'](
+    await stakeV3['initialize(address,address,uint256,string,string,uint8)'](
       users[0].address,
       users[1].address,
-      '2000'
+      '2000',
+      'Staked AAVE',
+      'stkAAVE',
+      18
     );
 
     const slashingAdmin = await stakeV3.getAdmin(SLASHING_ADMIN); //slash admin

@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js';
-import {BigNumber as BigNumberEthers, BigNumberish} from 'ethers';
+import { BigNumber as BigNumberEthers, BigNumberish } from 'ethers';
 
 export type BigNumberValue = string | number | BigNumber | BigNumberEthers | BigNumberish;
 

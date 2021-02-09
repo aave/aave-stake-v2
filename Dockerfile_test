@@ -5,9 +5,6 @@ WORKDIR /app
 
 ADD  ./package-lock.json ./package.json /app/
 
-RUN npm config set @aave-tech:registry https://gitlab.com/api/v4/packages/npm/
-
-RUN npm run load:npm
 RUN npm ci
 
 ADD ./ /app/

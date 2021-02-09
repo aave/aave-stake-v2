@@ -96,7 +96,13 @@ contract StakedTokenV3 is StakedTokenV2,
   /**
    * @dev Called by the proxy contract
    **/
-  function initialize(address slashingAdmin, address cooldownPauseAdmin, uint256 maxSlashablePercentage) external initializer {
+  function initialize(
+    address slashingAdmin,
+    address cooldownPauseAdmin,
+    uint256 maxSlashablePercentage,
+    string calldata name,
+    string calldata symbol,
+    uint8 decimals) external initializer {
     uint256 chainId;
 
     //solium-disable-next-line
@@ -107,13 +113,19 @@ contract StakedTokenV3 is StakedTokenV2,
     DOMAIN_SEPARATOR = keccak256(
       abi.encode(
         EIP712_DOMAIN,
-        keccak256(bytes(name())),
+        keccak256(bytes(super.name())),
         keccak256(EIP712_REVISION),
         chainId,
         address(this)
       )
     );
 
+    if (REVISION() == 1) {
+      _name = name;
+      _symbol = symbol;
+      _setupDecimals(decimals);
+    }
+    
     address[] memory adminsAddresses = new address[](2);
     uint256[] memory adminsRoles = new uint256[](2);
 

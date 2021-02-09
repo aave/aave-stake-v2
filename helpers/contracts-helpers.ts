@@ -59,9 +59,10 @@ export const decodeAbiNumber = (data: string): number =>
 export const deployContract = async <ContractType extends Contract>(
   contractName: string,
   args: any[],
-  slug: string = ''
+  slug: string = '',
+  signer?: Signer
 ): Promise<ContractType> => {
-  const contract = (await (await DRE.ethers.getContractFactory(contractName)).deploy(
+  const contract = (await (await DRE.ethers.getContractFactory(contractName, signer)).deploy(
     ...args
   )) as ContractType;
 

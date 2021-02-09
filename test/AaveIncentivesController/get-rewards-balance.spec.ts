@@ -1,12 +1,12 @@
-const {expect} = require('chai');
+const { expect } = require('chai');
 
-import {makeSuite} from '../helpers/make-suite';
-import {getRewards} from '../DistributionManager/data-helpers/base-math';
-import {getUserIndex} from '../DistributionManager/data-helpers/asset-user-data';
-import {getAssetsData} from '../DistributionManager/data-helpers/asset-data';
-import {advanceBlock, timeLatest, waitForTx, increaseTimeAndMine} from '../../helpers/misc-utils';
-import {getNormalizedDistribution} from '../helpers/ray-math';
-import {getBlockTimestamp} from '../../helpers/contracts-helpers';
+import { makeSuite } from '../helpers/make-suite';
+import { getRewards } from '../DistributionManager/data-helpers/base-math';
+import { getUserIndex } from '../DistributionManager/data-helpers/asset-user-data';
+import { getAssetsData } from '../DistributionManager/data-helpers/asset-data';
+import { advanceBlock, timeLatest, waitForTx, increaseTimeAndMine } from '../../helpers/misc-utils';
+import { getNormalizedDistribution } from '../helpers/ray-math';
+import { getBlockTimestamp } from '../../helpers/contracts-helpers';
 
 type ScenarioAction = {
   caseName: string;
@@ -29,11 +29,11 @@ const getRewardsBalanceScenarios: ScenarioAction[] = [
 ];
 
 makeSuite('AaveIncentivesController getRewardsBalance tests', (testEnv) => {
-  for (const {caseName, emissionPerSecond} of getRewardsBalanceScenarios) {
+  for (const { caseName, emissionPerSecond } of getRewardsBalanceScenarios) {
     it(caseName, async () => {
       await increaseTimeAndMine(100);
 
-      const {aaveIncentivesController, users, aDaiMock} = testEnv;
+      const { aaveIncentivesController, users, aDaiMock } = testEnv;
 
       const distributionEndTimestamp = await aaveIncentivesController.DISTRIBUTION_END();
       const userAddress = users[1].address;
@@ -45,7 +45,7 @@ makeSuite('AaveIncentivesController getRewardsBalance tests', (testEnv) => {
       await advanceBlock((await timeLatest()).plus(100).toNumber());
       if (emissionPerSecond) {
         await aaveIncentivesController.configureAssets([
-          {emissionPerSecond, underlyingAsset, totalStaked},
+          { emissionPerSecond, underlyingAsset, totalStaked },
         ]);
       }
       await aDaiMock.handleActionOnAic(userAddress, stakedByUser, totalStaked);
@@ -66,7 +66,7 @@ makeSuite('AaveIncentivesController getRewardsBalance tests', (testEnv) => {
       );
 
       const userIndex = await getUserIndex(aaveIncentivesController, userAddress, underlyingAsset);
-      const assetData = (await getAssetsData(aaveIncentivesController, [{underlyingAsset}]))[0];
+      const assetData = (await getAssetsData(aaveIncentivesController, [{ underlyingAsset }]))[0];
 
       await aDaiMock.cleanUserState();
 

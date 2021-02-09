@@ -1,10 +1,10 @@
-import {timeLatest} from '../../helpers/misc-utils';
+import { timeLatest } from '../../helpers/misc-utils';
 
-const {expect} = require('chai');
+const { expect } = require('chai');
 
-import {makeSuite} from '../helpers/make-suite';
-import {deployAaveIncentivesController} from '../../helpers/contracts-accessors';
-import {RANDOM_ADDRESSES} from '../../helpers/constants';
+import { makeSuite } from '../helpers/make-suite';
+import { deployAaveIncentivesController } from '../../helpers/contracts-accessors';
+import { RANDOM_ADDRESSES } from '../../helpers/constants';
 
 makeSuite('AaveIncentivesController constructor tests', () => {
   it('should assign correct params', async () => {

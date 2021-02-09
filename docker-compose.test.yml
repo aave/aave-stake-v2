@@ -4,8 +4,5 @@ services:
     build:
       context: ./
       dockerfile: ./Dockerfile_test
-      args:
-        GITLAB_ACCESS_TOKEN: ${CI_JOB_TOKEN}
     environment:
-      GITLAB_ACCESS_TOKEN: ${CI_JOB_TOKEN}
-
+      ALCHEMY_KEY: ${ALCHEMY_KEY}
