@@ -1,15 +1,28 @@
 import { makeSuite, TestEnv } from '../helpers/make-suite';
 import { COOLDOWN_SECONDS, UNSTAKE_WINDOW, MAX_UINT_AMOUNT, WAD } from '../../helpers/constants';
-import { waitForTx, timeLatest, advanceBlock, increaseTimeAndMine } from '../../helpers/misc-utils';
+import {
+  waitForTx,
+  timeLatest,
+  advanceBlock,
+  increaseTimeAndMine,
+  DRE,
+} from '../../helpers/misc-utils';
 import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
-import { getContract, getEthersSigners } from '../../helpers/contracts-helpers';
+import {
+  buildPermitParams,
+  getContract,
+  getEthersSigners,
+  getSignatureFromTypedData,
+} from '../../helpers/contracts-helpers';
 import { deployStakedAaveV3, getStakedAaveProxy } from '../../helpers/contracts-accessors';
 import { StakedTokenV3 } from '../../types/StakedTokenV3';
 import { StakedAaveV3 } from '../../types/StakedAaveV3';
 import { getUserIndex } from '../DistributionManager/data-helpers/asset-user-data';
 import { getRewards } from '../DistributionManager/data-helpers/base-math';
 import { compareRewardsAtAction } from '../StakedAaveV2/data-helpers/reward';
+import { fail } from 'assert';
+import { parseEther } from 'ethers/lib/utils';
 
 const { expect } = require('chai');
 
@@ -41,8 +54,9 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
 
     //initialize the stake instance
 
-    await stakeV3['initialize(address,address,uint256,string,string,uint8)'](
+    await stakeV3['initialize(address,address,address,uint256,string,string,uint8)'](
       users[0].address,
+      users[1].address,
       users[1].address,
       '2000',
       'Staked AAVE',
@@ -418,7 +432,6 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     expect(newAdmin).to.be.equal(users[3].address);
   });
 
-
   it('Pauses the cooldown', async () => {
     const { users } = testEnv;
 
@@ -505,5 +518,49 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     await expect(stakeV3.connect(staker.signer).redeem(staker.address, amount)).to.be.revertedWith(
       'INVALID_ZERO_AMOUNT'
     );
+  });
+
+  it('Stakes using permit', async () => {
+
+    const {
+      users: [, staker],
+    } = testEnv;
+
+    const { chainId } = await DRE.ethers.provider.getNetwork();
+    if (!chainId) {
+      fail("Current network doesn't have CHAIN ID");
+    }
+
+    console.log("Staker address is ",staker.address);
+
+    const expiration = 0;
+
+    const nonce = (await stakeV3._nonces(staker.address)).toNumber();
+
+    const amount = parseEther('0.1').toString();
+
+
+    const msgParams = buildPermitParams(
+      chainId,
+      stakeV3.address,
+      staker.address,
+      stakeV3.address,
+      nonce,
+      amount,
+      expiration.toFixed()
+    );
+
+
+    const stakerPrivateKey = require('../../test-wallets').accounts[0].secretKey;
+    if (!stakerPrivateKey) {
+      throw new Error('INVALID_OWNER_PK');
+    }
+
+    const { v, r, s } = getSignatureFromTypedData(stakerPrivateKey, msgParams);
+
+
+    await stakeV3
+      .connect(staker.signer)
+      .stakeWithPermit(staker.address, staker.address, amount, expiration, v, r, s);
   });
 });

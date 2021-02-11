@@ -16,7 +16,7 @@
     "compile": "SKIP_LOAD=true hardhat compile",
     "compile:force": "npm run compile -- --force",
     "compile:force:quiet": "npm run compile:force -- --quiet",
-    "test": "npm run compile:force:quiet && hardhat test test/__setup.spec.ts test/AaveIncentivesController/*.spec.ts test/StakedAave/*.spec.ts test/StakedAaveV2/*.spec.ts test/Slashing/*.spec.ts",
+    "test": "npm run compile:force:quiet && hardhat test test/__setup.spec.ts test/AaveIncentivesController/*.spec.ts test/StakedAave/*.spec.ts test/StakedAaveV2/*.spec.ts test/StakedAaveV3/*.spec.ts",
     "test:ci": "npm run compile:force:quiet && npm run test-pei && npm run test-psi && npm run test-psi2 && npm run test-bpt",
     "test-pei": "npm run test test/__setup.spec.ts test/AaveIncentivesController/*.spec.ts",
     "test-psi": "npm run test test/__setup.spec.ts test/StakedAave/*.spec.ts",
