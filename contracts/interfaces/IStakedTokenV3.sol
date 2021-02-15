@@ -32,7 +32,19 @@ interface IStakedTokenV3 is IStakedToken {
     uint256 amount
   ) external;
 
-  function claimRewardsAndStake(uint256 amount) external;
+  function claimRewardsAndStake(address to, uint256 amount) external;
 
-  function claimRewardsAndStakeOnBehalf(address user, uint256 amount) external;
+  function claimRewardsAndUnstake(address to, uint256 amount) external;
+
+  function claimRewardsAndStakeOnBehalf(
+    address user,
+    address to,
+    uint256 amount
+  ) external;
+
+  function claimRewardsAndUnstakeOnBehalf(
+    address user,
+    address to,
+    uint256 amount
+  ) external;
 }

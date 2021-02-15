@@ -58,7 +58,6 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     _;
   }
 
-
   event Staked(
     address indexed from,
     address indexed onBehalfOf,
@@ -162,6 +161,8 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     _initAdmins(adminsRoles, adminsAddresses);
 
     _maxSlashablePercentage = maxSlashablePercentage;
+
+    IERC20(STAKED_TOKEN).approve(address(this), type(uint256).max);
   }
 
   /**
@@ -204,67 +205,80 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param amount Amount to redeem
    **/
   function redeem(address to, uint256 amount) external override(IStakedToken, StakedTokenV2) {
-       require(amount != 0, 'INVALID_ZERO_AMOUNT');
-    //solium-disable-next-line
-    uint256 cooldownStartTimestamp = stakersCooldowns[msg.sender];
-
-    require(
-      !_cooldownPaused && block.timestamp > cooldownStartTimestamp.add(COOLDOWN_SECONDS),
-      'INSUFFICIENT_COOLDOWN'
-    );
-    require(
-      block.timestamp.sub(cooldownStartTimestamp.add(COOLDOWN_SECONDS)) <= UNSTAKE_WINDOW,
-      'UNSTAKE_WINDOW_FINISHED'
-    );
-    uint256 balanceOfMessageSender = balanceOf(msg.sender);
-
-    uint256 amountToRedeem = (amount > balanceOfMessageSender) ? balanceOfMessageSender : amount;
-
-    _updateCurrentUnclaimedRewards(msg.sender, balanceOfMessageSender, true);
-
-    uint256 underlyingToRedeem = amountToRedeem.mul(exchangeRate()).div(1e18);
-
-    _burn(msg.sender, amountToRedeem);
-
-    if (balanceOfMessageSender.sub(amountToRedeem) == 0) {
-      stakersCooldowns[msg.sender] = 0;
-    }
-
-    IERC20(STAKED_TOKEN).safeTransfer(to, underlyingToRedeem);
-
-    emit Redeem(msg.sender, to, amountToRedeem, underlyingToRedeem);
+    _redeem(msg.sender, to, amount);
   }
 
-    /**
+  /**
    * @dev Claims an `amount` of `REWARD_TOKEN` to the address `to` on behalf of the user. Only the claim helper contract is allowed to call this function
    * @param user The address of the user
    * @param to Address to claim for
    * @param amount Amount to claim
    **/
-  function claimRewardsOnBehalf(address user, address to, uint256 amount) external override onlyClaimHelper {
-    uint256 newTotalRewards =
-      _updateCurrentUnclaimedRewards(user, balanceOf(user), false);
-    uint256 amountToClaim = (amount == type(uint256).max) ? newTotalRewards : amount;
+  function claimRewardsOnBehalf(
+    address user,
+    address to,
+    uint256 amount
+  ) external override onlyClaimHelper {
+    _claimRewards(user, to, amount);
+  }
 
-    stakerRewardsToClaim[user] = newTotalRewards.sub(amountToClaim, 'INVALID_AMOUNT');
-    REWARD_TOKEN.safeTransferFrom(REWARDS_VAULT, to, amountToClaim);
-
-    emit RewardsClaimed(user, to, amountToClaim);
+  /**
+   * @dev Claims an `amount` of `REWARD_TOKEN` to the address `to`
+   * @param to Address to stake for
+   * @param amount Amount to stake
+   **/
+  function claimRewards(address to, uint256 amount) external override(StakedTokenV2, IStakedToken) {
+    _claimRewards(msg.sender, to, amount);
   }
 
   /**
    * @dev Claims an `amount` of `REWARD_TOKEN` amd restakes
+   * @param to Address to stake to
    * @param amount Amount to claim
    **/
-  function claimRewardsAndStake(uint256 amount) external override {
+  function claimRewardsAndStake(address to, uint256 amount) external override {
+    uint256 rewardsClaimed = _claimRewards(msg.sender, address(this), amount);
+    _stake(address(this), to, rewardsClaimed);
   }
 
   /**
    * @dev Claims an `amount` of `REWARD_TOKEN` and restakes. Only the claim helper contract is allowed to call this function
-   * @param user The address of the user
+   * @param user The address of the user from which to claim
+   * @param to Address to stake to
    * @param amount Amount to claim
    **/
-  function claimRewardsAndStakeOnBehalf(address user, uint256 amount) external override onlyClaimHelper {
+  function claimRewardsAndStakeOnBehalf(
+    address user,
+    address to,
+    uint256 amount
+  ) external override onlyClaimHelper {
+    uint256 rewardsClaimed = _claimRewards(user, address(this), amount);
+    _stake(address(this), to, rewardsClaimed);
+  }
+
+  /**
+   * @dev Claims an `amount` of `REWARD_TOKEN` amd unstakes
+   * @param amount Amount to claim
+   * @param to Address to claim and unstake to
+   **/
+  function claimRewardsAndUnstake(address to, uint256 amount) external override {
+    _claimRewards(msg.sender, to, amount);
+    _redeem(msg.sender, to, amount);
+  }
+
+  /**
+   * @dev Claims an `amount` of `REWARD_TOKEN` and unstakes. Only the claim helper contract is allowed to call this function
+   * @param user The address of the user
+   * @param to Address to claim and unstake to
+   * @param amount Amount to claim
+   **/
+  function claimRewardsAndUnstakeOnBehalf(
+    address user,
+    address to,
+    uint256 amount
+  ) external override onlyClaimHelper {
+    _claimRewards(user, to, amount);
+    _redeem(user, to, amount);
   }
 
   /**
@@ -289,7 +303,6 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param amount the amount
    **/
   function slash(address destination, uint256 amount) external override onlySlashingAdmin {
-    
     uint256 balance = STAKED_TOKEN.balanceOf(address(this));
 
     uint256 maxSlashable = balance.percentMul(_maxSlashablePercentage);
@@ -343,6 +356,22 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     return REVISION();
   }
 
+  function _claimRewards(
+    address from,
+    address to,
+    uint256 amount
+  ) internal returns (uint256) {
+    uint256 newTotalRewards = _updateCurrentUnclaimedRewards(from, balanceOf(from), false);
+    uint256 amountToClaim = (amount == type(uint256).max) ? newTotalRewards : amount;
+
+    stakerRewardsToClaim[from] = newTotalRewards.sub(amountToClaim, 'INVALID_AMOUNT');
+
+    REWARD_TOKEN.safeTransferFrom(REWARDS_VAULT, to, amountToClaim);
+
+    emit RewardsClaimed(from, to, amountToClaim);
+    return (amountToClaim);
+  }
+
   function _stake(
     address user,
     address onBehalfOf,
@@ -368,5 +397,46 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     STAKED_TOKEN.safeTransferFrom(user, address(this), amount);
 
     emit Staked(user, onBehalfOf, amount, sharesToMint);
-  } 
+  }
+
+  /**
+   * @dev Redeems staked tokens, and stop earning rewards
+   * @param to Address to redeem to
+   * @param amount Amount to redeem
+   **/
+  function _redeem(
+    address from,
+    address to,
+    uint256 amount
+  ) internal {
+    require(amount != 0, 'INVALID_ZERO_AMOUNT');
+    //solium-disable-next-line
+    uint256 cooldownStartTimestamp = stakersCooldowns[from];
+
+    require(
+      !_cooldownPaused && block.timestamp > cooldownStartTimestamp.add(COOLDOWN_SECONDS),
+      'INSUFFICIENT_COOLDOWN'
+    );
+    require(
+      block.timestamp.sub(cooldownStartTimestamp.add(COOLDOWN_SECONDS)) <= UNSTAKE_WINDOW,
+      'UNSTAKE_WINDOW_FINISHED'
+    );
+    uint256 balanceOfFrom = balanceOf(from);
+
+    uint256 amountToRedeem = (amount > balanceOfFrom) ? balanceOfFrom : amount;
+
+    _updateCurrentUnclaimedRewards(from, balanceOfFrom, true);
+
+    uint256 underlyingToRedeem = amountToRedeem.mul(exchangeRate()).div(1e18);
+
+    _burn(from, amountToRedeem);
+
+    if (balanceOfFrom.sub(amountToRedeem) == 0) {
+      stakersCooldowns[from] = 0;
+    }
+
+    IERC20(STAKED_TOKEN).safeTransfer(to, underlyingToRedeem);
+
+    emit Redeem(from, to, amountToRedeem, underlyingToRedeem);
+  }
 }
