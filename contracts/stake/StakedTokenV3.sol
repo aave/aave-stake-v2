@@ -58,11 +58,6 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     _;
   }
 
-  modifier onlyStakedTokenIsRewardToken {
-    require((REWARD_TOKEN == STAKED_TOKEN), 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
-    _;
-  }
-
   event Staked(address indexed from, address indexed to, uint256 amount, uint256 sharesMinted);
   event Redeem(
     address indexed from,
@@ -169,7 +164,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param amount The amount to be staked
    **/
   function stake(address to, uint256 amount) external override(IStakedToken, StakedTokenV2) {
-    _stake(msg.sender, to, amount, false);
+    _stake(msg.sender, to, amount, true);
   }
 
   /**
@@ -223,7 +218,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param amount Amount to stake
    **/
   function claimRewards(address to, uint256 amount) external override(StakedTokenV2, IStakedToken) {
-    _claimRewards(msg.sender, to, amount, false);
+    _claimRewards(msg.sender, to, amount);
   }
 
   /**
@@ -237,7 +232,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address to,
     uint256 amount
   ) external override onlyClaimHelper {
-    _claimRewards(from, to, amount, false);
+    _claimRewards(from, to, amount);
   }
 
   /**
@@ -248,10 +243,11 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   function claimRewardsAndStake(address to, uint256 amount)
     external
     override
-    onlyStakedTokenIsRewardToken
   {
-    uint256 rewardsClaimed = _claimRewards(msg.sender, address(this), amount, true);
-    _stake(address(this), to, rewardsClaimed, true);
+    require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
+
+    uint256 rewardsClaimed = _claimRewards(msg.sender, address(this), amount);
+    _stake(address(this), to, rewardsClaimed, false);
   }
 
   /**
@@ -264,9 +260,11 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address from,
     address to,
     uint256 amount
-  ) external override onlyStakedTokenIsRewardToken onlyClaimHelper {
-    uint256 rewardsClaimed = _claimRewards(from, address(this), amount, true);
-    _stake(address(this), to, rewardsClaimed, true);
+  ) external override onlyClaimHelper {
+    require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
+
+    uint256 rewardsClaimed = _claimRewards(from, address(this), amount);
+    _stake(address(this), to, rewardsClaimed, false);
   }
 
   /**
@@ -280,7 +278,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint256 claimAmount,
     uint256 redeemAmount
   ) external override {
-    _claimRewards(msg.sender, to, claimAmount, false);
+    _claimRewards(msg.sender, to, claimAmount);
     _redeem(msg.sender, to, redeemAmount);
   }
 
@@ -297,7 +295,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint256 claimAmount,
     uint256 redeemAmount
   ) external override onlyClaimHelper {
-    _claimRewards(from, to, claimAmount, false);
+    _claimRewards(from, to, claimAmount);
     _redeem(from, to, redeemAmount);
   }
 
@@ -379,18 +377,13 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   function _claimRewards(
     address from,
     address to,
-    uint256 amount,
-    bool claimToReserve
+    uint256 amount
   ) internal returns (uint256) {
     uint256 newTotalRewards = _updateCurrentUnclaimedRewards(from, balanceOf(from), false);
     uint256 amountToClaim = (amount == type(uint256).max) ? newTotalRewards : amount;
 
     stakerRewardsToClaim[from] = newTotalRewards.sub(amountToClaim, 'INVALID_AMOUNT');
-
-    if (!claimToReserve) {
-      REWARD_TOKEN.safeTransferFrom(REWARDS_VAULT, to, amountToClaim);
-    }
-
+    REWARD_TOKEN.safeTransferFrom(REWARDS_VAULT, to, amountToClaim);
     emit RewardsClaimed(from, to, amountToClaim);
     return (amountToClaim);
   }
@@ -399,7 +392,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address from,
     address to,
     uint256 amount,
-    bool stakeFromReserve
+    bool pullFunds
   ) internal {
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
 
@@ -418,11 +411,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint256 sharesToMint = amount.mul(1e18).div(exchangeRate());
     _mint(to, sharesToMint);
 
-    if (stakeFromReserve) {
-      // redondant in current implementation
-      require((REWARD_TOKEN == STAKED_TOKEN), 'SHOULD_BE_SETTLED');
-      REWARD_TOKEN.safeTransferFrom(REWARDS_VAULT, address(this), amount);
-    } else {
+    if (pullFunds) {
       STAKED_TOKEN.safeTransferFrom(from, address(this), amount);
     }
 
