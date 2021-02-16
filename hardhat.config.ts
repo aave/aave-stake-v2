@@ -9,6 +9,7 @@ import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-etherscan';
 import path from 'path';
 import fs from 'fs';
+import 'hardhat-gas-reporter';
 
 export const BUIDLEREVM_CHAIN_ID = 31337;
 

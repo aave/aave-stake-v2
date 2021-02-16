@@ -186,7 +186,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     bytes32 s
   ) external override {
     IERC20WithPermit(address(STAKED_TOKEN)).permit(from, address(this), amount, deadline, v, r, s);
-    _stake(from, to, amount, false);
+    _stake(from, to, amount, true);
   }
 
   /**
@@ -240,14 +240,13 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param to Address to stake to
    * @param amount Amount to claim
    **/
-  function claimRewardsAndStake(address to, uint256 amount)
-    external
-    override
-  {
+  function claimRewardsAndStake(address to, uint256 amount) external override {
     require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
 
     uint256 rewardsClaimed = _claimRewards(msg.sender, address(this), amount);
-    _stake(address(this), to, rewardsClaimed, false);
+    if (rewardsClaimed != 0) {
+          _stake(address(this), to, rewardsClaimed, false);
+    }
   }
 
   /**
@@ -380,6 +379,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint256 amount
   ) internal returns (uint256) {
     uint256 newTotalRewards = _updateCurrentUnclaimedRewards(from, balanceOf(from), false);
+
     uint256 amountToClaim = (amount == type(uint256).max) ? newTotalRewards : amount;
 
     stakerRewardsToClaim[from] = newTotalRewards.sub(amountToClaim, 'INVALID_AMOUNT');
