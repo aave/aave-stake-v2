@@ -17,8 +17,8 @@ interface IStakedTokenV3 is IStakedToken {
   function setMaxSlashablePercentage(uint256 percentage) external;
 
   function stakeWithPermit(
-    address user,
-    address onBehalfOf,
+    address from,
+    address to,
     uint256 amount,
     uint256 deadline,
     uint8 v,
@@ -27,24 +27,35 @@ interface IStakedTokenV3 is IStakedToken {
   ) external;
 
   function claimRewardsOnBehalf(
-    address user,
+    address from,
+    address to,
+    uint256 amount
+  ) external;
+
+  function redeemOnBehalf(
+    address from,
     address to,
     uint256 amount
   ) external;
 
   function claimRewardsAndStake(address to, uint256 amount) external;
 
-  function claimRewardsAndUnstake(address to, uint256 amount) external;
+  function claimRewardsAndRedeem(
+    address to,
+    uint256 claimAmount,
+    uint256 redeemAmount
+  ) external;
 
   function claimRewardsAndStakeOnBehalf(
-    address user,
+    address from,
     address to,
     uint256 amount
   ) external;
 
-  function claimRewardsAndUnstakeOnBehalf(
-    address user,
+  function claimRewardsAndRedeemOnBehalf(
+    address from,
     address to,
-    uint256 amount
+    uint256 claimAmount,
+    uint256 redeemAmount
   ) external;
 }

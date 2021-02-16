@@ -58,12 +58,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     _;
   }
 
-  event Staked(
-    address indexed from,
-    address indexed onBehalfOf,
-    uint256 amount,
-    uint256 sharesMinted
-  );
+  event Staked(address indexed from, address indexed to, uint256 amount, uint256 sharesMinted);
   event Redeem(
     address indexed from,
     address indexed to,
@@ -166,20 +161,17 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   }
 
   /**
-   * @dev Allows a user to stake STAKED_TOKEN
-   * @param onBehalfOf Address of the user that will receive stake token shares
+   * @dev Allows a from to stake STAKED_TOKEN
+   * @param to Address of the from that will receive stake token shares
    * @param amount The amount to be staked
    **/
-  function stake(address onBehalfOf, uint256 amount)
-    external
-    override(IStakedToken, StakedTokenV2)
-  {
-    _stake(msg.sender, onBehalfOf, amount);
+  function stake(address to, uint256 amount) external override(IStakedToken, StakedTokenV2) {
+    _stake(msg.sender, to, amount);
   }
 
   /**
-   * @dev Allows a user to stake STAKED_TOKEN with gasless approvals (permit)
-   * @param onBehalfOf Address of the user that will receive stake token shares
+   * @dev Allows a from to stake STAKED_TOKEN with gasless approvals (permit)
+   * @param to Address of the from that will receive stake token shares
    * @param amount The amount to be staked
    * @param deadline The permit execution deadline
    * @param v The v component of the signed message
@@ -187,16 +179,16 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param s The s component of the signed message
    **/
   function stakeWithPermit(
-    address user,
-    address onBehalfOf,
+    address from,
+    address to,
     uint256 amount,
     uint256 deadline,
     uint8 v,
     bytes32 r,
     bytes32 s
   ) external override {
-    IERC20WithPermit(address(STAKED_TOKEN)).permit(user, address(this), amount, deadline, v, r, s);
-    _stake(user, onBehalfOf, amount);
+    IERC20WithPermit(address(STAKED_TOKEN)).permit(from, address(this), amount, deadline, v, r, s);
+    _stake(from, to, amount);
   }
 
   /**
@@ -209,26 +201,40 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   }
 
   /**
-   * @dev Claims an `amount` of `REWARD_TOKEN` to the address `to` on behalf of the user. Only the claim helper contract is allowed to call this function
-   * @param user The address of the user
-   * @param to Address to claim for
-   * @param amount Amount to claim
+   * @dev Redeems staked tokens for a user. Only the claim helper contract is allowed to call this function
+   * @param from Address to redeem from
+   * @param to Address to redeem to
+   * @param amount Amount to redeem
    **/
-  function claimRewardsOnBehalf(
-    address user,
+  function redeemOnBehalf(
+    address from,
     address to,
     uint256 amount
   ) external override onlyClaimHelper {
-    _claimRewards(user, to, amount);
+    _redeem(from, to, amount);
   }
 
   /**
    * @dev Claims an `amount` of `REWARD_TOKEN` to the address `to`
-   * @param to Address to stake for
+   * @param to Address to send the claimed rewards
    * @param amount Amount to stake
    **/
   function claimRewards(address to, uint256 amount) external override(StakedTokenV2, IStakedToken) {
     _claimRewards(msg.sender, to, amount);
+  }
+
+  /**
+   * @dev Claims an `amount` of `REWARD_TOKEN` to the address `to` on behalf of the user. Only the claim helper contract is allowed to call this function
+   * @param from The address of the user from to claim
+   * @param to Address to send the claimed rewards
+   * @param amount Amount to claim
+   **/
+  function claimRewardsOnBehalf(
+    address from,
+    address to,
+    uint256 amount
+  ) external override onlyClaimHelper {
+    _claimRewards(from, to, amount);
   }
 
   /**
@@ -243,42 +249,49 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
   /**
    * @dev Claims an `amount` of `REWARD_TOKEN` and restakes. Only the claim helper contract is allowed to call this function
-   * @param user The address of the user from which to claim
+   * @param from The address of the from from which to claim
    * @param to Address to stake to
    * @param amount Amount to claim
    **/
   function claimRewardsAndStakeOnBehalf(
-    address user,
+    address from,
     address to,
     uint256 amount
   ) external override onlyClaimHelper {
-    uint256 rewardsClaimed = _claimRewards(user, address(this), amount);
+    uint256 rewardsClaimed = _claimRewards(from, address(this), amount);
     _stake(address(this), to, rewardsClaimed);
   }
 
   /**
-   * @dev Claims an `amount` of `REWARD_TOKEN` amd unstakes
-   * @param amount Amount to claim
+   * @dev Claims an `amount` of `REWARD_TOKEN` amd redeem
+   * @param claimAmount Amount to claim
+   * @param redeemAmount Amount to redeem
    * @param to Address to claim and unstake to
    **/
-  function claimRewardsAndUnstake(address to, uint256 amount) external override {
-    _claimRewards(msg.sender, to, amount);
-    _redeem(msg.sender, to, amount);
+  function claimRewardsAndRedeem(
+    address to,
+    uint256 claimAmount,
+    uint256 redeemAmount
+  ) external override {
+    _claimRewards(msg.sender, to, claimAmount);
+    _redeem(msg.sender, to, redeemAmount);
   }
 
   /**
-   * @dev Claims an `amount` of `REWARD_TOKEN` and unstakes. Only the claim helper contract is allowed to call this function
-   * @param user The address of the user
+   * @dev Claims an `amount` of `REWARD_TOKEN` and redeem. Only the claim helper contract is allowed to call this function
+   * @param from The address of the from
    * @param to Address to claim and unstake to
-   * @param amount Amount to claim
+   * @param claimAmount Amount to claim
+   * @param redeemAmount Amount to redeem
    **/
-  function claimRewardsAndUnstakeOnBehalf(
-    address user,
+  function claimRewardsAndRedeemOnBehalf(
+    address from,
     address to,
-    uint256 amount
+    uint256 claimAmount,
+    uint256 redeemAmount
   ) external override onlyClaimHelper {
-    _claimRewards(user, to, amount);
-    _redeem(user, to, amount);
+    _claimRewards(from, to, claimAmount);
+    _redeem(from, to, redeemAmount);
   }
 
   /**
@@ -373,30 +386,30 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   }
 
   function _stake(
-    address user,
-    address onBehalfOf,
+    address from,
+    address to,
     uint256 amount
   ) internal {
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
 
-    uint256 balanceOfUser = balanceOf(onBehalfOf);
+    uint256 balanceOfUser = balanceOf(to);
 
     uint256 accruedRewards =
-      _updateUserAssetInternal(onBehalfOf, address(this), balanceOfUser, totalSupply());
+      _updateUserAssetInternal(to, address(this), balanceOfUser, totalSupply());
 
     if (accruedRewards != 0) {
-      emit RewardsAccrued(onBehalfOf, accruedRewards);
-      stakerRewardsToClaim[onBehalfOf] = stakerRewardsToClaim[onBehalfOf].add(accruedRewards);
+      emit RewardsAccrued(to, accruedRewards);
+      stakerRewardsToClaim[to] = stakerRewardsToClaim[to].add(accruedRewards);
     }
 
-    stakersCooldowns[onBehalfOf] = getNextCooldownTimestamp(0, amount, onBehalfOf, balanceOfUser);
+    stakersCooldowns[to] = getNextCooldownTimestamp(0, amount, to, balanceOfUser);
 
     uint256 sharesToMint = amount.mul(1e18).div(exchangeRate());
-    _mint(onBehalfOf, sharesToMint);
+    _mint(to, sharesToMint);
 
-    STAKED_TOKEN.safeTransferFrom(user, address(this), amount);
+    STAKED_TOKEN.safeTransferFrom(from, address(this), amount);
 
-    emit Staked(user, onBehalfOf, amount, sharesToMint);
+    emit Staked(from, to, amount, sharesToMint);
   }
 
   /**
