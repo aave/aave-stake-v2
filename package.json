@@ -16,11 +16,12 @@
     "compile": "SKIP_LOAD=true hardhat compile",
     "compile:force": "npm run compile -- --force",
     "compile:force:quiet": "npm run compile:force -- --quiet",
-    "test": "npm run compile:force:quiet && hardhat test test/__setup.spec.ts test/AaveIncentivesController/*.spec.ts test/StakedAave/*.spec.ts test/StakedAaveV2/*.spec.ts test/Slashing/*.spec.ts",
+    "test": "npm run compile:force:quiet && hardhat test test/__setup.spec.ts test/AaveIncentivesController/*.spec.ts test/StakedAave/*.spec.ts test/StakedAaveV2/*.spec.ts test/StakedAaveV3/*.spec.ts",
     "test:ci": "npm run compile:force:quiet && npm run test-pei && npm run test-psi && npm run test-psi2 && npm run test-bpt",
     "test-pei": "npm run test test/__setup.spec.ts test/AaveIncentivesController/*.spec.ts",
     "test-psi": "npm run test test/__setup.spec.ts test/StakedAave/*.spec.ts",
     "test-psi2": "npm run test test/__setup.spec.ts test/StakedAaveV2/*.spec.ts",
+    "test-stk-aave-3": "hardhat test test/__setup.spec.ts test/StakedAaveV3/*.spec.ts",
     "test-bpt": "npm run compile:force:quiet && FORKING_BLOCK=11730175 MAINNET_FORK=true hardhat test test/StakedBPT/create-bpt-and-stakebpt.spec.ts",
     "coverage": "SKIP_LOAD=true npx hardhat typechain && node --max_old_space_size=6144 node_modules/.bin/hardhat coverage",
     "dev:deployment": "hardhat dev-deployment",
@@ -66,7 +67,8 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.3.0",
     "typechain": "^3.0.0",
-    "typescript": "^4.1.2"
+    "typescript": "^4.1.2",
+    "hardhat-gas-reporter": "^1.0.0"
   },
   "husky": {
     "hooks": {

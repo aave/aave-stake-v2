@@ -23,4 +23,19 @@ contract MintableErc20 is ERC20 {
     _mint(msg.sender, value);
     return true;
   }
+
+  /**
+  * @dev implements a mock permit feature
+  **/
+function permit(
+    address owner,
+    address spender,
+    uint256 value,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) external {
+    _approve(owner, spender, value);
+  }
 }

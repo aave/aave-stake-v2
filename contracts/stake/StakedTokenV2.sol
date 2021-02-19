@@ -30,9 +30,10 @@ contract StakedTokenV2 is
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
-  function REVISION() public virtual pure returns(uint256) {
+  function REVISION() public pure virtual returns (uint256) {
     return 2;
   }
+
   IERC20 public immutable STAKED_TOKEN;
   IERC20 public immutable REWARD_TOKEN;
   uint256 public immutable COOLDOWN_SECONDS;
@@ -117,7 +118,7 @@ contract StakedTokenV2 is
     );
   }
 
-  function stake(address onBehalfOf, uint256 amount) external override virtual {
+  function stake(address onBehalfOf, uint256 amount) external virtual override {
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
     uint256 balanceOfUser = balanceOf(onBehalfOf);
 
@@ -141,7 +142,7 @@ contract StakedTokenV2 is
    * @param to Address to redeem to
    * @param amount Amount to redeem
    **/
-  function redeem(address to, uint256 amount) external override virtual {
+  function redeem(address to, uint256 amount) external virtual override {
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
     //solium-disable-next-line
     uint256 cooldownStartTimestamp = stakersCooldowns[msg.sender];
@@ -187,7 +188,7 @@ contract StakedTokenV2 is
    * @param to Address to stake for
    * @param amount Amount to stake
    **/
-  function claimRewards(address to, uint256 amount) external override {
+  function claimRewards(address to, uint256 amount) external virtual override {
     uint256 newTotalRewards =
       _updateCurrentUnclaimedRewards(msg.sender, balanceOf(msg.sender), false);
     uint256 amountToClaim = (amount == type(uint256).max) ? newTotalRewards : amount;
@@ -280,7 +281,7 @@ contract StakedTokenV2 is
     uint256 amountToReceive,
     address toAddress,
     uint256 toBalance
-  ) public returns (uint256) {
+  ) public view returns (uint256) {
     uint256 toCooldownTimestamp = stakersCooldowns[toAddress];
     if (toCooldownTimestamp == 0) {
       return 0;
@@ -306,7 +307,6 @@ contract StakedTokenV2 is
           .div(amountToReceive.add(toBalance));
       }
     }
-    stakersCooldowns[toAddress] = toCooldownTimestamp;
 
     return toCooldownTimestamp;
   }
@@ -331,7 +331,7 @@ contract StakedTokenV2 is
    * @dev returns the revision of the implementation contract
    * @return The revision
    */
-  function getRevision() internal virtual pure override returns (uint256) {
+  function getRevision() internal pure virtual override returns (uint256) {
     return REVISION();
   }
 
