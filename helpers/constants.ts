@@ -51,7 +51,7 @@ export const getAaveTokenPerNetwork = (network: eEthereumNetwork): tEthereumAddr
     {
       [eEthereumNetwork.coverage]: ZERO_ADDRESS,
       [eEthereumNetwork.hardhat]: ZERO_ADDRESS,
-      [eEthereumNetwork.kovan]: '0xe4483afcf0d612c011679C76B61F5b0d27bAF93C',
+      [eEthereumNetwork.kovan]: '0xb597cd8d3217ea6477232f9217fa70837ff667af',
       [eEthereumNetwork.ropsten]: '0x74dA004A1B81b4d0C79F5820f9FF22647cb1dD95',
       [eEthereumNetwork.main]: '0x9c0435779F5E52CEC404D957C9bAa6f7d674C8bA',
     },
@@ -63,7 +63,7 @@ export const getCooldownSecondsPerNetwork = (network: eEthereumNetwork): tEthere
     {
       [eEthereumNetwork.coverage]: COOLDOWN_SECONDS,
       [eEthereumNetwork.hardhat]: COOLDOWN_SECONDS,
-      [eEthereumNetwork.kovan]: '21600', // 8h
+      [eEthereumNetwork.kovan]: '180', // 5m
       [eEthereumNetwork.ropsten]: '180', // 3m
       [eEthereumNetwork.main]: '864000', // 10d
     },
@@ -87,7 +87,7 @@ export const getAaveAdminPerNetwork = (network: eEthereumNetwork): tEthereumAddr
     {
       [eEthereumNetwork.coverage]: ZERO_ADDRESS,
       [eEthereumNetwork.hardhat]: ZERO_ADDRESS,
-      [eEthereumNetwork.kovan]: '0x8134929c3dcb1b8b82f27f53424b959fb82182f2', // Aave Governance
+      [eEthereumNetwork.kovan]: '0x2012b02574f32a96b9cfb8ba7fdfd589d5c70f50', // Short Executor
       [eEthereumNetwork.ropsten]: '0xEd93e49A2d75beA505fD4D1A0Dff745f69F2E997', // Aave Governance
       [eEthereumNetwork.main]: '0x8a2Efd9A790199F4c94c6effE210fce0B4724f52', // Aave Governance
     },
@@ -99,7 +99,8 @@ export const getDistributionDurationPerNetwork = (network: eEthereumNetwork): tE
     {
       [eEthereumNetwork.coverage]: DISTRIBUTION_DURATION,
       [eEthereumNetwork.hardhat]: DISTRIBUTION_DURATION,
-      [eEthereumNetwork.kovan]: '864000',
+      // tslint:disable-next-line:max-line-length
+      [eEthereumNetwork.kovan]: '129600000', // 50 months
       [eEthereumNetwork.ropsten]: '864000',
       [eEthereumNetwork.main]: '12960000', // 5 months (30 days) in seconds
     },
@@ -111,7 +112,7 @@ export const getAaveIncentivesVaultPerNetwork = (network: eEthereumNetwork): tEt
     {
       [eEthereumNetwork.coverage]: '',
       [eEthereumNetwork.hardhat]: '',
-      [eEthereumNetwork.kovan]: '',
+      [eEthereumNetwork.kovan]: '0xE8b7fff5035dACa574259dC67FD9639f805edFbf',
       [eEthereumNetwork.ropsten]: '',
       [eEthereumNetwork.main]: '0x253f7b06c1d60c1fbbc9d82c301327eb86e3ba81',
     },

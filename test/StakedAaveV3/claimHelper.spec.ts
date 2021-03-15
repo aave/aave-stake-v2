@@ -128,10 +128,10 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     );
     const slashingAdmin = await stakeAaveV3.getAdmin(SLASHING_ADMIN); //slash admin
     const cooldownAdmin = await stakeAaveV3.getAdmin(COOLDOWN_ADMIN); //cooldown admin
-    const claimAdmin = await stakeAave2V3.getAdmin(CLAIM_HELPER_ROLE); //claim admin // helper contract
+    const claimAdmin = await stakeAave2V3.getClaimHelper(); //claim admin // helper contract
     const slashingAdmin2 = await stakeAave2V3.getAdmin(SLASHING_ADMIN); //slash admin
     const cooldownAdmin2 = await stakeAave2V3.getAdmin(COOLDOWN_ADMIN); //cooldown admin
-    const claimAdmin2 = await stakeAave2V3.getAdmin(CLAIM_HELPER_ROLE); //claim admin // helper contract
+    const claimAdmin2 = await stakeAave2V3.getClaimHelper(); //claim admin // helper contract
 
     expect(slashingAdmin).to.be.equal(users[0].address);
     expect(cooldownAdmin).to.be.equal(users[1].address);
