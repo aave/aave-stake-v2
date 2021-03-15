@@ -30,7 +30,7 @@ interface IStakedTokenV3 is IStakedToken {
     address from,
     address to,
     uint256 amount
-  ) external;
+  ) external returns (uint256);
 
   function redeemOnBehalf(
     address from,
@@ -38,7 +38,7 @@ interface IStakedTokenV3 is IStakedToken {
     uint256 amount
   ) external;
 
-  function claimRewardsAndStake(address to, uint256 amount) external;
+  function claimRewardsAndStake(address to, uint256 amount) external returns (uint256);
 
   function claimRewardsAndRedeem(
     address to,
@@ -50,7 +50,7 @@ interface IStakedTokenV3 is IStakedToken {
     address from,
     address to,
     uint256 amount
-  ) external;
+  ) external returns (uint256);
 
   function claimRewardsAndRedeemOnBehalf(
     address from,
