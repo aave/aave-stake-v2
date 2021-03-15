@@ -3,7 +3,7 @@ import { eContractid, tEthereumAddress } from './types';
 import { MintableErc20 } from '../types/MintableErc20';
 import { StakedAave } from '../types/StakedAave';
 import { StakedAaveV2 } from '../types/StakedAaveV2';
-import {StakedAaveV3 } from '../types/StakedAaveV3';
+import { StakedAaveV3 } from '../types/StakedAaveV3';
 import { IcrpFactory } from '../types/IcrpFactory'; // Configurable right pool factory
 import { IConfigurableRightsPool } from '../types/IConfigurableRightsPool';
 import { IControllerAaveEcosystemReserve } from '../types/IControllerAaveEcosystemReserve';
@@ -22,6 +22,20 @@ import { DoubleTransferHelper } from '../types/DoubleTransferHelper';
 import { zeroAddress } from 'ethereumjs-util';
 import { ZERO_ADDRESS } from './constants';
 import { Signer } from 'ethers';
+import { ClaimStakingRewardsHelper } from '../types';
+
+export const deployClaimHelper = async (
+  [aaveStakeTokenAddress, bptStakeTokenAddress]: [tEthereumAddress, tEthereumAddress],
+  verify?: boolean
+) => {
+  const id = eContractid.ClaimStakingRewardsHelper;
+  const args: string[] = [aaveStakeTokenAddress, bptStakeTokenAddress];
+  const instance = await deployContract<ClaimStakingRewardsHelper>(id, args);
+  if (verify) {
+    await verifyContract(instance.address, args);
+  }
+  return instance;
+};
 
 export const deployStakedAave = async (
   [
@@ -197,7 +211,6 @@ export const deployStakedTokenV3 = async (
   }
   return instance;
 };
-
 
 export const deployStakedAaveV3 = async (
   [

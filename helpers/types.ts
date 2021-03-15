@@ -30,6 +30,7 @@ export enum eContractid {
   IBPool = 'IBPool',
   IControllerAaveEcosystemReserve = 'IControllerAaveEcosystemReserve',
   MockSelfDestruct = 'SelfdestructTransfer',
+  ClaimStakingRewardsHelper = 'ClaimStakingRewardsHelper',
 }
 
 export type tEthereumAddress = string;

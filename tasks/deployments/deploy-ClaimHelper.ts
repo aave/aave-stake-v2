@@ -1,12 +1,11 @@
 import { task } from 'hardhat/config';
-import { verifyContract } from '../../helpers/etherscan-verification';
+import { deployClaimHelper } from '../../helpers/contracts-accessors';
 import { eEthereumNetwork } from '../../helpers/types';
-import { ClaimStakingRewardsHelper__factory } from '../../types';
 
 task(`deploy-ClaimHelper`, `Deploys the ClaimStakingRewardsHelper contract`)
   .addFlag('verify', 'Verify ClaimStakingRewardsHelper contract via Etherscan API.')
   .setAction(async ({ verify }, localBRE) => {
-    await localBRE.run('set-DRE');
+    await localBRE.run('set-dre');
 
     if (!localBRE.network.config.chainId) {
       throw new Error('INVALID_CHAIN_ID');
@@ -26,15 +25,13 @@ task(`deploy-ClaimHelper`, `Deploys the ClaimStakingRewardsHelper contract`)
     };
 
     console.log(`\tDeploying ClaimHelper implementation ...`);
-    const ClaimHelper = await new ClaimStakingRewardsHelper__factory(
-      await localBRE.ethers.provider.getSigner()
-    ).deploy(
-      stakeTokens[localBRE.network.name].aaveStakeTokenAddress,
-      stakeTokens[localBRE.network.name].bptStakeTokenAddress
+    const ClaimHelper = await deployClaimHelper(
+      [
+        stakeTokens[localBRE.network.name].aaveStakeTokenAddress,
+        stakeTokens[localBRE.network.name].bptStakeTokenAddress,
+      ],
+      verify
     );
-    await ClaimHelper.deployTransaction.wait();
-    console.log('ClaimHelper.address', ClaimHelper.address);
-    await verifyContract(ClaimHelper.address, []);
 
-    console.log(`\tFinished ClaimHelper deployment`);
+    console.log(`\tFinished ClaimHelper deployment: ${ClaimHelper.address}`);
   });
