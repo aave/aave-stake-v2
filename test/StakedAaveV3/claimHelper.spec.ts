@@ -112,4 +112,42 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     expect(cooldownAdmin2).to.be.equal(users[1].address);
     expect(claimAdmin2).to.be.equal(claimHelper.address);
   });
+  it('Claims all rewards from both stakes', async () => {
+    const {
+      aaveToken,
+      users: [, staker],
+    } = testEnv;
+    const amount = ethers.utils.parseEther('10');
+
+    const saveBalanceBefore = new BigNumber(
+      (await stakeAaveV3.balanceOf(staker.address)).toString()
+    );
+    const saveBalanceBefore2 = new BigNumber(
+      (await stakeAave2V3.balanceOf(staker.address)).toString()
+    );
+
+    // Prepare actions for the test case
+    aaveToken.connect(staker.signer).approve(stakeAaveV3.address, amount);
+    aaveToken.connect(staker.signer).approve(stakeAave2V3.address, amount);
+
+    stakeAaveV3.connect(staker.signer).stake(staker.address, amount);
+    stakeAave2V3.connect(staker.signer).stake(staker.address, amount);
+
+    // Increase time for bigger rewards
+    await increaseTimeAndMine(1000);
+
+    // user1 claims all
+    const rewards = await stakeAaveV3.stakerRewardsToClaim(staker.address);
+    const rewards2 = await stakeAave2V3.stakerRewardsToClaim(staker.address);
+
+    const saveUserBalance = await aaveToken.balanceOf(staker.address);
+
+    await claimHelper
+      .connect(staker.signer)
+      .claimAllRewards(staker.address, ethers.constants.MaxUint256.toString());
+
+    const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
+
+    expect(userBalanceAfterActions.eq(saveUserBalance.add(rewards.add(rewards2)))).to.be.ok;
+  });
 });
