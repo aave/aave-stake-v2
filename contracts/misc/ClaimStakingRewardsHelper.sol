@@ -11,23 +11,15 @@ contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
     stakeTokens = _stakeTokens;
   }
 
-  function claimAllRewards(
-    address from,
-    address to,
-    uint256 amount
-  ) external override {
+  function claimAllRewards(address to, uint256 amount) external override {
     for (uint256 i = 0; i < stakeTokens.length; i++) {
-      IStakedTokenV3(stakeTokens[i]).claimRewardsOnBehalf(from, to, amount);
+      IStakedTokenV3(stakeTokens[i]).claimRewardsOnBehalf(msg.sender, to, amount);
     }
   }
 
-  function claimAllRewardsAndStake(
-    address from,
-    address to,
-    uint256 amount
-  ) external override {
+  function claimAllRewardsAndStake(address to, uint256 amount) external override {
     for (uint256 i = 0; i < stakeTokens.length; i++) {
-      IStakedTokenV3(stakeTokens[i]).claimRewardsAndStakeOnBehalf(from, to, amount);
+      IStakedTokenV3(stakeTokens[i]).claimRewardsAndStakeOnBehalf(msg.sender, to, amount);
     }
   }
 }
