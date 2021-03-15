@@ -5,21 +5,21 @@ import {IClaimStakingRewardsHelper} from '../interfaces/IClaimStakingRewardsHelp
 import {IStakedTokenV3} from '../interfaces/IStakedTokenV3.sol';
 
 contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
-  address[] public stakeTokens;
+  address public immutable aaveStakeToken;
+  address public immutable bptStakeToken;
 
-  constructor(address[] memory _stakeTokens) {
-    stakeTokens = _stakeTokens;
+  constructor(address _aaveStakeToken, address _bptStakeToken) {
+    aaveStakeToken = _aaveStakeToken;
+    bptStakeToken = _bptStakeToken;
   }
 
   function claimAllRewards(address to, uint256 amount) external override {
-    for (uint256 i = 0; i < stakeTokens.length; i++) {
-      IStakedTokenV3(stakeTokens[i]).claimRewardsOnBehalf(msg.sender, to, amount);
-    }
+    IStakedTokenV3(aaveStakeToken).claimRewardsOnBehalf(msg.sender, to, amount);
+    IStakedTokenV3(bptStakeToken).claimRewardsOnBehalf(msg.sender, to, amount);
   }
 
   function claimAllRewardsAndStake(address to, uint256 amount) external override {
-    for (uint256 i = 0; i < stakeTokens.length; i++) {
-      IStakedTokenV3(stakeTokens[i]).claimRewardsAndStakeOnBehalf(msg.sender, to, amount);
-    }
+    IStakedTokenV3(aaveStakeToken).claimRewardsAndStakeOnBehalf(msg.sender, to, amount);
+    IStakedTokenV3(bptStakeToken).claimRewardsAndStakeOnBehalf(msg.sender, to, amount);
   }
 }
