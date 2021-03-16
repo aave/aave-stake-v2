@@ -38,7 +38,7 @@ if (!SKIP_LOAD) {
 }
 
 require(`${path.join(__dirname, 'tasks/misc')}/set-dre.ts`);
-console.log('----------------------> ', ALCHEMY_KEY);
+
 const mainnetFork = MAINNET_FORK
   ? {
       blockNumber: FORKING_BLOCK,

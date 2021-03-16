@@ -18,8 +18,11 @@ contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
     IStakedTokenV3(bptStakeToken).claimRewardsOnBehalf(msg.sender, to, amount);
   }
 
-  // function claimAllRewardsAndStake(address to, uint256 amount) external override {
-  //   IStakedTokenV3(aaveStakeToken).claimRewardsAndStakeOnBehalf(msg.sender, to, amount);
-  //   IStakedTokenV3(bptStakeToken).claimRewardsAndStakeOnBehalf(msg.sender, to, amount);
-  // }
+  function claimAllRewardsAndStake(address to, uint256 amount) external override {
+    IStakedTokenV3(aaveStakeToken).claimRewardsAndStakeOnBehalf(msg.sender, to, amount);
+
+    uint256 rewardsClaimed =
+      IStakedTokenV3(bptStakeToken).claimRewardsOnBehalf(msg.sender, address(this), amount);
+    IStakedTokenV3(aaveStakeToken).stake(to, rewardsClaimed);
+  }
 }
