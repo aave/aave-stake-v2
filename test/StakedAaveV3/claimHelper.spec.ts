@@ -105,7 +105,7 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     );
 
     await waitForTx(
-      await stakeAaveV3.connect(emissionManager).configureAssets([
+      await stakeAaveV3.connect(deployer).configureAssets([
         {
           emissionPerSecond: parseEther('0.01').toString(),
           totalStaked: parseEther('1000').toString(),
@@ -115,7 +115,7 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     );
 
     await waitForTx(
-      await stakeAave2V3.connect(emissionManager).configureAssets([
+      await stakeAave2V3.connect(deployer).configureAssets([
         {
           emissionPerSecond: parseEther('0.01').toString(),
           totalStaked: parseEther('1000').toString(),
