@@ -25,11 +25,15 @@ import { Signer } from 'ethers';
 import { ClaimStakingRewardsHelper } from '../types';
 
 export const deployClaimHelper = async (
-  [aaveStakeTokenAddress, bptStakeTokenAddress]: [tEthereumAddress, tEthereumAddress],
+  [aaveStakeTokenAddress, bptStakeTokenAddress, aaveToken]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress
+  ],
   verify?: boolean
 ) => {
   const id = eContractid.ClaimStakingRewardsHelper;
-  const args: string[] = [aaveStakeTokenAddress, bptStakeTokenAddress];
+  const args: string[] = [aaveStakeTokenAddress, bptStakeTokenAddress, aaveToken];
   const instance = await deployContract<ClaimStakingRewardsHelper>(id, args);
   if (verify) {
     await verifyContract(instance.address, args);
