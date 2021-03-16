@@ -1,5 +1,11 @@
 import { makeSuite, TestEnv } from '../helpers/make-suite';
-import { COOLDOWN_SECONDS, UNSTAKE_WINDOW, MAX_UINT_AMOUNT, WAD } from '../../helpers/constants';
+import {
+  COOLDOWN_SECONDS,
+  UNSTAKE_WINDOW,
+  MAX_UINT_AMOUNT,
+  SHORT_EXECUTOR,
+  WAD,
+} from '../../helpers/constants';
 import {
   waitForTx,
   timeLatest,
@@ -96,6 +102,26 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
       'Staked AAVE',
       'stkAAVE',
       18
+    );
+
+    await waitForTx(
+      await stakeAaveV3.connect(emissionManager).configureAssets([
+        {
+          emissionPerSecond: parseEther('0.01').toString(),
+          totalStaked: parseEther('1000').toString(),
+          underlyingAsset: aaveToken.address,
+        },
+      ])
+    );
+
+    await waitForTx(
+      await stakeAave2V3.connect(emissionManager).configureAssets([
+        {
+          emissionPerSecond: parseEther('0.01').toString(),
+          totalStaked: parseEther('1000').toString(),
+          underlyingAsset: aaveToken.address,
+        },
+      ])
     );
 
     const slashingAdmin = await stakeAaveV3.getAdmin(SLASHING_ADMIN); //slash admin
