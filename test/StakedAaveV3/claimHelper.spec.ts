@@ -182,7 +182,6 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
       userIndexAfter2,
       userIndexBefore2
     ).toString();
-    console.log('expected accrued rewards2: ', expectedAccruedRewards2.toString());
 
     const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
 
@@ -227,18 +226,24 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
       userIndexAfter,
       userIndexBefore
     ).toString();
+    console.log('expected accrued rewards: ', expectedAccruedRewards.toString());
 
     const expectedAccruedRewards2 = getRewards(
       stakeBalance2,
       userIndexAfter2,
       userIndexBefore2
     ).toString();
+    console.log('expected accrued rewards2: ', expectedAccruedRewards2.toString());
 
     // current state
     const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
 
     const stakeBalanceAfter = await stakeAaveV3.balanceOf(staker.address);
-
+    console.log('stake after: ', stakeBalanceAfter.toString());
+    console.log(
+      'stake expected: ',
+      stakeBalance.add(expectedAccruedRewards).add(expectedAccruedRewards2)
+    );
     expect(userBalanceAfterActions).to.be.equal(saveUserBalance);
     expect(stakeBalanceAfter).to.be.gt(stakeBalance.add(expectedAccruedRewards));
     expect(stakeBalanceAfter).to.be.lte(
