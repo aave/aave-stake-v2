@@ -4,6 +4,7 @@ pragma solidity 0.7.5;
 import {IClaimStakingRewardsHelper} from '../interfaces/IClaimStakingRewardsHelper.sol';
 import {IStakedTokenV3} from '../interfaces/IStakedTokenV3.sol';
 import {IERC20} from '../interfaces/IERC20.sol';
+import {SafeMath} from '../lib/SafeMath.sol';
 
 /**
  * @title ClaimStakingRewardsHelper
@@ -12,6 +13,7 @@ import {IERC20} from '../interfaces/IERC20.sol';
  * @author Aave
  **/
 contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
+  using SafeMath for uint256;
   address public immutable aaveStakeToken;
   address public immutable bptStakeToken;
 
@@ -30,9 +32,12 @@ contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
    * @dev Claims all reward for an user, on all the different staked assets.
    * @param to Address that will be receiving the rewards
    **/
-  function claimAllRewards(address to) external override {
-    IStakedTokenV3(aaveStakeToken).claimRewardsOnBehalf(msg.sender, to, type(uint256).max);
-    IStakedTokenV3(bptStakeToken).claimRewardsOnBehalf(msg.sender, to, type(uint256).max);
+  function claimAllRewards(address to) external override returns (uint256) {
+    uint256 claimedFromAave =
+      IStakedTokenV3(aaveStakeToken).claimRewardsOnBehalf(msg.sender, to, type(uint256).max);
+    uint256 claimedFromBPT =
+      IStakedTokenV3(bptStakeToken).claimRewardsOnBehalf(msg.sender, to, type(uint256).max);
+    return claimedFromAave.add(claimedFromBPT);
   }
 
   /**

@@ -166,8 +166,8 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     const userIndexBefore = await getUserIndex(stakeAaveV3, staker.address, aaveToken.address);
     const userIndexBefore2 = await getUserIndex(stakeAave2V3, staker.address, aaveToken.address);
 
-    await claimHelper.connect(staker.signer).claimAllRewards(staker.address);
-
+    const claimedTotal = await claimHelper.connect(staker.signer).claimAllRewards(staker.address);
+    console.log('total claimed == > ', claimedTotal);
     const userIndexAfter = await getUserIndex(stakeAaveV3, staker.address, stakeAaveV3.address);
     const userIndexAfter2 = await getUserIndex(stakeAave2V3, staker.address, stakeAave2V3.address);
 
@@ -242,7 +242,7 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     console.log('stake after: ', stakeBalanceAfter.toString());
     console.log(
       'stake expected: ',
-      stakeBalance.add(expectedAccruedRewards).add(expectedAccruedRewards2)
+      stakeBalance.add(expectedAccruedRewards).add(expectedAccruedRewards2).toString()
     );
     expect(userBalanceAfterActions).to.be.equal(saveUserBalance);
     expect(stakeBalanceAfter).to.be.gt(stakeBalance.add(expectedAccruedRewards));
