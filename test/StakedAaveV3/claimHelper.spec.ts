@@ -109,8 +109,8 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     await waitForTx(
       await stakeAaveV3.connect(deployer).configureAssets([
         {
-          emissionPerSecond: parseEther('0.01').toString(),
-          totalStaked: parseEther('1000').toString(),
+          emissionPerSecond: parseEther('0.001').toString(),
+          totalStaked: parseEther('0').toString(),
           underlyingAsset: stakeAaveV3.address,
         },
       ])
@@ -119,8 +119,8 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     await waitForTx(
       await stakeAave2V3.connect(deployer).configureAssets([
         {
-          emissionPerSecond: parseEther('0.01').toString(),
-          totalStaked: parseEther('1000').toString(),
+          emissionPerSecond: parseEther('0.001').toString(),
+          totalStaked: parseEther('0').toString(),
           underlyingAsset: stakeAave2V3.address,
         },
       ])
@@ -155,6 +155,8 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     await stakeAaveV3.connect(staker.signer).stake(staker.address, amount);
     await stakeAave2V3.connect(staker.signer).stake(staker.address, amount);
 
+    const userAaveBalance = await aaveToken.balanceOf(staker.address);
+
     const stakeBalance = await stakeAaveV3.balanceOf(staker.address);
     const stakeBalance2 = await stakeAave2V3.balanceOf(staker.address);
     console.log('stake balance: ', stakeBalance.toString());
@@ -165,25 +167,42 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
 
     // user1 claims all
 
-    const rewards = await stakeAaveV3.stakerRewardsToClaim(staker.address);
-    const rewards2 = await stakeAave2V3.stakerRewardsToClaim(staker.address);
-    console.log('rewards:: ', rewards.toString());
-    console.log('rewards2: ', rewards2.toString());
-
     const saveUserBalance = await aaveToken.balanceOf(staker.address);
     console.log('balance before: ', saveUserBalance.toString());
+
+    const userIndexBefore = await getUserIndex(stakeAaveV3, staker.address, aaveToken.address);
+    const userIndexBefore2 = await getUserIndex(stakeAave2V3, staker.address, aaveToken.address);
 
     await claimHelper
       .connect(staker.signer)
       .claimAllRewards(staker.address, ethers.constants.MaxUint256.toString());
 
+    const userIndexAfter = await getUserIndex(stakeAaveV3, staker.address, stakeAaveV3.address);
+    const userIndexAfter2 = await getUserIndex(stakeAave2V3, staker.address, stakeAave2V3.address);
+
+    const expectedAccruedRewards = getRewards(
+      stakeBalance,
+      userIndexAfter,
+      userIndexBefore
+    ).toString();
+    console.log('expected accrued rewards: ', expectedAccruedRewards.toString());
+
+    const expectedAccruedRewards2 = getRewards(
+      stakeBalance2,
+      userIndexAfter2,
+      userIndexBefore2
+    ).toString();
+    console.log('expected accrued rewards2: ', expectedAccruedRewards2.toString());
+
     const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
     console.log('userBalanceAfter: ', userBalanceAfterActions.toString());
 
-    console.log('balance total: ', saveUserBalance.add(rewards.add(rewards2)).toString());
-    expect(userBalanceAfterActions.eq(saveUserBalance.add(rewards.add(rewards2)))).to.be.ok;
+    // console.log('balance total: ', saveUserBalance.add(rewards.add(rewards2)).toString());
+    expect(userBalanceAfterActions).to.be.equal(
+      userAaveBalance.add(expectedAccruedRewards).add(expectedAccruedRewards2).toString()
+    );
   });
-  xit('Claims all rewards from both stakes and stakes claimed amount', async () => {
+  it('Claims all rewards from both stakes and stakes claimed amount', async () => {
     const {
       aaveToken,
       users: [, staker],
@@ -200,38 +219,51 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     // Increase time for bigger rewards
     await increaseTimeAndMine(1000);
 
+    const stakeBalance = await stakeAaveV3.balanceOf(staker.address);
+    const stakeBalance2 = await stakeAave2V3.balanceOf(staker.address);
+    console.log('stake balance: ', stakeBalance.toString());
+    console.log('stake balance2: ', stakeBalance2.toString());
+
     // save state
     const saveUserBalance = await aaveToken.balanceOf(staker.address);
-    const saveBalanceBefore = new BigNumber(
-      (await stakeAaveV3.balanceOf(staker.address)).toString()
-    );
-    const saveBalanceBefore2 = new BigNumber(
-      (await stakeAave2V3.balanceOf(staker.address)).toString()
-    );
-    const rewards = new BigNumber(
-      (await stakeAaveV3.stakerRewardsToClaim(staker.address)).toString()
-    );
-    const rewards2 = new BigNumber(
-      (await stakeAave2V3.stakerRewardsToClaim(staker.address)).toString()
-    );
-    console.log(`rewards: ${rewards.toString()} | rewards2: ${rewards2.toString()}`);
+
+    const saveBalanceBefore = await stakeAaveV3.balanceOf(staker.address);
+    const saveBalanceBefore2 = await stakeAave2V3.balanceOf(staker.address);
+
+    const userIndexBefore = await getUserIndex(stakeAaveV3, staker.address, aaveToken.address);
+    const userIndexBefore2 = await getUserIndex(stakeAave2V3, staker.address, aaveToken.address);
 
     // claim and stake
     await claimHelper
       .connect(staker.signer)
       .claimAllRewardsAndStake(staker.address, ethers.constants.MaxUint256.toString());
 
+    const userIndexAfter = await getUserIndex(stakeAaveV3, staker.address, stakeAaveV3.address);
+    const userIndexAfter2 = await getUserIndex(stakeAave2V3, staker.address, stakeAave2V3.address);
+
+    const expectedAccruedRewards = getRewards(
+      stakeBalance,
+      userIndexAfter,
+      userIndexBefore
+    ).toString();
+    console.log('expected accrued rewards: ', expectedAccruedRewards.toString());
+
+    const expectedAccruedRewards2 = getRewards(
+      stakeBalance2,
+      userIndexAfter2,
+      userIndexBefore2
+    ).toString();
+    console.log('expected accrued rewards2: ', expectedAccruedRewards2.toString());
+
     // current state
     const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
-    const stakeBalanceAfter = new BigNumber(
-      (await stakeAaveV3.balanceOf(staker.address)).toString()
-    );
-    const stakeBalanceAfter2 = new BigNumber(
-      (await stakeAave2V3.balanceOf(staker.address)).toString()
-    );
 
-    expect(userBalanceAfterActions.eq(saveUserBalance)).to.be.ok;
-    expect(stakeBalanceAfter2.eq(saveBalanceBefore2)).to.be.ok;
-    expect(stakeBalanceAfter.eq(saveBalanceBefore.plus(rewards2).plus(rewards))).to.be.ok;
+    const stakeBalanceAfter = await stakeAaveV3.balanceOf(staker.address);
+    const stakeBalanceAfter2 = await stakeAave2V3.balanceOf(staker.address);
+
+    expect(userBalanceAfterActions).to.be.equal(saveUserBalance);
+    expect(stakeBalanceAfter).to.be.equal(
+      saveBalanceBefore.add(expectedAccruedRewards).add(expectedAccruedRewards2)
+    );
   });
 });
