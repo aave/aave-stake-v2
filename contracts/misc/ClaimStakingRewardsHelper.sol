@@ -8,16 +8,16 @@ import {IERC20} from '../interfaces/IERC20.sol';
 contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
   address public immutable aaveStakeToken;
   address public immutable bptStakeToken;
-  address public immutable aaveToken;
 
   constructor(
     address _aaveStakeToken,
     address _bptStakeToken,
-    address _aaveToken
+    address aaveToken
   ) {
     aaveStakeToken = _aaveStakeToken;
     bptStakeToken = _bptStakeToken;
-    aaveToken = _aaveToken;
+
+    IERC20(aaveToken).approve(_aaveStakeToken, type(uint256).max);
   }
 
   function claimAllRewards(address to, uint256 amount) external override {
@@ -30,8 +30,6 @@ contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
 
     uint256 rewardsClaimed =
       IStakedTokenV3(bptStakeToken).claimRewardsOnBehalf(msg.sender, address(this), amount);
-
-    IERC20(aaveToken).approve(address(this), rewardsClaimed);
     IStakedTokenV3(aaveStakeToken).stake(to, rewardsClaimed);
   }
 }

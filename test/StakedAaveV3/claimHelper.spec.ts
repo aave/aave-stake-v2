@@ -48,7 +48,8 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
   let stakeAave2V3: StakedAaveV3;
   let claimHelper: ClaimStakingRewardsHelper;
   let snap: string;
-  it('Deploys 2 stake tokens with claimHelper address', async () => {
+  // it('Deploys 2 stake tokens with claimHelper address', async () => {
+  beforeEach(async () => {
     const { aaveToken, users } = testEnv;
 
     const [deployer, rewardsVault] = await getEthersSigners();
@@ -146,8 +147,6 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     } = testEnv;
     const amount = ethers.utils.parseEther('10');
 
-    const balance = await aaveToken.balanceOf(staker.address);
-    console.log('balance:: ', balance.toString());
     // Prepare actions for the test case
     await aaveToken.connect(staker.signer).approve(stakeAaveV3.address, amount);
     await aaveToken.connect(staker.signer).approve(stakeAave2V3.address, amount);
@@ -159,17 +158,11 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
 
     const stakeBalance = await stakeAaveV3.balanceOf(staker.address);
     const stakeBalance2 = await stakeAave2V3.balanceOf(staker.address);
-    console.log('stake balance: ', stakeBalance.toString());
-    console.log('stake balance2: ', stakeBalance2.toString());
 
     // Increase time for bigger rewards
-    await increaseTimeAndMine(100000);
+    await increaseTimeAndMine(1000);
 
     // user1 claims all
-
-    const saveUserBalance = await aaveToken.balanceOf(staker.address);
-    console.log('balance before: ', saveUserBalance.toString());
-
     const userIndexBefore = await getUserIndex(stakeAaveV3, staker.address, aaveToken.address);
     const userIndexBefore2 = await getUserIndex(stakeAave2V3, staker.address, aaveToken.address);
 
@@ -185,7 +178,6 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
       userIndexAfter,
       userIndexBefore
     ).toString();
-    console.log('expected accrued rewards: ', expectedAccruedRewards.toString());
 
     const expectedAccruedRewards2 = getRewards(
       stakeBalance2,
@@ -195,7 +187,6 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     console.log('expected accrued rewards2: ', expectedAccruedRewards2.toString());
 
     const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
-    console.log('userBalanceAfter: ', userBalanceAfterActions.toString());
 
     // console.log('balance total: ', saveUserBalance.add(rewards.add(rewards2)).toString());
     expect(userBalanceAfterActions).to.be.equal(
@@ -219,16 +210,14 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     // Increase time for bigger rewards
     await increaseTimeAndMine(1000);
 
+    const saveUserBalance = await aaveToken.balanceOf(staker.address);
+
     const stakeBalance = await stakeAaveV3.balanceOf(staker.address);
     const stakeBalance2 = await stakeAave2V3.balanceOf(staker.address);
     console.log('stake balance: ', stakeBalance.toString());
     console.log('stake balance2: ', stakeBalance2.toString());
 
-    // save state
-    const saveUserBalance = await aaveToken.balanceOf(staker.address);
-
-    const saveBalanceBefore = await stakeAaveV3.balanceOf(staker.address);
-    const saveBalanceBefore2 = await stakeAave2V3.balanceOf(staker.address);
+    console.log('stake balance Before: ', stakeBalance.toString());
 
     const userIndexBefore = await getUserIndex(stakeAaveV3, staker.address, aaveToken.address);
     const userIndexBefore2 = await getUserIndex(stakeAave2V3, staker.address, aaveToken.address);
@@ -259,11 +248,11 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
 
     const stakeBalanceAfter = await stakeAaveV3.balanceOf(staker.address);
-    const stakeBalanceAfter2 = await stakeAave2V3.balanceOf(staker.address);
+    console.log('stakeBalance after: ', stakeBalanceAfter.toString());
 
-    expect(userBalanceAfterActions).to.be.equal(saveUserBalance);
+    // expect(userBalanceAfterActions).to.be.equal(saveUserBalance);
     expect(stakeBalanceAfter).to.be.equal(
-      saveBalanceBefore.add(expectedAccruedRewards).add(expectedAccruedRewards2)
+      stakeBalance.add(expectedAccruedRewards).add(expectedAccruedRewards2)
     );
   });
 });
