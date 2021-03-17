@@ -166,9 +166,7 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     const userIndexBefore = await getUserIndex(stakeAaveV3, staker.address, aaveToken.address);
     const userIndexBefore2 = await getUserIndex(stakeAave2V3, staker.address, aaveToken.address);
 
-    await claimHelper
-      .connect(staker.signer)
-      .claimAllRewards(staker.address, ethers.constants.MaxUint256.toString());
+    await claimHelper.connect(staker.signer).claimAllRewards(staker.address);
 
     const userIndexAfter = await getUserIndex(stakeAaveV3, staker.address, stakeAaveV3.address);
     const userIndexAfter2 = await getUserIndex(stakeAave2V3, staker.address, stakeAave2V3.address);
@@ -219,9 +217,7 @@ makeSuite('StakedAave V3 Claim Helper', (testEnv: TestEnv) => {
     const userIndexBefore2 = await getUserIndex(stakeAave2V3, staker.address, aaveToken.address);
 
     // claim and stake
-    await claimHelper
-      .connect(staker.signer)
-      .claimAllRewardsAndStake(staker.address, ethers.constants.MaxUint256.toString());
+    await claimHelper.connect(staker.signer).claimAllRewardsAndStake(staker.address);
 
     const userIndexAfter = await getUserIndex(stakeAaveV3, staker.address, stakeAaveV3.address);
     const userIndexAfter2 = await getUserIndex(stakeAave2V3, staker.address, stakeAave2V3.address);
