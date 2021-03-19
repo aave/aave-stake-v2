@@ -45,8 +45,8 @@ contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
    * @param to Address that will be receiving the stk Token representing the staked amount
    **/
   function claimAllRewardsAndStake(address to) external override {
-    _claimAndStake(to, aaveStakeToken);
-    _claimAndStake(to, bptStakeToken);
+    _claimAndStake(msg.sender, to, aaveStakeToken);
+    _claimAndStake(msg.sender, to, bptStakeToken);
   }
 
   /**
@@ -59,16 +59,20 @@ contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
       stakeToken == aaveStakeToken || stakeToken == bptStakeToken,
       'Staked Token address must exists'
     );
-    _claimAndStake(to, stakeToken);
+    _claimAndStake(msg.sender, to, stakeToken);
   }
 
   /**
    * @dev Claims reward from stakedToken and stakes it into the aave stake pool
    * @param to Address that will be receiving the stk Token representing the staked amount
    **/
-  function _claimAndStake(address to, address stakeToken) internal {
+  function _claimAndStake(
+    address from,
+    address to,
+    address stakeToken
+  ) internal {
     uint256 rewardsClaimed =
-      IStakedTokenV3(stakeToken).claimRewardsOnBehalf(msg.sender, address(this), type(uint256).max);
+      IStakedTokenV3(stakeToken).claimRewardsOnBehalf(from, address(this), type(uint256).max);
     if (rewardsClaimed > 0) {
       IStakedTokenV3(aaveStakeToken).stake(to, rewardsClaimed);
     }
