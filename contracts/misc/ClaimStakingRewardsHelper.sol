@@ -69,6 +69,8 @@ contract ClaimStakingRewardsHelper is IClaimStakingRewardsHelper {
   function _claimAndStake(address to, address stakeToken) internal {
     uint256 rewardsClaimed =
       IStakedTokenV3(stakeToken).claimRewardsOnBehalf(msg.sender, address(this), type(uint256).max);
-    IStakedTokenV3(aaveStakeToken).stake(to, rewardsClaimed);
+    if (rewardsClaimed > 0) {
+      IStakedTokenV3(aaveStakeToken).stake(to, rewardsClaimed);
+    }
   }
 }
