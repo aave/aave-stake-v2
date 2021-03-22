@@ -385,16 +385,3 @@ export const deployAaveEcosystemReserve = async (verify?: boolean) => {
 
 export const getAaveEcosystemReserve = (address: tEthereumAddress) =>
   getContract<AaveEcosystemReserve>(eContractid.AaveEcosystemReserve, address);
-
-export const deployControllerAaveEcosystemReserve = async (verify?: boolean) => {
-  const id = eContractid.ControllerAaveEcosystemReserve;
-  const args: string[] = [];
-  const instance = await deployContract<ControllerAaveEcosystemReserve>(id, args);
-  if (verify) {
-    verifyContract(instance.address, args);
-  }
-  return instance;
-};
-
-export const getAaveEcosystemReserveController = (address: tEthereumAddress) =>
-  getContract<ControllerAaveEcosystemReserve>(eContractid.ControllerAaveEcosystemReserve, address);

@@ -31,7 +31,6 @@ export enum eContractid {
   IControllerAaveEcosystemReserve = 'IControllerAaveEcosystemReserve',
   MockSelfDestruct = 'SelfdestructTransfer',
   AaveEcosystemReserve = 'AaveEcosystemReserve',
-  ControllerAaveEcosystemReserve = 'ControllerAaveEcosystemReserve',
 }
 
 export type tEthereumAddress = string;
