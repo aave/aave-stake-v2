@@ -3,7 +3,9 @@ import { eContractid, tEthereumAddress } from './types';
 import { MintableErc20 } from '../types/MintableErc20';
 import { StakedAave } from '../types/StakedAave';
 import { StakedAaveV2 } from '../types/StakedAaveV2';
-import {StakedAaveV3 } from '../types/StakedAaveV3';
+import { StakedAaveV3 } from '../types/StakedAaveV3';
+import { AaveEcosystemReserve } from '../types/AaveEcosystemReserve';
+import { ControllerAaveEcosystemReserve } from '../types/ControllerAaveEcosystemReserve';
 import { IcrpFactory } from '../types/IcrpFactory'; // Configurable right pool factory
 import { IConfigurableRightsPool } from '../types/IConfigurableRightsPool';
 import { IControllerAaveEcosystemReserve } from '../types/IControllerAaveEcosystemReserve';
@@ -198,7 +200,6 @@ export const deployStakedTokenV3 = async (
   return instance;
 };
 
-
 export const deployStakedAaveV3 = async (
   [
     stakedToken,
@@ -371,3 +372,29 @@ export const deploySelfDestruct = async () => {
   await instance.deployTransaction.wait();
   return instance;
 };
+
+export const deployAaveEcosystemReserve = async (verify?: boolean) => {
+  const id = eContractid.AaveEcosystemReserve;
+  const args: string[] = [];
+  const instance = await deployContract<AaveEcosystemReserve>(id, args);
+  if (verify) {
+    verifyContract(instance.address, args);
+  }
+  return instance;
+};
+
+export const getAaveEcosystemReserve = (address: tEthereumAddress) =>
+  getContract<AaveEcosystemReserve>(eContractid.AaveEcosystemReserve, address);
+
+export const deployControllerAaveEcosystemReserve = async (verify?: boolean) => {
+  const id = eContractid.ControllerAaveEcosystemReserve;
+  const args: string[] = [];
+  const instance = await deployContract<ControllerAaveEcosystemReserve>(id, args);
+  if (verify) {
+    verifyContract(instance.address, args);
+  }
+  return instance;
+};
+
+export const getAaveEcosystemReserveController = (address: tEthereumAddress) =>
+  getContract<ControllerAaveEcosystemReserve>(eContractid.ControllerAaveEcosystemReserve, address);
