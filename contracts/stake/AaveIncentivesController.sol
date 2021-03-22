@@ -61,13 +61,13 @@ contract AaveIncentivesController is
   /**
    * @dev Called by the corresponding asset on any update that affects the rewards distribution
    * @param user The address of the user
-   * @param userBalance The balance of the user of the asset in the lending pool
    * @param totalSupply The total supply of the asset in the lending pool
+   * @param userBalance The balance of the user of the asset in the lending pool
    **/
   function handleAction(
     address user,
-    uint256 userBalance,
-    uint256 totalSupply
+    uint256 totalSupply,
+    uint256 userBalance
   ) external override {
     uint256 accruedRewards = _updateUserAssetInternal(user, msg.sender, userBalance, totalSupply);
     if (accruedRewards != 0) {

@@ -28,7 +28,7 @@ contract ATokenMock is IAToken {
     uint256 userBalance,
     uint256 totalSupply
   ) external {
-    _aic.handleAction(user, userBalance, totalSupply);
+    _aic.handleAction(user, totalSupply, userBalance);
   }
 
   function setUserBalanceAndSupply(uint256 userBalance, uint256 totalSupply) public {
