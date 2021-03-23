@@ -23,6 +23,27 @@ import { zeroAddress } from 'ethereumjs-util';
 import { ZERO_ADDRESS } from './constants';
 import { Signer } from 'ethers';
 import { ClaimStakingRewardsHelper } from '../types';
+import { StakeUiHelper } from '../types';
+
+export const deployStakeUIHelper = async (
+  [priceOracle, bptPriceFeed, aave, stkAave, bpt, stkBpt]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress
+  ],
+  verify?: boolean
+) => {
+  const id = eContractid.StakeUIHelper;
+  const args: string[] = [priceOracle, bptPriceFeed, aave, stkAave, bpt, stkBpt];
+  const instance = await deployContract<StakeUiHelper>(id, args);
+  if (verify) {
+    await verifyContract(instance.address, args);
+  }
+  return instance;
+};
 
 export const deployClaimHelper = async (
   [aaveStakeTokenAddress, bptStakeTokenAddress, aaveToken]: [

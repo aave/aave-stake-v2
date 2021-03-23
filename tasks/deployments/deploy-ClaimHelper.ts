@@ -20,7 +20,7 @@ task(`deploy-ClaimHelper`, `Deploys the ClaimStakingRewardsHelper contract`)
     } = {
       [eEthereumNetwork.kovan]: {
         aaveStakeTokenAddress: '0xf2fbf9A6710AfDa1c4AaB2E922DE9D69E0C97fd2',
-        bptStakeTokenAddress: '0xf2fbf9A6710AfDa1c4AaB2E922DE9D69E0C97fd2',
+        bptStakeTokenAddress: '0xCe7021eDabaf82D28adBBea449Bc4dF70261F33E', // mock, need aave to stake
         aaveToken: '0xb597cd8d3217ea6477232f9217fa70837ff667af',
       },
       [eEthereumNetwork.main]: {
