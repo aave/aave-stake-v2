@@ -71,6 +71,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   event Slashed(address indexed destination, uint256 amount);
   event CooldownPauseAdminChanged(address indexed newAdmin);
   event SlashingAdminChanged(address indexed newAdmin);
+  event ClaimHelperChanged(address indexed newClaimHelper);
 
   constructor(
     IERC20 stakedToken,
@@ -335,6 +336,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
   function setClaimHelper(address claimHelper) external override onlyAdmin {
     _claimHelper = claimHelper;
+    emit ClaimHelperChanged(claimHelper);
   }
 
   function getClaimHelper() external view override returns (address) {
