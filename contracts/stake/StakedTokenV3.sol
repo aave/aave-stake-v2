@@ -325,6 +325,10 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     emit Slashed(destination, amount);
   }
 
+  /**
+   * @dev Function that pull funds to be staked as a donation to the pool of staked tokens.
+   * @param amount the amount to send
+   **/
   function donate(uint256 amount) external override {
     STAKED_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
     snapshotExchangeRate();
@@ -427,6 +431,12 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     return REVISION();
   }
 
+  /**
+   * @dev returns the delegated power of a user at a certain block
+   * @param user the user
+   * @param blockNumber the blockNumber at which to evalute the power
+   * @param delegationType 0 for Voting, 1 for proposition
+   **/
   function getPowerAtBlock(
     address user,
     uint256 blockNumber,
@@ -445,6 +455,12 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     );
   }
 
+  /**
+   * @dev returns the current delegated power of a user. The current power is the
+   * power delegated at the time of the last snapshot
+   * @param user the user
+   * @param delegationType 0 for Voting, 1 for proposition
+   **/
   function getPowerCurrent(address user, DelegationType delegationType)
     external
     view
