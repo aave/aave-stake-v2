@@ -320,14 +320,14 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     require(amount <= maxSlashable, 'INVALID_SLASHING_AMOUNT');
 
     STAKED_TOKEN.safeTransfer(destination, amount);
-    _snapshotExchangeRate();
+    snapshotExchangeRate();
 
     emit Slashed(destination, amount);
   }
 
   function donate(uint256 amount) external override {
     STAKED_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
-    _snapshotExchangeRate();
+    snapshotExchangeRate();
 
     emit Donated(msg.sender, amount);
   }
@@ -360,6 +360,26 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
     _maxSlashablePercentage = percentage;
     emit MaxSlashablePercentageChanged(percentage);
+  }
+
+  /**
+   * @dev Snapshots the current exchange rate
+   */
+  function snapshotExchangeRate() public {
+    uint128 currentBlock = uint128(block.number);
+    uint128 newExchangeRate = uint128(exchangeRate());
+
+    // Doing multiple operations in the same block
+    if (
+      _countExchangeRateSnapshots != 0 &&
+      _exchangeRateSnapshots[_countExchangeRateSnapshots - 1].blockNumber == currentBlock
+    ) {
+      _exchangeRateSnapshots[_countExchangeRateSnapshots - 1].value = newExchangeRate;
+    } else {
+      _exchangeRateSnapshots[_countExchangeRateSnapshots] = Snapshot(currentBlock, newExchangeRate);
+      _countExchangeRateSnapshots = _countExchangeRateSnapshots + 1;
+    }
+    emit EchangeRateSnapshotted(currentBlock, newExchangeRate);
   }
 
   /**
@@ -528,23 +548,6 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     IERC20(STAKED_TOKEN).safeTransfer(to, underlyingToRedeem);
 
     emit Redeem(from, to, amountToRedeem, underlyingToRedeem);
-  }
-
-  function _snapshotExchangeRate() internal {
-    uint128 currentBlock = uint128(block.number);
-    uint128 newExchangeRate = uint128(exchangeRate());
-
-    // Doing multiple operations in the same block
-    if (
-      _countExchangeRateSnapshots != 0 &&
-      _exchangeRateSnapshots[_countExchangeRateSnapshots - 1].blockNumber == currentBlock
-    ) {
-      _exchangeRateSnapshots[_countExchangeRateSnapshots - 1].value = newExchangeRate;
-    } else {
-      _exchangeRateSnapshots[_countExchangeRateSnapshots] = Snapshot(currentBlock, newExchangeRate);
-      _countExchangeRateSnapshots = _countExchangeRateSnapshots + 1;
-    }
-    emit EchangeRateSnapshotted(currentBlock, newExchangeRate);
   }
 
   /**
