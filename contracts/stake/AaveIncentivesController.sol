@@ -10,7 +10,8 @@ import {IAToken} from '../interfaces/IAToken.sol';
 import {IAaveIncentivesController} from '../interfaces/IAaveIncentivesController.sol';
 import {IStakedToken} from '../interfaces/IStakedToken.sol';
 import {VersionedInitializable} from '../utils/VersionedInitializable.sol';
-import {AaveDistributionManager} from './AaveDistributionManager.sol';
+import {AaveDistributionManagerV2} from './AaveDistributionManagerV2.sol';
+import {RoleManager} from '../utils/RoleManager.sol';
 
 /**
  * @title AaveIncentivesController
@@ -20,7 +21,8 @@ import {AaveDistributionManager} from './AaveDistributionManager.sol';
 contract AaveIncentivesController is
   IAaveIncentivesController,
   VersionedInitializable,
-  AaveDistributionManager
+  AaveDistributionManagerV2,
+  RoleManager
 {
   using SafeMath for uint256;
   uint256 public constant REVISION = 1;
@@ -28,32 +30,55 @@ contract AaveIncentivesController is
   IStakedToken public immutable PSM;
 
   IERC20 public immutable REWARD_TOKEN;
-  address public immutable REWARDS_VAULT;
+  address internal _rewardsVault;
   uint256 public immutable EXTRA_PSM_REWARD;
 
   mapping(address => uint256) internal _usersUnclaimedRewards;
 
+  uint256 constant REWARDS_ADMIN_ROLE = 4;
+
   event RewardsAccrued(address indexed user, uint256 amount);
   event RewardsClaimed(address indexed user, address indexed to, uint256 amount);
+  event RewardsVaultUpdate(address indexed vault);
+
+  modifier onlyRewardsAdmin {
+    require(msg.sender == getAdmin(REWARDS_ADMIN_ROLE), 'CALLER_NOT_REWARDS_ADMIN');
+    _;
+  }
 
   constructor(
     IERC20 rewardToken,
-    address rewardsVault,
     IStakedToken psm,
     uint256 extraPsmReward,
-    address emissionManager,
-    uint128 distributionDuration
-  ) public AaveDistributionManager(emissionManager, distributionDuration) {
+    address emissionManager
+  ) public AaveDistributionManagerV2(emissionManager) {
     REWARD_TOKEN = rewardToken;
-    REWARDS_VAULT = rewardsVault;
     PSM = psm;
     EXTRA_PSM_REWARD = extraPsmReward;
   }
 
   /**
-   * @dev Called by the proxy contract. Not used at the moment, but for the future
+   * @dev Initialize AaveIncentivesController
+   * @param rewardsVault rewards vault to pull funds
+   * @param distributionDuration unix timestamp of the duration of the distribution
+   * @param rewardsAdmin address of the admin that controls the rewards vault and extending the distribution
    **/
-  function initialize() external initializer {
+  function initialize(
+    address rewardsVault,
+    uint256 distributionDuration,
+    address rewardsAdmin
+  ) external initializer {
+    _rewardsVault = rewardsVault;
+    _extendDistribution(distributionDuration);
+
+    uint256[] memory adminsRoles = new uint256[](1);
+    address[] memory adminsAddresses = new address[](1);
+
+    adminsRoles[0] = REWARDS_ADMIN_ROLE;
+    adminsAddresses[0] = rewardsAdmin;
+
+    _initAdmins(adminsRoles, adminsAddresses);
+
     // to unlock possibility to stake on behalf of the user
     REWARD_TOKEN.approve(address(PSM), type(uint256).max);
   }
@@ -142,10 +167,10 @@ contract AaveIncentivesController is
 
     if (stake) {
       amountToClaim = amountToClaim.add(amountToClaim.mul(EXTRA_PSM_REWARD).div(100));
-      REWARD_TOKEN.transferFrom(REWARDS_VAULT, address(this), amountToClaim);
+      REWARD_TOKEN.transferFrom(_rewardsVault, address(this), amountToClaim);
       PSM.stake(to, amountToClaim);
     } else {
-      REWARD_TOKEN.transferFrom(REWARDS_VAULT, to, amountToClaim);
+      REWARD_TOKEN.transferFrom(_rewardsVault, to, amountToClaim);
     }
     emit RewardsClaimed(msg.sender, to, amountToClaim);
 
@@ -166,5 +191,37 @@ contract AaveIncentivesController is
    */
   function getRevision() internal pure override returns (uint256) {
     return REVISION;
+  }
+
+  /**
+   * @dev update the rewards vault address
+   * @param rewardsVault The rewards vault address to replace current une
+   **/
+  function _setRewardsVault(address rewardsVault) internal {
+    _rewardsVault = rewardsVault;
+  }
+
+  /**
+   * @dev returns the current rewards vault contract
+   * @return address
+   */
+  function getRewardsVault() external view returns (address) {
+    return _rewardsVault;
+  }
+
+  /**
+   * @dev update the rewards vault address, only allowed by the Rewards admin
+   * @param rewardsVault The address of the rewards vault
+   **/
+  function setRewardsVault(address rewardsVault) external onlyRewardsAdmin {
+    _setRewardsVault(rewardsVault);
+  }
+
+  /**
+   * @dev Extends the end of the distribution in regards of current timestamp.
+   * @param distributionDuration The timestamp duration of the new distribution
+   **/
+  function extendDistribution(uint256 distributionDuration) external onlyRewardsAdmin {
+    _extendDistribution(distributionDuration);
   }
 }

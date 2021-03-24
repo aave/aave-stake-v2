@@ -219,13 +219,13 @@ contract AaveDistributionManager is IAaveDistributionManager {
       emissionPerSecond == 0 ||
       totalBalance == 0 ||
       lastUpdateTimestamp == block.timestamp ||
-      lastUpdateTimestamp >= DISTRIBUTION_END
+      lastUpdateTimestamp >= _getDistributionEnd()
     ) {
       return currentIndex;
     }
 
     uint256 currentTimestamp =
-      block.timestamp > DISTRIBUTION_END ? DISTRIBUTION_END : block.timestamp;
+      block.timestamp > _getDistributionEnd() ? _getDistributionEnd() : block.timestamp;
     uint256 timeDelta = currentTimestamp.sub(lastUpdateTimestamp);
     return
       emissionPerSecond.mul(timeDelta).mul(10**uint256(PRECISION)).div(totalBalance).add(
@@ -241,5 +241,14 @@ contract AaveDistributionManager is IAaveDistributionManager {
    **/
   function getUserAssetData(address user, address asset) public view returns (uint256) {
     return assets[asset].users[user];
+  }
+
+  /**
+   * @dev Returns the timestamp of the end of the current distribution
+   * @notice This field remains virtual to extend at AaveDistributionManageV2, keeping V1 logic
+   * @return uint256 unix timestamp
+   **/
+  function _getDistributionEnd() internal view virtual returns (uint256) {
+    return DISTRIBUTION_END;
   }
 }
