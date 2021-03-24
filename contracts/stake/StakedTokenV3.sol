@@ -334,20 +334,14 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     emit Slashed(destination, amount);
   }
 
+  /**
+   * @dev Set the address of the contract with priviledge, the ClaimHelper contract
+   * It speicifically enables to claim from several contracts at once
+   * @param claimHelper new address of the claim helper
+   **/
   function setClaimHelper(address claimHelper) external override onlyAdmin {
     _claimHelper = claimHelper;
     emit ClaimHelperChanged(claimHelper);
-  }
-
-  function getClaimHelper() external view override returns (address) {
-    return _claimHelper;
-  }
-
-  /**
-   * @dev returns true if the unstake cooldown is paused
-   */
-  function getCooldownPaused() external view override returns (bool) {
-    return _cooldownPaused;
   }
 
   /**
@@ -368,6 +362,21 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
     _maxSlashablePercentage = percentage;
     emit MaxSlashablePercentageChanged(percentage);
+  }
+
+  /**
+   * @dev returns the current address of the claimHelper Contract, contract with priviledge
+   * It speicifically enables to claim from several contracts at once
+   */
+  function getClaimHelper() external view override returns (address) {
+    return _claimHelper;
+  }
+
+  /**
+   * @dev returns true if the unstake cooldown is paused
+   */
+  function getCooldownPaused() external view override returns (bool) {
+    return _cooldownPaused;
   }
 
   /**
