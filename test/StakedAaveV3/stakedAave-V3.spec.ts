@@ -213,8 +213,14 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
 
   it('Verifies that the initial exchange rate is 1:1', async () => {
     const currentExchangeRate = await stakeV3.exchangeRate();
+    const searchedExchangeRate = await stakeV3.getExchangeRate(
+      await DRE.ethers.provider.getBlockNumber()
+    );
+    const searchedExchangeRateBlockZero = await stakeV3.getExchangeRate(0);
 
     expect(currentExchangeRate.toString()).to.be.equal(WAD);
+    expect(searchedExchangeRateBlockZero.toString()).to.be.equal(WAD);
+    expect(searchedExchangeRate.toString()).to.be.equal(WAD);
   });
 
   it('Verifies that after a deposit the initial exchange rate is still 1:1', async () => {
@@ -233,13 +239,18 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
   });
 
   it('Executes a slash of 20% of the asset', async () => {
-    const { aaveToken, users } = testEnv;
-
-    const fundsReceiver = users[3].address;
+    const {
+      aaveToken,
+      users: [admin, staker, , fundsReceiver],
+    } = testEnv;
 
     const userBalanceBeforeSlash = new BigNumber(
-      (await aaveToken.balanceOf(fundsReceiver)).toString()
+      (await aaveToken.balanceOf(fundsReceiver.address)).toString()
     );
+
+    const stakerBalanceBeforeSlash = await aaveToken.balanceOf(staker.address);
+    const votingPowerBeforeSlash = await stakeV3.getPowerCurrent(staker.address, 0);
+    const propPowerBeforeSlash = await stakeV3.getPowerCurrent(staker.address, 1);
 
     const currentStakeBalance = new BigNumber(
       (await aaveToken.balanceOf(stakeV3.address)).toString()
@@ -247,15 +258,36 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
 
     const amountToSlash = currentStakeBalance.times(0.2).toFixed(0);
 
-    await stakeV3.connect(users[0].signer).slash(fundsReceiver, amountToSlash);
+    await stakeV3.connect(admin.signer).slash(fundsReceiver.address, amountToSlash);
 
     const newStakeBalance = new BigNumber((await aaveToken.balanceOf(stakeV3.address)).toString());
 
     const userBalanceAfterSlash = new BigNumber(
-      (await aaveToken.balanceOf(fundsReceiver)).toString()
+      (await aaveToken.balanceOf(fundsReceiver.address)).toString()
     );
 
     const exchangeRate = new BigNumber((await stakeV3.exchangeRate()).toString()).toString();
+    const searchedExchangeRate = await stakeV3.getExchangeRate(
+      await DRE.ethers.provider.getBlockNumber()
+    );
+    const searchedExchangeRateBlockBefore = await stakeV3.getExchangeRate(
+      (await DRE.ethers.provider.getBlockNumber()) - 1
+    );
+    const searchedExchangeRateBlockZero = await stakeV3.getExchangeRate(0);
+
+    const stakerBalanceAfterSlash = await aaveToken.balanceOf(staker.address);
+    const votingPowerAfterSlash = await stakeV3.getPowerCurrent(staker.address, 0);
+    const propPowerAfterSlash = await stakeV3.getPowerCurrent(staker.address, 1);
+    const searchedVotingPowerBeforeSlash = await stakeV3.getPowerAtBlock(
+      staker.address,
+      (await DRE.ethers.provider.getBlockNumber()) - 1,
+      0
+    );
+    const searchedPropPowerBeforeSlash = await stakeV3.getPowerAtBlock(
+      staker.address,
+      (await DRE.ethers.provider.getBlockNumber()) - 1,
+      1
+    );
 
     expect(newStakeBalance.toString()).to.be.equal(
       currentStakeBalance.minus(amountToSlash).toFixed(0)
@@ -264,6 +296,14 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
       userBalanceBeforeSlash.plus(amountToSlash).toFixed(0)
     );
     expect(exchangeRate).to.be.equal(ethers.utils.parseEther('0.8'));
+    expect(searchedExchangeRate).to.be.equal(ethers.utils.parseEther('0.8'));
+    expect(searchedExchangeRateBlockBefore).to.be.equal(ethers.utils.parseEther('1.0'));
+    expect(searchedExchangeRateBlockZero).to.be.equal(ethers.utils.parseEther('1.0'));
+    expect(stakerBalanceAfterSlash).to.be.equal(stakerBalanceBeforeSlash);
+    expect(searchedVotingPowerBeforeSlash).to.be.equal(votingPowerBeforeSlash);
+    expect(searchedPropPowerBeforeSlash).to.be.equal(propPowerBeforeSlash);
+    expect(votingPowerAfterSlash).to.be.equal(votingPowerBeforeSlash.mul(8).div(10));
+    expect(propPowerAfterSlash).to.be.equal(propPowerBeforeSlash.mul(8).div(10));
   });
 
   it('Redeems 1 stkAAVE after slashing - expected to receive 0.8 AAVE', async () => {
