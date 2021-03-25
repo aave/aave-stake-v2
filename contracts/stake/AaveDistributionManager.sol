@@ -21,7 +21,7 @@ contract AaveDistributionManager is IAaveDistributionManager {
     mapping(address => uint256) users;
   }
 
-  uint256 public immutable DISTRIBUTION_END;
+  uint256 internal immutable _oldDistributionEnd;
 
   address public immutable EMISSION_MANAGER;
 
@@ -34,7 +34,7 @@ contract AaveDistributionManager is IAaveDistributionManager {
   event UserIndexUpdated(address indexed user, address indexed asset, uint256 index);
 
   constructor(address emissionManager, uint256 distributionDuration) public {
-    DISTRIBUTION_END = block.timestamp.add(distributionDuration);
+    _oldDistributionEnd = block.timestamp.add(distributionDuration);
     EMISSION_MANAGER = emissionManager;
   }
 
@@ -249,6 +249,14 @@ contract AaveDistributionManager is IAaveDistributionManager {
    * @return uint256 unix timestamp
    **/
   function _getDistributionEnd() internal view virtual returns (uint256) {
-    return DISTRIBUTION_END;
+    return _oldDistributionEnd;
+  }
+
+  /**
+   * @dev Keeps interface compatibility. Returns the timestamp of the end of the current distribution
+   * @return uint256 unix timestamp
+   **/
+  function DISTRIBUTION_END() external view returns (uint256) {
+    return _getDistributionEnd();
   }
 }
