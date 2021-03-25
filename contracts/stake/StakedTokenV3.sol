@@ -480,6 +480,16 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     );
   }
 
+  /**
+   * @notice Searches the exchange rate for a blocknumber
+   * @param blockNumber blockNumber to search
+   * @return The last exchangeRate recorded before the blockNumber
+   * @dev not all exchangeRates are recorded, so this value might not be exact. Use archive node for exact value
+   **/
+  function getExchangeRate(uint256 blockNumber) external view returns (uint256) {
+    return _searchExchangeRateByBlockNumber(blockNumber);
+  }
+
   function _claimRewards(
     address from,
     address to,
