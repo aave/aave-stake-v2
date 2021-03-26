@@ -19,23 +19,28 @@ task(`deploy-incentives`, `Deploy and initializes the ${id} contract`)
   .addOptionalParam('extraPsmReward')
   .addOptionalParam('emissionManager')
   .addOptionalParam('distributionDuration')
-  .addParam('admin', `The address to be added as an Admin role in ${id} Transparent Proxy.`)
+  .addParam('proxyAdmin', `The address to be added as an Admin role in ${id} Transparent Proxy.`)
+  .addParam('rewardsAdmin', `The address to be added as an Admin role in ${id} Transparent Proxy.`)
   .setAction(
     async (
       {
         verify,
-        admin,
         rewardToken,
         rewardsVault,
         psm,
         extraPsmReward,
         emissionManager,
         distributionDuration,
+        proxyAdmin,
+        rewardsAdmin,
       },
       localBRE
     ) => {
       await localBRE.run('set-dre');
-      if (!isAddress(admin)) {
+      if (!isAddress(proxyAdmin)) {
+        throw Error('Missing or incorrect admin param');
+      }
+      if (!isAddress(rewardsAdmin)) {
         throw Error('Missing or incorrect admin param');
       }
       if (!isAddress(rewardToken)) {
@@ -54,7 +59,7 @@ task(`deploy-incentives`, `Deploy and initializes the ${id} contract`)
       console.log(`\n- ${id} implementation deployment:`);
 
       const aaveIncentivesControllerImpl = await deployAaveIncentivesController(
-        [rewardToken, rewardsVault, psm, extraPsmReward, emissionManager, distributionDuration],
+        [rewardToken, psm, extraPsmReward, emissionManager],
         verify
       );
 
@@ -62,12 +67,15 @@ task(`deploy-incentives`, `Deploy and initializes the ${id} contract`)
 
       const aaveIncentivesProxy = await deployInitializableAdminUpgradeabilityProxy(verify);
 
-      const encodedParams = aaveIncentivesControllerImpl.interface.encodeFunctionData('initialize');
+      const encodedParams = aaveIncentivesControllerImpl.interface.encodeFunctionData(
+        'initialize',
+        [rewardsVault, distributionDuration, rewardsAdmin]
+      );
 
       await waitForTx(
         await aaveIncentivesProxy.functions['initialize(address,address,bytes)'](
           aaveIncentivesControllerImpl.address,
-          admin,
+          proxyAdmin,
           encodedParams
         )
       );

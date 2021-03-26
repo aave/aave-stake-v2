@@ -9,28 +9,35 @@ task('deploy-reserve-and-incentives', 'Deployment in hardhat')
   .addOptionalParam('extraPsmReward')
   .addOptionalParam('emissionManager')
   .addOptionalParam('distributionDuration')
-  .addParam('admin', `The address to be added as an Admin role in proxies.`)
+  .addParam('proxyAdmin', `The address to be added as an Admin role in proxies.`)
+  .addParam('rewardsAdmin', `The address to be added as an Admin role in proxies.`)
   .setAction(
     async (
       {
         verify,
-        admin,
         controller,
         rewardToken,
         psm,
         extraPsmReward,
         emissionManager,
         distributionDuration,
+        proxyAdmin,
+        rewardsAdmin,
       },
       localBRE
     ) => {
       const DRE: HardhatRuntimeEnvironment = await localBRE.run('set-dre');
 
-      const reserveAddress = await DRE.run('deploy-reserve', { verify, admin, controller });
+      const reserveAddress = await DRE.run('deploy-reserve', {
+        verify,
+        admin: proxyAdmin,
+        controller,
+      });
 
       await DRE.run('deploy-incentives', {
         verify,
-        admin,
+        proxyAdmin,
+        rewardsAdmin,
         rewardToken,
         rewardsVault: reserveAddress,
         psm,

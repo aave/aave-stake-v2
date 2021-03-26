@@ -6,8 +6,8 @@ import {ERC20} from '@aave/aave-token/contracts/open-zeppelin/ERC20.sol';
 
 import {IERC20} from '../interfaces/IERC20.sol';
 import {IERC20WithPermit} from '../interfaces/IERC20WithPermit.sol';
-import {IStakedTokenV3} from '../interfaces/IStakedTokenV3.sol';
 import {IStakedToken} from '../interfaces/IStakedToken.sol';
+import {IStakedTokenV3} from '../interfaces/IStakedTokenV3.sol';
 import {ITransferHook} from '../interfaces/ITransferHook.sol';
 
 import {DistributionTypes} from '../lib/DistributionTypes.sol';
@@ -217,7 +217,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param to Address to send the claimed rewards
    * @param amount Amount to stake
    **/
-  function claimRewards(address to, uint256 amount) external override(StakedTokenV2, IStakedToken) {
+  function claimRewards(address to, uint256 amount) external override(IStakedToken, StakedTokenV2) {
     _claimRewards(msg.sender, to, amount);
   }
 
@@ -231,8 +231,8 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address from,
     address to,
     uint256 amount
-  ) external override onlyClaimHelper {
-    _claimRewards(from, to, amount);
+  ) external override onlyClaimHelper returns (uint256) {
+    return _claimRewards(from, to, amount);
   }
 
   /**
@@ -240,13 +240,14 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param to Address to stake to
    * @param amount Amount to claim
    **/
-  function claimRewardsAndStake(address to, uint256 amount) external override {
+  function claimRewardsAndStake(address to, uint256 amount) external override returns (uint256) {
     require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
 
     uint256 rewardsClaimed = _claimRewards(msg.sender, address(this), amount);
     if (rewardsClaimed != 0) {
-          _stake(address(this), to, rewardsClaimed, false);
+      _stake(address(this), to, rewardsClaimed, false);
     }
+    return rewardsClaimed;
   }
 
   /**
@@ -259,11 +260,12 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address from,
     address to,
     uint256 amount
-  ) external override onlyClaimHelper {
+  ) external override onlyClaimHelper returns (uint256) {
     require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
 
     uint256 rewardsClaimed = _claimRewards(from, address(this), amount);
     _stake(address(this), to, rewardsClaimed, false);
+    return (rewardsClaimed);
   }
 
   /**
