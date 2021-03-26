@@ -70,7 +70,7 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
 
     const slashingAdmin = await stakeV3.getAdmin(SLASHING_ADMIN); //slash admin
     const cooldownAdmin = await stakeV3.getAdmin(COOLDOWN_ADMIN); //cooldown admin
-    const claimAdmin = await stakeV3.getAdmin(CLAIM_HELPER_ROLE); //claim admin // helper contract
+    const claimAdmin = await stakeV3.getClaimHelper(); //claim admin // helper contract
 
     expect(slashingAdmin).to.be.equal(users[0].address);
     expect(cooldownAdmin).to.be.equal(users[1].address);
@@ -86,6 +86,7 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     await expect(stakeV3.connect(staker.signer).stake(staker.address, amount)).to.be.revertedWith(
       'INVALID_ZERO_AMOUNT'
     );
+    console.log((await stakeV3.balanceOf(staker.address)).toString());
   });
 
   it('User 1 stakes 10 AAVE: receives 10 stkAAVE, StakedAave balance of AAVE is 10 and his rewards to claim are 0', async () => {
@@ -353,9 +354,7 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
   it('Tries to slash with an account that is not the slashing admin', async () => {
     const { users } = testEnv;
 
-    await expect(stakeV3.slash(users[2].address, '1')).to.be.revertedWith(
-      'CALLER_NOT_SLASHING_ADMIN'
-    );
+    await expect(stakeV3.slash(users[2].address, '1')).to.be.revertedWith('CALLER_NOT_MAIN_ADMIN');
   });
 
   it('Tries to pause the cooldown with an account that is not the cooldown admin', async () => {
@@ -583,10 +582,7 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
       balanceBefore.add(amount.mul(ether).div(exchangeRate))
     );
 
-    expect(aaveStakedAfter).to.be.eql(
-      aaveStakedBefore.add(amount)
-    );
-
+    expect(aaveStakedAfter).to.be.eql(aaveStakedBefore.add(amount));
   });
   it('Fails claim rewards for someone using claimRewardsOnBehalf if not helper', async () => {
     const {
@@ -718,17 +714,20 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
       await stakeV3.balanceOf(staker.address),
     ];
 
+    expect(userBalanceAfterActions[0]).to.be.eq(
+      saveUserBalance[0],
+      'Invalid aave user balance after action'
+    );
 
-    expect(userBalanceAfterActions[0]).to.be.eq(saveUserBalance[0], "Invalid aave user balance after action");
+    expect(userBalanceAfterActions[1]).to.be.eq(
+      saveUserBalance[1].add(halfRewards.mul(ether).div(currentExchangeRate)),
+      'invalid stkAAVE user balance after action'
+    );
 
-    expect(
-      userBalanceAfterActions[1]
-    ).to.be.eq(
-      saveUserBalance[1].add(halfRewards.mul(ether).div(currentExchangeRate))
-    ,"invalid stkAAVE user balance after action")
-
-    expect(aaveStakedAfter).to.be.equal(aaveStakedBefore.add(halfRewards), "Invalid underlying balance");
-   
+    expect(aaveStakedAfter).to.be.equal(
+      aaveStakedBefore.add(halfRewards),
+      'Invalid underlying balance'
+    );
   });
   it('Claim & stake higher reward than current rewards balance', async () => {
     const {

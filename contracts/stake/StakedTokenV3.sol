@@ -31,9 +31,8 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   using SafeERC20 for IERC20;
   using PercentageMath for uint256;
 
-  uint256 public constant SLASH_ADMIN_ROLE = 0;
+  uint256 public constant MAIN_ADMIN_ROLE = 0;
   uint256 public constant COOLDOWN_ADMIN_ROLE = 1;
-  uint256 public constant CLAIM_HELPER_ROLE = 2;
 
   function REVISION() public pure virtual override returns (uint256) {
     return 3;
@@ -43,8 +42,10 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   uint256 internal _maxSlashablePercentage;
   bool _cooldownPaused;
 
-  modifier onlySlashingAdmin {
-    require(msg.sender == getAdmin(SLASH_ADMIN_ROLE), 'CALLER_NOT_SLASHING_ADMIN');
+  address internal _claimHelper;
+
+  modifier onlyAdmin {
+    require(msg.sender == getAdmin(MAIN_ADMIN_ROLE), 'CALLER_NOT_MAIN_ADMIN');
     _;
   }
 
@@ -54,7 +55,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   }
 
   modifier onlyClaimHelper {
-    require(msg.sender == getAdmin(CLAIM_HELPER_ROLE), 'CALLER_NOT_CLAIM_HELPER');
+    require(msg.sender == _claimHelper, 'CALLER_NOT_CLAIM_HELPER');
     _;
   }
 
@@ -70,6 +71,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   event Slashed(address indexed destination, uint256 amount);
   event CooldownPauseAdminChanged(address indexed newAdmin);
   event SlashingAdminChanged(address indexed newAdmin);
+  event ClaimHelperChanged(address indexed newClaimHelper);
 
   constructor(
     IERC20 stakedToken,
@@ -142,18 +144,17 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
       _setupDecimals(decimals);
     }
 
-    address[] memory adminsAddresses = new address[](3);
-    uint256[] memory adminsRoles = new uint256[](3);
+    address[] memory adminsAddresses = new address[](2);
+    uint256[] memory adminsRoles = new uint256[](2);
 
     adminsAddresses[0] = slashingAdmin;
     adminsAddresses[1] = cooldownPauseAdmin;
-    adminsAddresses[2] = claimHelper;
 
-    adminsRoles[0] = SLASH_ADMIN_ROLE;
+    adminsRoles[0] = MAIN_ADMIN_ROLE;
     adminsRoles[1] = COOLDOWN_ADMIN_ROLE;
-    adminsRoles[2] = CLAIM_HELPER_ROLE;
 
     _initAdmins(adminsRoles, adminsAddresses);
+    _claimHelper = claimHelper;
 
     _maxSlashablePercentage = maxSlashablePercentage;
   }
@@ -321,7 +322,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param destination the address where seized funds will be transferred
    * @param amount the amount
    **/
-  function slash(address destination, uint256 amount) external override onlySlashingAdmin {
+  function slash(address destination, uint256 amount) external override onlyAdmin {
     uint256 balance = STAKED_TOKEN.balanceOf(address(this));
 
     uint256 maxSlashable = balance.percentMul(_maxSlashablePercentage);
@@ -334,10 +335,13 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   }
 
   /**
-   * @dev returns true if the unstake cooldown is paused
-   */
-  function getCooldownPaused() external view override returns (bool) {
-    return _cooldownPaused;
+   * @dev Set the address of the contract with priviledge, the ClaimHelper contract
+   * It speicifically enables to claim from several contracts at once
+   * @param claimHelper new address of the claim helper
+   **/
+  function setClaimHelper(address claimHelper) external override onlyAdmin {
+    _claimHelper = claimHelper;
+    emit ClaimHelperChanged(claimHelper);
   }
 
   /**
@@ -353,11 +357,26 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @dev sets the admin of the slashing pausing function
    * @param percentage the new maximum slashable percentage
    */
-  function setMaxSlashablePercentage(uint256 percentage) external override onlySlashingAdmin {
+  function setMaxSlashablePercentage(uint256 percentage) external override onlyAdmin {
     require(percentage <= PercentageMath.PERCENTAGE_FACTOR, 'INVALID_SLASHING_PERCENTAGE');
 
     _maxSlashablePercentage = percentage;
     emit MaxSlashablePercentageChanged(percentage);
+  }
+
+  /**
+   * @dev returns the current address of the claimHelper Contract, contract with priviledge
+   * It speicifically enables to claim from several contracts at once
+   */
+  function getClaimHelper() external view override returns (address) {
+    return _claimHelper;
+  }
+
+  /**
+   * @dev returns true if the unstake cooldown is paused
+   */
+  function getCooldownPaused() external view override returns (bool) {
+    return _cooldownPaused;
   }
 
   /**

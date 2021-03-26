@@ -58,4 +58,8 @@ interface IStakedTokenV3 is IStakedToken {
     uint256 claimAmount,
     uint256 redeemAmount
   ) external;
+
+  function setClaimHelper(address claimHelper) external;
+
+  function getClaimHelper() external view returns (address);
 }
