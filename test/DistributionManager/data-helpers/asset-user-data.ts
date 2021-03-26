@@ -3,6 +3,7 @@ import { AaveDistributionManager } from '../../../types/AaveDistributionManager'
 import { StakedAave } from '../../../types/StakedAave';
 import { AaveIncentivesController } from '../../../types/AaveIncentivesController';
 import { StakedAaveV2 } from '../../../types/StakedAaveV2';
+import { StakedAaveV3 } from '../../../types/StakedAaveV3';
 
 export type UserStakeInput = {
   underlyingAsset: string;
@@ -18,7 +19,8 @@ export async function getUserIndex(
     | AaveDistributionManager
     | AaveIncentivesController
     | StakedAave
-    | StakedAaveV2,
+    | StakedAaveV2
+    | StakedAaveV3,
   user: string,
   asset: string
 ): Promise<BigNumber> {
