@@ -72,7 +72,7 @@ makeSuite('AaveIncentivesController handleAction tests', (testEnv) => {
         ]);
       }
 
-      const distributionEndTimestamp = await aaveIncentivesController.DISTRIBUTION_END();
+      const distributionEndTimestamp = await aaveIncentivesController.getDistributionEnd();
 
       const rewardsBalanceBefore = await aaveIncentivesController.getUserUnclaimedRewards(
         userAddress

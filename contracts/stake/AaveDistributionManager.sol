@@ -21,7 +21,7 @@ contract AaveDistributionManager is IAaveDistributionManager {
     mapping(address => uint256) users;
   }
 
-  uint256 public immutable DISTRIBUTION_END;
+  uint256 internal immutable _oldDistributionEnd;
 
   address public immutable EMISSION_MANAGER;
 
@@ -34,7 +34,7 @@ contract AaveDistributionManager is IAaveDistributionManager {
   event UserIndexUpdated(address indexed user, address indexed asset, uint256 index);
 
   constructor(address emissionManager, uint256 distributionDuration) public {
-    DISTRIBUTION_END = block.timestamp.add(distributionDuration);
+    _oldDistributionEnd = block.timestamp.add(distributionDuration);
     EMISSION_MANAGER = emissionManager;
   }
 
@@ -219,13 +219,13 @@ contract AaveDistributionManager is IAaveDistributionManager {
       emissionPerSecond == 0 ||
       totalBalance == 0 ||
       lastUpdateTimestamp == block.timestamp ||
-      lastUpdateTimestamp >= DISTRIBUTION_END
+      lastUpdateTimestamp >= _getDistributionEnd()
     ) {
       return currentIndex;
     }
 
     uint256 currentTimestamp =
-      block.timestamp > DISTRIBUTION_END ? DISTRIBUTION_END : block.timestamp;
+      block.timestamp > _getDistributionEnd() ? _getDistributionEnd() : block.timestamp;
     uint256 timeDelta = currentTimestamp.sub(lastUpdateTimestamp);
     return
       emissionPerSecond.mul(timeDelta).mul(10**uint256(PRECISION)).div(totalBalance).add(
@@ -241,5 +241,22 @@ contract AaveDistributionManager is IAaveDistributionManager {
    **/
   function getUserAssetData(address user, address asset) public view returns (uint256) {
     return assets[asset].users[user];
+  }
+
+  /**
+   * @dev Returns the timestamp of the end of the current distribution
+   * @notice This field remains virtual to extend at AaveDistributionManageV2, keeping V1 logic
+   * @return uint256 unix timestamp
+   **/
+  function _getDistributionEnd() internal view virtual returns (uint256) {
+    return _oldDistributionEnd;
+  }
+
+  /**
+   * @dev Keeps interface compatibility. Returns the timestamp of the end of the current distribution
+   * @return uint256 unix timestamp
+   **/
+  function DISTRIBUTION_END() external view returns (uint256) {
+    return _getDistributionEnd();
   }
 }

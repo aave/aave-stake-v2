@@ -35,7 +35,7 @@ makeSuite('AaveIncentivesController getRewardsBalance tests', (testEnv) => {
 
       const { aaveIncentivesController, users, aDaiMock } = testEnv;
 
-      const distributionEndTimestamp = await aaveIncentivesController.DISTRIBUTION_END();
+      const distributionEndTimestamp = await aaveIncentivesController.getDistributionEnd();
       const userAddress = users[1].address;
       const stakedByUser = 22 * caseName.length;
       const totalStaked = 33 * caseName.length;

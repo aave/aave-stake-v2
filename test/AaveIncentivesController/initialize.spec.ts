@@ -1,5 +1,5 @@
 import { makeSuite, TestEnv } from '../helpers/make-suite';
-import { MAX_UINT_AMOUNT } from '../../helpers/constants';
+import { MAX_UINT_AMOUNT, ZERO_ADDRESS } from '../../helpers/constants';
 
 const { expect } = require('chai');
 
@@ -7,7 +7,8 @@ makeSuite('AaveIncentivesController initialize', (testEnv: TestEnv) => {
   // TODO: useless or not?
   it('Tries to call initialize second time, should be reverted', async () => {
     const { aaveIncentivesController } = testEnv;
-    await expect(aaveIncentivesController.initialize()).to.be.reverted;
+    await expect(aaveIncentivesController.initialize(ZERO_ADDRESS, '0', ZERO_ADDRESS)).to.be
+      .reverted;
   });
   it('allowance on aave token should be granted to psm contract for pei', async () => {
     const { aaveIncentivesController, stakedAave, aaveToken } = testEnv;

@@ -131,7 +131,7 @@ makeSuite('AaveIncentivesController configureAssets', (testEnv: TestEnv) => {
   for (const { assets, caseName, compareRules, customTimeMovement } of configureAssetScenarios) {
     it(caseName, async () => {
       const { aaveIncentivesController } = testEnv;
-      const distributionEndTimestamp = await aaveIncentivesController.DISTRIBUTION_END();
+      const distributionEndTimestamp = await aaveIncentivesController.getDistributionEnd();
 
       const assetConfigsUpdate: AssetUpdateData[] = [];
 

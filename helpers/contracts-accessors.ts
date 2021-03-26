@@ -3,7 +3,7 @@ import { eContractid, tEthereumAddress } from './types';
 import { MintableErc20 } from '../types/MintableErc20';
 import { StakedAave } from '../types/StakedAave';
 import { StakedAaveV2 } from '../types/StakedAaveV2';
-import {StakedAaveV3 } from '../types/StakedAaveV3';
+import { StakedAaveV3 } from '../types/StakedAaveV3';
 import { IcrpFactory } from '../types/IcrpFactory'; // Configurable right pool factory
 import { IConfigurableRightsPool } from '../types/IConfigurableRightsPool';
 import { IControllerAaveEcosystemReserve } from '../types/IControllerAaveEcosystemReserve';
@@ -198,7 +198,6 @@ export const deployStakedTokenV3 = async (
   return instance;
 };
 
-
 export const deployStakedAaveV3 = async (
   [
     stakedToken,
@@ -238,25 +237,16 @@ export const deployStakedAaveV3 = async (
 };
 
 export const deployAaveIncentivesController = async (
-  [rewardToken, rewardsVault, aavePsm, extraPsmReward, emissionManager, distributionDuration]: [
-    tEthereumAddress,
+  [rewardToken, aavePsm, extraPsmReward, emissionManager]: [
     tEthereumAddress,
     tEthereumAddress,
     string,
-    tEthereumAddress,
-    string
+    tEthereumAddress
   ],
   verify?: boolean
 ) => {
   const id = eContractid.AaveIncentivesController;
-  const args: string[] = [
-    rewardToken,
-    rewardsVault,
-    aavePsm,
-    extraPsmReward,
-    emissionManager,
-    distributionDuration,
-  ];
+  const args: string[] = [rewardToken, aavePsm, extraPsmReward, emissionManager];
   const instance = await deployContract<AaveIncentivesController>(id, args);
   await instance.deployTransaction.wait();
   if (verify) {
