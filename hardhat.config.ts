@@ -1,5 +1,5 @@
 import { HardhatUserConfig } from 'hardhat/config';
-import { eEthereumNetwork } from './helpers/types';
+import { eEthereumNetwork, eNetwork, ePolygonNetwork, eXDaiNetwork } from './helpers/types';
 // @ts-ignore
 import { accounts } from './test-wallets';
 
@@ -10,6 +10,7 @@ import '@nomiclabs/hardhat-etherscan';
 import path from 'path';
 import fs from 'fs';
 import 'hardhat-gas-reporter';
+import { NETWORKS_RPC_URL, NETWORKS_DEFAULT_GAS } from './helper-hardhat-config';
 
 export const BUIDLEREVM_CHAIN_ID = 31337;
 
@@ -24,6 +25,7 @@ const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
 const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
 const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '11633164');
+const DEFAULT_GAS_MUL = 5;
 
 // Prevent to load scripts before compilation and typechain
 if (!SKIP_LOAD) {
@@ -48,25 +50,20 @@ const mainnetFork = MAINNET_FORK
     }
   : undefined;
 
-const getCommonNetworkConfig = (networkName: eEthereumNetwork, networkId: number) => {
-  return {
-    url: ALCHEMY_KEY
-      ? `https://eth-${
-          networkName === 'main' ? 'mainnet' : networkName
-        }.alchemyapi.io/v2/${ALCHEMY_KEY}`
-      : `https://${networkName}.infura.io/v3/${INFURA_KEY}`,
-    hardfork: HARDFORK,
-    blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
-    gasPrice: DEFAULT_GAS_PRICE,
-    chainId: networkId,
-    accounts: {
-      mnemonic: MNEMONIC,
-      path: MNEMONIC_PATH,
-      initialIndex: 0,
-      count: 20,
-    },
-  };
-};
+const getCommonNetworkConfig = (networkName: eNetwork, networkId: number) => ({
+  url: NETWORKS_RPC_URL[networkName],
+  hardfork: HARDFORK,
+  blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
+  gasMultiplier: DEFAULT_GAS_MUL,
+  gasPrice: NETWORKS_DEFAULT_GAS[networkName],
+  chainId: networkId,
+  accounts: {
+    mnemonic: MNEMONIC,
+    path: MNEMONIC_PATH,
+    initialIndex: 0,
+    count: 20,
+  },
+});
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -101,6 +98,9 @@ const config: HardhatUserConfig = {
     kovan: getCommonNetworkConfig(eEthereumNetwork.kovan, 42),
     ropsten: getCommonNetworkConfig(eEthereumNetwork.ropsten, 3),
     main: getCommonNetworkConfig(eEthereumNetwork.main, 1),
+    matic: getCommonNetworkConfig(ePolygonNetwork.matic, 137),
+    mumbai: getCommonNetworkConfig(ePolygonNetwork.mumbai, 80001),
+    xdai: getCommonNetworkConfig(eXDaiNetwork.xdai, 100),
     hardhat: {
       hardfork: 'istanbul',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,

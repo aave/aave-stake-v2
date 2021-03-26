@@ -4,7 +4,6 @@ import { parseEther } from 'ethers/lib/utils';
 import { eContractid, eEthereumNetwork, tEthereumAddress } from '../../helpers/types';
 import { StakedTokenV2 } from '../../types/StakedTokenV2';
 import { InitializableAdminUpgradeabilityProxy } from '../../types/InitializableAdminUpgradeabilityProxy';
-import { verifyContract } from '../../helpers/etherscan-verification';
 import {
   UPGRADABLE_CRP_FACTORY,
   WETH,

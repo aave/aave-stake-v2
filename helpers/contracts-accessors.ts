@@ -16,7 +16,7 @@ import { Ierc20Detailed } from '../types/Ierc20Detailed';
 import { InitializableAdminUpgradeabilityProxy } from '../types/InitializableAdminUpgradeabilityProxy';
 import { AaveIncentivesController } from '../types/AaveIncentivesController';
 import { MockTransferHook } from '../types/MockTransferHook';
-import { verifyContract } from './etherscan-verification';
+import { verifyContract } from './contracts-helpers';
 import { ATokenMock } from '../types/ATokenMock';
 import { getDb, DRE } from './misc-utils';
 import { DoubleTransferHelper } from '../types/DoubleTransferHelper';
@@ -56,7 +56,7 @@ export const deployStakedAave = async (
   ];
   const instance = await deployContract<StakedAave>(id, args);
   if (verify) {
-    await verifyContract(instance.address, args);
+    await verifyContract(id, instance, args);
   }
   return instance;
 };
@@ -94,7 +94,7 @@ export const deployStakedAaveV2 = async (
   ];
   const instance = await deployContract<StakedAaveV2>(id, args);
   if (verify) {
-    await verifyContract(instance.address, args);
+    await verifyContract(id, instance, args);
   }
   return instance;
 };
@@ -144,7 +144,7 @@ export const deployStakedTokenV2 = async (
   ];
   const instance = await deployContract<StakedTokenV2>(id, args, '', signer);
   if (verify) {
-    await verifyContract(instance.address, args);
+    await verifyContract(id, instance, args);
   }
   return instance;
 };
@@ -194,7 +194,7 @@ export const deployStakedTokenV3 = async (
   ];
   const instance = await deployContract<StakedTokenV3>(id, args, '', signer);
   if (verify) {
-    await verifyContract(instance.address, args);
+    await verifyContract(id, instance, args);
   }
   return instance;
 };
@@ -232,7 +232,7 @@ export const deployStakedAaveV3 = async (
   ];
   const instance = await deployContract<StakedAaveV3>(id, args);
   if (verify) {
-    await verifyContract(instance.address, args);
+    await verifyContract(id, instance, args);
   }
   return instance;
 };
@@ -251,7 +251,7 @@ export const deployAaveIncentivesController = async (
   const instance = await deployContract<AaveIncentivesController>(id, args);
   await instance.deployTransaction.wait();
   if (verify) {
-    await verifyContract(instance.address, args);
+    await verifyContract(id, instance, args);
   }
   return instance;
 };
@@ -273,7 +273,7 @@ export const deployInitializableAdminUpgradeabilityProxy = async (
   );
   await instance.deployTransaction.wait();
   if (verify) {
-    await verifyContract(instance.address, args);
+    await verifyContract(id, instance, args);
   }
   return instance;
 };
@@ -290,7 +290,24 @@ export const deployDoubleTransferHelper = async (aaveToken: tEthereumAddress, ve
   const instance = await deployContract<DoubleTransferHelper>(id, args);
   await instance.deployTransaction.wait();
   if (verify) {
-    await verifyContract(instance.address, args);
+    await verifyContract(id, instance, args);
+  }
+  return instance;
+};
+
+export const deploySelfDestruct = async () => {
+  const id = eContractid.MockSelfDestruct;
+  const instance = await deployContract<SelfdestructTransfer>(id, []);
+  await instance.deployTransaction.wait();
+  return instance;
+};
+
+export const deployAaveEcosystemReserve = async (verify?: boolean) => {
+  const id = eContractid.AaveEcosystemReserve;
+  const args: string[] = [];
+  const instance = await deployContract<AaveEcosystemReserve>(id, args);
+  if (verify) {
+    verifyContract(id, instance, args);
   }
   return instance;
 };
@@ -355,23 +372,6 @@ export const getController = (address: tEthereumAddress) =>
     eContractid.IControllerAaveEcosystemReserve,
     address
   );
-
-export const deploySelfDestruct = async () => {
-  const id = eContractid.MockSelfDestruct;
-  const instance = await deployContract<SelfdestructTransfer>(id, []);
-  await instance.deployTransaction.wait();
-  return instance;
-};
-
-export const deployAaveEcosystemReserve = async (verify?: boolean) => {
-  const id = eContractid.AaveEcosystemReserve;
-  const args: string[] = [];
-  const instance = await deployContract<AaveEcosystemReserve>(id, args);
-  if (verify) {
-    verifyContract(instance.address, args);
-  }
-  return instance;
-};
 
 export const getAaveEcosystemReserve = (address: tEthereumAddress) =>
   getContract<AaveEcosystemReserve>(eContractid.AaveEcosystemReserve, address);

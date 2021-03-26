@@ -1,5 +1,5 @@
 import { task } from 'hardhat/config';
-import { verifyContract, checkVerification } from '../../helpers/etherscan-verification';
+import { checkVerification, verifyEtherscanContract } from '../../helpers/etherscan-verification';
 
 interface VerifyParams {
   contractName: string;
@@ -8,7 +8,7 @@ interface VerifyParams {
   libraries: string;
 }
 
-task('verify-sc', 'Inits the DRE, to have access to all the plugins')
+task('verify-sc', 'Verify contract at Etherscan')
   .addParam('address', 'Ethereum address of the smart contract')
   .addOptionalParam(
     'libraries',
@@ -24,6 +24,6 @@ task('verify-sc', 'Inits the DRE, to have access to all the plugins')
 
     checkVerification();
 
-    const result = await verifyContract(address, constructorArguments, libraries);
+    const result = await verifyEtherscanContract(address, constructorArguments, libraries);
     return result;
   });
