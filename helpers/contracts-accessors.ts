@@ -347,9 +347,8 @@ export const getStakedTokenV3 = async (address?: tEthereumAddress) => {
   );
 };
 
-export const getAaveIncentivesController = getContractFactory<AaveIncentivesController>(
-  eContractid.AaveIncentivesController
-);
+export const getAaveIncentivesController = async (address: tEthereumAddress) =>
+  await getContract<AaveIncentivesController>(eContractid.AaveIncentivesController, address);
 
 export const getIErc20Detailed = getContractFactory<Ierc20Detailed>(eContractid.IERC20Detailed);
 
@@ -373,5 +372,11 @@ export const getController = (address: tEthereumAddress) =>
     address
   );
 
-export const getAaveEcosystemReserve = (address: tEthereumAddress) =>
-  getContract<AaveEcosystemReserve>(eContractid.AaveEcosystemReserve, address);
+export const getAaveEcosystemReserve = async (address: tEthereumAddress) =>
+  await getContract<AaveEcosystemReserve>(eContractid.AaveEcosystemReserve, address);
+
+export const getInitializableAdminUpgradeabilityProxy = async (address: tEthereumAddress) =>
+  await getContract<InitializableAdminUpgradeabilityProxy>(
+    eContractid.InitializableAdminUpgradeabilityProxy,
+    address
+  );
