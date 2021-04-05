@@ -34,6 +34,7 @@ export interface TestEnv {
   stakedAaveV2: StakedAaveV2;
   rewardsVault: SignerWithAddress;
   deployer: SignerWithAddress;
+  rewardsAdmin: SignerWithAddress;
   users: SignerWithAddress[];
   aaveToken: MintableErc20;
   aaveIncentivesController: AaveIncentivesController;
@@ -51,6 +52,7 @@ const setBuidlerevmSnapshotId = (id: string) => {
 
 const testEnv: TestEnv = {
   deployer: {} as SignerWithAddress,
+  rewardsAdmin: {} as SignerWithAddress,
   users: [] as SignerWithAddress[],
   aaveToken: {} as MintableErc20,
   stakedAave: {} as StakedAave,
@@ -72,6 +74,11 @@ export async function initializeMakeSuite() {
     signer: _rewardsVault,
   };
 
+  const rewardsAdmin: SignerWithAddress = {
+    address: await restSigners[1].getAddress(),
+    signer: restSigners[1],
+  };
+
   for (const signer of restSigners) {
     testEnv.users.push({
       signer,
@@ -79,6 +86,7 @@ export async function initializeMakeSuite() {
     });
   }
   testEnv.deployer = deployer;
+  testEnv.rewardsAdmin = rewardsAdmin;
   testEnv.rewardsVault = rewardsVault;
   testEnv.stakedAave = await getStakedAave();
   testEnv.stakedAaveV2 = await getStakedAaveV2();

@@ -50,7 +50,7 @@ contract AaveIncentivesController is
   }
 
   function _onBehalfWhitelisted(address user, address caller) internal {
-    require(user != address(0) || caller != address(0), 'USER_OR_CALLER_NOT_ZERO_ADDRESS');
+    require(user != address(0) && caller != address(0), 'USER_OR_CALLER_NOT_ZERO_ADDRESS');
     require(_allowClaimOnBehalf[user] == caller, 'CALLER_NOT_ALLOWED_TO_CLAIM_ON_BEHALF');
   }
 
@@ -216,7 +216,7 @@ contract AaveIncentivesController is
 
     uint256 amountToClaim = amount > unclaimedRewards ? unclaimedRewards : amount;
     _usersUnclaimedRewards[user] = unclaimedRewards - amountToClaim; // Safe due to the previous line
-    amountToClaim = amountToClaim.add(amountToClaim.mul(EXTRA_PSM_REWARD).div(100));
+
     PSM.stake(to, amountToClaim);
     emit RewardsClaimed(user, to, amountToClaim);
 

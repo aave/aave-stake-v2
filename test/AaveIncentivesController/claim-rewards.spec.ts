@@ -211,9 +211,6 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         );
       }
 
-      expectedClaimedAmount = expectedClaimedAmount.add(
-        expectedClaimedAmount.mul(PSM_STAKER_PREMIUM).div('100')
-      );
       expect(claimedAmount.toString()).to.be.equal(
         expectedClaimedAmount.toString(),
         'claimed amount are wrong'
