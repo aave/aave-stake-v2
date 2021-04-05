@@ -37,13 +37,21 @@ contract AaveIncentivesController is
 
   uint256 constant REWARDS_ADMIN_ROLE = 4;
 
+  mapping(address => address) internal _allowClaimOnBehalf;
+
   event RewardsAccrued(address indexed user, uint256 amount);
   event RewardsClaimed(address indexed user, address indexed to, uint256 amount);
   event RewardsVaultUpdate(address indexed vault);
+  event RewardsClaimedOnBehalf(address indexed user, address indexed claimer);
 
   modifier onlyRewardsAdmin {
     require(msg.sender == getAdmin(REWARDS_ADMIN_ROLE), 'CALLER_NOT_REWARDS_ADMIN');
     _;
+  }
+
+  function _onBehalfWhitelisted(address user, address caller) internal {
+    require(user != address(0) || caller != address(0), 'USER_OR_CALLER_NOT_ZERO_ADDRESS');
+    require(_allowClaimOnBehalf[user] == caller, 'CALLER_NOT_ALLOWED_TO_CLAIM_ON_BEHALF');
   }
 
   constructor(
@@ -129,19 +137,63 @@ contract AaveIncentivesController is
    * @dev Claims reward for an user, on all the assets of the lending pool, accumulating the pending rewards
    * @param amount Amount of rewards to claim
    * @param to Address that will be receiving the rewards
-   * @param stake Boolean flag to determined if the claimed rewards should be staked in the Safety Module or not
    * @return Rewards claimed
    **/
   function claimRewards(
     address[] calldata assets,
     uint256 amount,
-    address to,
-    bool stake
+    address to
   ) external override returns (uint256) {
+    return _claimRewards(assets, amount, msg.sender, to);
+  }
+
+  /**
+   * @dev Claims reward for an user on behalf, on all the assets of the lending pool, accumulating the pending rewards. The caller must
+   * be whitelisted via "allowClaimOnBehalf" function by the RewardsAdmin role manager
+   * @param amount Amount of rewards to claim
+   * @param from Address to check and claim rewards
+   * @param to Address that will be receiving the rewards
+   * @return Rewards claimed
+   **/
+  function claimRewardsOnBehalf(
+    address[] calldata assets,
+    uint256 amount,
+    address from,
+    address to
+  ) external override returns (uint256) {
+    _onBehalfWhitelisted(from, msg.sender);
+    emit RewardsClaimedOnBehalf(from, msg.sender);
+    return _claimRewards(assets, amount, from, to);
+  }
+
+  function allowClaimOnBehalf(address user, address caller) external override onlyRewardsAdmin {
+    _setAllowClaimOnBehalf(user, caller);
+  }
+
+  function _setAllowClaimOnBehalf(address user, address caller) internal {
+    _allowClaimOnBehalf[user] = caller;
+  }
+
+  function getAllowedToClaimOnBehalf(address user) external view override returns (address) {
+    return _allowClaimOnBehalf[user];
+  }
+
+  /**
+   * @dev Claims reward for an user on behalf, on all the assets of the lending pool, accumulating the pending rewards.
+   * @param amount Amount of rewards to claim
+   * @param user Address to check and claim rewards
+   * @param to Address that will be receiving the rewards
+   * @return Rewards claimed
+   **/
+  function _claimRewards(
+    address[] calldata assets,
+    uint256 amount,
+    address user,
+    address to
+  ) internal returns (uint256) {
     if (amount == 0) {
       return 0;
     }
-    address user = msg.sender;
     uint256 unclaimedRewards = _usersUnclaimedRewards[user];
 
     DistributionTypes.UserStakeInput[] memory userState =
@@ -164,15 +216,9 @@ contract AaveIncentivesController is
 
     uint256 amountToClaim = amount > unclaimedRewards ? unclaimedRewards : amount;
     _usersUnclaimedRewards[user] = unclaimedRewards - amountToClaim; // Safe due to the previous line
-
-    if (stake) {
-      amountToClaim = amountToClaim.add(amountToClaim.mul(EXTRA_PSM_REWARD).div(100));
-      REWARD_TOKEN.transferFrom(_rewardsVault, address(this), amountToClaim);
-      PSM.stake(to, amountToClaim);
-    } else {
-      REWARD_TOKEN.transferFrom(_rewardsVault, to, amountToClaim);
-    }
-    emit RewardsClaimed(msg.sender, to, amountToClaim);
+    amountToClaim = amountToClaim.add(amountToClaim.mul(EXTRA_PSM_REWARD).div(100));
+    PSM.stake(to, amountToClaim);
+    emit RewardsClaimed(user, to, amountToClaim);
 
     return amountToClaim;
   }

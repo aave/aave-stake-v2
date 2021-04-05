@@ -347,8 +347,13 @@ export const getStakedTokenV3 = async (address?: tEthereumAddress) => {
   );
 };
 
-export const getAaveIncentivesController = async (address: tEthereumAddress) =>
-  await getContract<AaveIncentivesController>(eContractid.AaveIncentivesController, address);
+export const getAaveIncentivesController = async (address?: tEthereumAddress) =>
+  await getContract<AaveIncentivesController>(
+    eContractid.AaveIncentivesController,
+    address ||
+      (await getDb().get(`${eContractid.AaveIncentivesController}.${DRE.network.name}`).value())
+        .address
+  );
 
 export const getIErc20Detailed = getContractFactory<Ierc20Detailed>(eContractid.IERC20Detailed);
 

@@ -22,7 +22,7 @@ const buildTestEnv = async (deployer: Signer, vaultOfRewards: Signer, restWallet
 
   const aaveToken = await deployMintableErc20(['Aave', 'aave', 18]);
 
-  await waitForTx(await aaveToken.connect(vaultOfRewards).mint(ethers.utils.parseEther('1000000')));
+  await waitForTx(await aaveToken.connect(vaultOfRewards).mint(ethers.utils.parseEther('2000000')));
   await topUpWalletsWithAave(
     [
       restWallets[0],
@@ -43,6 +43,12 @@ const buildTestEnv = async (deployer: Signer, vaultOfRewards: Signer, restWallet
     deployer,
     vaultOfRewards,
     restWallets
+  );
+
+  await waitForTx(
+    await aaveToken
+      .connect(vaultOfRewards)
+      .transfer(aaveIncentivesControllerProxy.address, ethers.utils.parseEther('1000000'))
   );
 
   await deployATokenMock(aaveIncentivesControllerProxy.address, 'aDai');

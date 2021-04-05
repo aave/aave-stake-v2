@@ -17,7 +17,17 @@ interface IAaveIncentivesController {
   function claimRewards(
     address[] calldata assets,
     uint256 amount,
-    address to,
-    bool stake
+    address to
   ) external returns (uint256);
+
+  function claimRewardsOnBehalf(
+    address[] calldata assets,
+    uint256 amount,
+    address from,
+    address to
+  ) external returns (uint256);
+
+  function allowClaimOnBehalf(address user, address caller) external;
+
+  function getAllowedToClaimOnBehalf(address user) external view returns (address);
 }

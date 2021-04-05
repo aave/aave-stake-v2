@@ -40,19 +40,16 @@ const getRewardsBalanceScenarios: ScenarioAction[] = [
     caseName: 'Should allow -1',
     emissionPerSecond: '2432424',
     amountToClaim: MAX_UINT_AMOUNT,
-    toStake: false,
   },
   {
     caseName: 'Should add extra premium on withdrawal to stake',
     emissionPerSecond: '1200',
     amountToClaim: '1034',
-    toStake: true,
   },
   {
     caseName: 'Should withdraw everything if amountToClaim more then rewards balance',
     emissionPerSecond: '100',
     amountToClaim: '1034',
-    toStake: true,
   },
   {
     caseName: 'Should withdraw to another user',
@@ -65,7 +62,6 @@ const getRewardsBalanceScenarios: ScenarioAction[] = [
     emissionPerSecond: '100',
     amountToClaim: '1034',
     to: RANDOM_ADDRESSES[5],
-    toStake: true,
   },
 ];
 
@@ -74,7 +70,6 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
     caseName,
     amountToClaim: _amountToClaim,
     to,
-    toStake,
     emissionPerSecond,
   } of getRewardsBalanceScenarios) {
     let amountToClaim = _amountToClaim;
@@ -98,9 +93,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
 
       const destinationAddress = to || userAddress;
 
-      const destinationAddressBalanceBefore = await (toStake ? stakedAave : aaveToken).balanceOf(
-        destinationAddress
-      );
+      const destinationAddressBalanceBefore = await stakedAave.balanceOf(destinationAddress);
       await aDaiMock.setUserBalanceAndSupply(stakedByUser, totalStaked);
       const unclaimedRewardsBefore = await aaveIncentivesController.getUserUnclaimedRewards(
         userAddress
@@ -118,8 +111,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         await aaveIncentivesController.claimRewards(
           [underlyingAsset],
           amountToClaim,
-          destinationAddress,
-          toStake || false
+          destinationAddress
         )
       );
       const eventsEmitted = claimRewardsReceipt.events || [];
@@ -138,9 +130,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         userAddress
       );
 
-      const destinationAddressBalanceAfter = await (toStake ? stakedAave : aaveToken).balanceOf(
-        destinationAddress
-      );
+      const destinationAddressBalanceAfter = await stakedAave.balanceOf(destinationAddress);
 
       const claimedAmount = destinationAddressBalanceAfter.sub(destinationAddressBalanceBefore);
 
@@ -221,11 +211,9 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         );
       }
 
-      if (toStake) {
-        expectedClaimedAmount = expectedClaimedAmount.add(
-          expectedClaimedAmount.mul(PSM_STAKER_PREMIUM).div('100')
-        );
-      }
+      expectedClaimedAmount = expectedClaimedAmount.add(
+        expectedClaimedAmount.mul(PSM_STAKER_PREMIUM).div('100')
+      );
       expect(claimedAmount.toString()).to.be.equal(
         expectedClaimedAmount.toString(),
         'claimed amount are wrong'
