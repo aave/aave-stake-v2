@@ -30,7 +30,7 @@ task('configure-asset', 'Deployment in for Main, Kovan and Ropsten networks')
         return {
           underlyingAsset,
           emissionPerSecond,
-          totalStaked: await miniERC20.totalSupply(),
+          totalStaked: (await miniERC20.totalSupply()).toString(),
         };
       })
     );
