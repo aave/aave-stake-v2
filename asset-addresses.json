@@ -1,0 +1,167 @@
+{
+  "matic": [
+    {
+      "aTokenAddress": "0x27F8D03b3a2196956ED754baDc28D73be8830A6e",
+      "aTokenSymbol": "amDAI",
+      "stableDebtTokenAddress": "0x2238101B7014C279aaF6b408A284E49cDBd5DB55",
+      "variableDebtTokenAddress": "0x75c4d1Fb84429023170086f06E682DcbBF537b7d",
+      "symbol": "DAI",
+      "address": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+      "decimals": 18
+    },
+    {
+      "aTokenAddress": "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F",
+      "aTokenSymbol": "amUSDC",
+      "stableDebtTokenAddress": "0xdeb05676dB0DB85cecafE8933c903466Bf20C572",
+      "variableDebtTokenAddress": "0x248960A9d75EdFa3de94F7193eae3161Eb349a12",
+      "symbol": "USDC",
+      "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      "decimals": 6
+    },
+    {
+      "aTokenAddress": "0x60D55F02A771d515e077c9C2403a1ef324885CeC",
+      "aTokenSymbol": "amUSDT",
+      "stableDebtTokenAddress": "0xe590cfca10e81FeD9B0e4496381f02256f5d2f61",
+      "variableDebtTokenAddress": "0x8038857FD47108A07d1f6Bf652ef1cBeC279A2f3",
+      "symbol": "USDT",
+      "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+      "decimals": 6
+    },
+    {
+      "aTokenAddress": "0x5c2ed810328349100A66B82b78a1791B101C9D61",
+      "aTokenSymbol": "amWBTC",
+      "stableDebtTokenAddress": "0x2551B15dB740dB8348bFaDFe06830210eC2c2F13",
+      "variableDebtTokenAddress": "0xF664F50631A6f0D72ecdaa0e49b0c019Fa72a8dC",
+      "symbol": "WBTC",
+      "address": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
+      "decimals": 8
+    },
+    {
+      "aTokenAddress": "0x28424507fefb6f7f8E9D3860F56504E4e5f5f390",
+      "aTokenSymbol": "amWETH",
+      "stableDebtTokenAddress": "0xc478cBbeB590C76b01ce658f8C4dda04f30e2C6f",
+      "variableDebtTokenAddress": "0xeDe17e9d79fc6f9fF9250D9EEfbdB88Cc18038b5",
+      "symbol": "WETH",
+      "address": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+      "decimals": 18
+    },
+    {
+      "aTokenAddress": "0x8dF3aad3a84da6b69A4DA8aeC3eA40d9091B2Ac4",
+      "aTokenSymbol": "amWMATIC",
+      "stableDebtTokenAddress": "0xb9A6E29fB540C5F1243ef643EB39b0AcbC2e68E3",
+      "variableDebtTokenAddress": "0x59e8E9100cbfCBCBAdf86b9279fa61526bBB8765",
+      "symbol": "WMATIC",
+      "address": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+      "decimals": 18
+    },
+    {
+      "aTokenAddress": "0x1d2a0E5EC8E5bBDCA5CB219e649B565d8e5c3360",
+      "aTokenSymbol": "amAAVE",
+      "stableDebtTokenAddress": "0x17912140e780B29Ba01381F088f21E8d75F954F9",
+      "variableDebtTokenAddress": "0x1c313e9d0d826662F5CE692134D938656F681350",
+      "symbol": "AAVE",
+      "address": "0xD6DF932A45C0f255f85145f286eA0b292B21C90B",
+      "decimals": 18
+    }
+  ],
+  "mumbai":  {
+    "incentivesController": "0xd3aC1EBa90c21D70464dDafd30E3Ff8941002929",
+    "incentives": [
+      {
+        "symbol": "WMATIC",
+        "type": "aToken",
+        "emissionPerSecond": "10000000000000"
+      },
+      {
+        "symbol": "WMATIC",
+        "type": "variableDebtToken",
+        "emissionPerSecond": "10000000000000"
+      },
+      {
+        "symbol": "DAI",
+        "type": "aToken",
+        "emissionPerSecond": "10000000000000"
+      },
+      {
+        "symbol": "DAI",
+        "type": "variableDebtToken",
+        "emissionPerSecond": "10000000000000"
+      },
+      {
+        "symbol": "USDC",
+        "type": "aToken",
+        "emissionPerSecond": "10000000000000"
+      },
+      {
+        "symbol": "USDC",
+        "type": "variableDebtToken",
+        "emissionPerSecond": "10000000000000"
+      }
+    ],
+    "assets": [
+      {
+        "aTokenAddress": "0x48D8BBB3FA1431a6775CabfaE5299468A787E6DD",
+        "aTokenSymbol": "amDAI",
+        "stableDebtTokenAddress": "0xC7C7eDA8233F6C999FF452F6bca9815fd96c934D",
+        "variableDebtTokenAddress": "0x9Bf72DcaD3e4388cDbBBaF8Bf40715AaD9bD2a1D",
+        "symbol": "DAI",
+        "address": "0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F",
+        "decimals": 18
+      },
+      {
+        "aTokenAddress": "0x6222a513DC4F2c2cD79902E70C9CFeeFd76162dE",
+        "aTokenSymbol": "amUSDC",
+        "stableDebtTokenAddress": "0xBcCa73e3838C66151995B202F29f749ee1d37c77",
+        "variableDebtTokenAddress": "0xe82f39Bff9D1d626c37A8744349b95BA41F4E05f",
+        "symbol": "USDC",
+        "address": "0x2058A9D7613eEE744279e3856Ef0eAda5FCbaA7e",
+        "decimals": 6
+      },
+      {
+        "aTokenAddress": "0x888e3D0e87c8fbD3D964a874ea061aDf395EBe6f",
+        "aTokenSymbol": "amUSDT",
+        "stableDebtTokenAddress": "0xc81B3F39D3EC3e64E5d02f83Cd5EeCdda45aa4E5",
+        "variableDebtTokenAddress": "0x65B8E3b5c03C0FF5Cff06ACb0f6Ec17A3C9a80Bf",
+        "symbol": "USDT",
+        "address": "0xBD21A10F619BE90d6066c941b04e340841F1F989",
+        "decimals": 6
+      },
+      {
+        "aTokenAddress": "0x49C2b17A945c186f12484B80BF9ED7446c56eC61",
+        "aTokenSymbol": "amWBTC",
+        "stableDebtTokenAddress": "0xaE248f72Af1Db5daBfF92cCa715af144b9de57A4",
+        "variableDebtTokenAddress": "0xd65Ae7913F3D87cF2C52f31E19565417569DAB03",
+        "symbol": "WBTC",
+        "address": "0x0d787a4a1548f673ed375445535a6c7A1EE56180",
+        "decimals": 8
+      },
+      {
+        "aTokenAddress": "0x2C93618884ff9925881F03dec05a8FBd02e10f4B",
+        "aTokenSymbol": "amWETH",
+        "stableDebtTokenAddress": "0xac9A2B8A2C65e299d2Fc6F98cf94391dE350b4B7",
+        "variableDebtTokenAddress": "0xea17AD413b0b89DdD19171bE47645c752D39870d",
+        "symbol": "WETH",
+        "address": "0x3C68CE8504087f89c640D02d133646d98e64ddd9",
+        "decimals": 18
+      },
+      {
+        "aTokenAddress": "0x2581e1df46Dc4C43A71AFac351190cba1dc7109D",
+        "aTokenSymbol": "amWMATIC",
+        "stableDebtTokenAddress": "0x29a2DEe9b8a1B2f0a0efC2d198c5AB6280b2A0CB",
+        "variableDebtTokenAddress": "0x98Ee6A00ca1cEDC80a4786B5DFA725A1f94f1dCb",
+        "symbol": "WMATIC",
+        "address": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",
+        "decimals": 18
+      },
+      {
+        "aTokenAddress": "0x028305302F63b1243a43A92Bc1F9627340A8a2D5",
+        "aTokenSymbol": "amAAVE",
+        "stableDebtTokenAddress": "0x0D9C6dc175F4A32Fe41cA920be2ceEF29Ed239DE",
+        "variableDebtTokenAddress": "0x09EB6e1e0E2B43E63f70777a0Fa68304C143020c",
+        "symbol": "AAVE",
+        "address": "0x341d1f30e77D3FBfbD43D17183E2acb9dF25574E",
+        "decimals": 18
+      }
+    ]
+  }
+}
