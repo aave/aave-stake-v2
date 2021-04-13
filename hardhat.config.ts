@@ -22,6 +22,7 @@ const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
 const MNEMONIC_PATH = "m/44'/60'/0'/0";
 const MNEMONIC = process.env.MNEMONIC || '';
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
+const MATIC_KEY = process.env.MATIC_KEY || '';
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
 const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
 const MATIC_FORK = process.env.MATIC_FORK === 'true';
@@ -53,7 +54,7 @@ let forkRpc = MAINNET_FORK
   : MATIC_FORK
   ? {
       blockNumber: FORKING_BLOCK,
-      url: 'https://rpc-aave-mainnet.maticvigil.com/v1/e616b9ddc7598ffae92629f8145614d55094c722',
+      url: `https://rpc-aave-mainnet.maticvigil.com/v1/${MATIC_KEY}`,
     }
   : undefined;
 

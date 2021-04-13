@@ -23,6 +23,7 @@
     "test-psi2": "npm run test test/__setup.spec.ts test/StakedAaveV2/*.spec.ts",
     "test-stk-aave-3": "hardhat test test/__setup.spec.ts test/StakedAaveV3/*.spec.ts",
     "test-bpt": "npm run compile:force:quiet && FORKING_BLOCK=11730175 MAINNET_FORK=true hardhat test test/StakedBPT/create-bpt-and-stakebpt.spec.ts",
+    "test-matic-incentives": "FORKING_BLOCK=13179002 MATIC_FORK=true hardhat test test/AaveIncentivesController/matic-fork-test/incentives-controler-fork-test.ts",
     "coverage": "SKIP_LOAD=true npx hardhat typechain && node --max_old_space_size=6144 node_modules/.bin/hardhat coverage",
     "dev:deployment": "hardhat dev-deployment",
     "ropsten:deployment": "npm run hardhat-ropsten -- common-deployment --verify",
@@ -84,7 +85,6 @@
     "David Racero <david.k@aave.com>"
   ],
   "license": "AGPL-3.0",
-  "dependencies": {},
   "keywords": [
     "aave",
     "stake",
