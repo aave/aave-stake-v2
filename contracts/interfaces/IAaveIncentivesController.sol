@@ -5,8 +5,8 @@ pragma experimental ABIEncoderV2;
 interface IAaveIncentivesController {
   function handleAction(
     address asset,
-    uint256 userBalance,
-    uint256 totalSupply
+    uint256 totalSupply,
+    uint256 userBalance
   ) external;
 
   function getRewardsBalance(address[] calldata assets, address user)
