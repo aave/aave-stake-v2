@@ -5,7 +5,13 @@ pragma experimental ABIEncoderV2;
 interface IAaveIncentivesController {
   
   event RewardsAccrued(address indexed user, uint256 amount);
-  
+
+  event RewardsClaimed(
+    address indexed user,
+    address indexed to,
+    uint256 amount
+  );
+
   event RewardsClaimed(
     address indexed user,
     address indexed to,
