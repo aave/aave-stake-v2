@@ -44,6 +44,8 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
   address internal _claimHelper;
 
+  uint public constant EXCHANGE_RATE_PRECISION = 1e18;
+
   mapping(uint256 => Snapshot) internal _exchangeRateSnapshots;
   uint256 internal _countExchangeRateSnapshots;
 
@@ -320,6 +322,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     require(amount <= maxSlashable, 'INVALID_SLASHING_AMOUNT');
 
     STAKED_TOKEN.safeTransfer(destination, amount);
+    // We transfer tokens first: this is the event updating the exchange Rate
     snapshotExchangeRate();
 
     emit Slashed(destination, amount);
@@ -331,6 +334,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    **/
   function donate(uint256 amount) external override {
     STAKED_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
+    // We transfer tokens first: this is the event updating the exchange Rate
     snapshotExchangeRate();
 
     emit Donated(msg.sender, amount);
@@ -396,10 +400,10 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint256 currentSupply = totalSupply();
 
     if (currentSupply == 0) {
-      return 1e18; //initial exchange rate is 1:1
+      return uint256(1).mul(EXCHANGE_RATE_PRECISION); //initial exchange rate is 1:1
     }
 
-    return STAKED_TOKEN.balanceOf(address(this)).mul(1e18).div(currentSupply);
+    return STAKED_TOKEN.balanceOf(address(this)).mul(EXCHANGE_RATE_PRECISION).div(currentSupply);
   }
 
   /**
