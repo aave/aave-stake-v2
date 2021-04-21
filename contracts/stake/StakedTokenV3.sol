@@ -372,16 +372,17 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   function snapshotExchangeRate() public {
     uint128 currentBlock = uint128(block.number);
     uint128 newExchangeRate = uint128(exchangeRate());
+    uint256 count = _countExchangeRateSnapshots;
 
     // Doing multiple operations in the same block
     if (
-      _countExchangeRateSnapshots != 0 &&
-      _exchangeRateSnapshots[_countExchangeRateSnapshots - 1].blockNumber == currentBlock
+      count != 0 &&
+      _exchangeRateSnapshots[count - 1].blockNumber == currentBlock
     ) {
-      _exchangeRateSnapshots[_countExchangeRateSnapshots - 1].value = newExchangeRate;
+      _exchangeRateSnapshots[count - 1].value = newExchangeRate;
     } else {
-      _exchangeRateSnapshots[_countExchangeRateSnapshots] = Snapshot(currentBlock, newExchangeRate);
-      _countExchangeRateSnapshots = _countExchangeRateSnapshots + 1;
+      _exchangeRateSnapshots[count] = Snapshot(currentBlock, newExchangeRate);
+      _countExchangeRateSnapshots++;
     }
     emit ExchangeRateSnapshotted(newExchangeRate);
   }
