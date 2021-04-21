@@ -73,7 +73,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   event MaxSlashablePercentageChanged(uint256 newPercentage);
   event Slashed(address indexed destination, uint256 amount);
   event Donated(address indexed sender, uint256 amount);
-  event EchangeRateSnapshotted(uint128 blockNumber, uint128 exchangeRate);
+  event ExchangeRateSnapshotted(uint128 exchangeRate);
   event CooldownPauseAdminChanged(address indexed newAdmin);
   event SlashingAdminChanged(address indexed newAdmin);
   event ClaimHelperChanged(address indexed newClaimHelper);
@@ -383,7 +383,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
       _exchangeRateSnapshots[_countExchangeRateSnapshots] = Snapshot(currentBlock, newExchangeRate);
       _countExchangeRateSnapshots = _countExchangeRateSnapshots + 1;
     }
-    emit EchangeRateSnapshotted(currentBlock, newExchangeRate);
+    emit ExchangeRateSnapshotted(newExchangeRate);
   }
 
   /**
