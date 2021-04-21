@@ -164,6 +164,8 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     _claimHelper = claimHelper;
 
     _maxSlashablePercentage = maxSlashablePercentage;
+
+    snapshotExchangeRate();
   }
 
   /**
@@ -376,16 +378,16 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   function snapshotExchangeRate() public {
     uint128 currentBlock = uint128(block.number);
     uint128 newExchangeRate = uint128(exchangeRate());
-    uint256 count = _countExchangeRateSnapshots;
+    uint256 snapshotsCount = _countExchangeRateSnapshots;
 
     // Doing multiple operations in the same block
     if (
-      count != 0 &&
-      _exchangeRateSnapshots[count - 1].blockNumber == currentBlock
+      snapshotsCount != 0 &&
+      _exchangeRateSnapshots[snapshotsCount - 1].blockNumber == currentBlock
     ) {
-      _exchangeRateSnapshots[count - 1].value = newExchangeRate;
+      _exchangeRateSnapshots[snapshotsCount - 1].value = newExchangeRate;
     } else {
-      _exchangeRateSnapshots[count] = Snapshot(currentBlock, newExchangeRate);
+      _exchangeRateSnapshots[snapshotsCount] = Snapshot(currentBlock, newExchangeRate);
       _countExchangeRateSnapshots++;
     }
     emit ExchangeRateSnapshotted(newExchangeRate);
@@ -588,13 +590,11 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   function _searchExchangeRateByBlockNumber(uint256 blockNumber) internal view returns (uint256) {
     require(blockNumber <= block.number, 'INVALID_BLOCK_NUMBER');
 
-    if (_countExchangeRateSnapshots == 0) {
-      return exchangeRate();
-    }
+    uint256 snapshotsCount =_countExchangeRateSnapshots;
 
     // First check most recent balance
-    if (_exchangeRateSnapshots[_countExchangeRateSnapshots - 1].blockNumber <= blockNumber) {
-      return _exchangeRateSnapshots[_countExchangeRateSnapshots - 1].value;
+    if (_exchangeRateSnapshots[snapshotsCount - 1].blockNumber <= blockNumber) {
+      return _exchangeRateSnapshots[snapshotsCount - 1].value;
     }
 
     // Next check implicit zero balance
@@ -603,7 +603,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     }
 
     uint256 lower = 0;
-    uint256 upper = _countExchangeRateSnapshots - 1;
+    uint256 upper = snapshotsCount - 1;
     while (upper > lower) {
       uint256 center = upper - (upper - lower) / 2; // ceil, avoiding overflow
       Snapshot memory snapshot = _exchangeRateSnapshots[center];
