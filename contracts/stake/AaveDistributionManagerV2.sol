@@ -15,7 +15,7 @@ contract AaveDistributionManagerV2 is AaveDistributionManager {
 
   uint256 internal _distributionEnd;
 
-  event DistributionEndUpdate(uint256 ditributionEnd, uint256 distributionDuration);
+  event DistributionEndUpdated(uint256 ditributionEnd);
 
   constructor(address emissionManager) AaveDistributionManager(emissionManager, 0) {}
 
@@ -24,20 +24,21 @@ contract AaveDistributionManagerV2 is AaveDistributionManager {
    * @return uint256 unix timestamp
    **/
   function getDistributionEnd() external view returns (uint256) {
-    return _getDistributionEnd();
+    return _distributionEnd;
   }
 
   /**
    * @dev Extends the end of the distribution in regards of current timestamp.
-   * @param distributionDuration The unix timestamp duration of the new distribution
+   * @param distributionEnd The unix timestamp of the next distribution end
    **/
-  function _extendDistribution(uint256 distributionDuration) internal {
-    _distributionEnd = block.timestamp.add(distributionDuration);
-    emit DistributionEndUpdate(_distributionEnd, distributionDuration);
+  function setDistributionEnd(uint256 distributionEnd) public onlyEmissionManager  {
+    _distributionEnd = distributionEnd;
+    emit DistributionEndUpdated(_distributionEnd);
   }
 
   /**
    * @dev Returns the timestamp of the end of the current distribution
+   * Used to replace the immutable in the parent class
    * @return uint256 unix timestamp
    **/
   function _getDistributionEnd() internal view override returns (uint256) {
