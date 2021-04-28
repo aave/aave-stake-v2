@@ -23,6 +23,7 @@
     "test-psi2": "npm run test test/__setup.spec.ts test/StakedAaveV2/*.spec.ts",
     "test-stk-aave-3": "hardhat test test/__setup.spec.ts test/StakedAaveV3/*.spec.ts",
     "test-bpt": "npm run compile:force:quiet && FORKING_BLOCK=11730175 MAINNET_FORK=true hardhat test test/StakedBPT/create-bpt-and-stakebpt.spec.ts",
+    "test-matic-incentives": "FORKING_BLOCK=13179002 MATIC_FORK=true hardhat test test/AaveIncentivesController/matic-fork-test/incentives-controler-fork-test.ts",
     "coverage": "SKIP_LOAD=true npx hardhat typechain && node --max_old_space_size=6144 node_modules/.bin/hardhat coverage",
     "dev:deployment": "hardhat dev-deployment",
     "ropsten:deployment": "npm run hardhat-ropsten -- common-deployment --verify",
@@ -44,6 +45,7 @@
     "@types/lowdb": "1.0.9",
     "@types/mocha": "7.0.2",
     "@types/node": "14.0.5",
+    "axios": "^0.21.1",
     "bignumber.js": "9.0.0",
     "chai": "4.2.0",
     "chai-bignumber": "3.0.0",
@@ -52,6 +54,7 @@
     "ethereumjs-util": "^7.0.7",
     "ethers": "^5.0.8",
     "hardhat": "^2.0.4",
+    "hardhat-gas-reporter": "^1.0.0",
     "hardhat-typechain": "^0.3.3",
     "husky": "^4.3.8",
     "lowdb": "1.0.0",
@@ -67,8 +70,7 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.3.0",
     "typechain": "^3.0.0",
-    "typescript": "^4.1.2",
-    "hardhat-gas-reporter": "^1.0.0"
+    "typescript": "^4.1.2"
   },
   "husky": {
     "hooks": {
@@ -83,7 +85,6 @@
     "David Racero <david.k@aave.com>"
   ],
   "license": "AGPL-3.0",
-  "dependencies": {},
   "keywords": [
     "aave",
     "stake",

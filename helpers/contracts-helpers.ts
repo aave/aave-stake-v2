@@ -5,6 +5,8 @@ import { eContractid, tEthereumAddress } from './types';
 import { Artifact } from 'hardhat/types';
 import { signTypedData_v4 } from 'eth-sig-util';
 import { fromRpcSig, ECDSASignature } from 'ethereumjs-util';
+import { usingPolygon, verifyAtPolygon } from './polygon-utils';
+import { verifyEtherscanContract } from './etherscan-verification';
 
 export const registerContractInJsonDb = async (contractId: string, contractInstance: Contract) => {
   const currentNetwork = DRE.network.name;
@@ -245,4 +247,17 @@ export const getSignatureFromTypedData = (
     data: typedData,
   });
   return fromRpcSig(signature);
+};
+
+export const verifyContract = async (
+  id: string,
+  instance: Contract,
+  args: (string | string[])[]
+) => {
+  if (usingPolygon()) {
+    await verifyAtPolygon(id, instance, args);
+  } else {
+    await verifyEtherscanContract(instance.address, args);
+  }
+  return instance;
 };

@@ -11,7 +11,7 @@ import {IAaveDistributionManager} from '../interfaces/IAaveDistributionManager.s
  * @notice Accounting contract to manage multiple staking distributions
  * @author Aave
  **/
-contract AaveDistributionManager is IAaveDistributionManager {
+contract AaveDistributionManager {
   using SafeMath for uint256;
 
   struct AssetData {
@@ -21,10 +21,10 @@ contract AaveDistributionManager is IAaveDistributionManager {
     mapping(address => uint256) users;
   }
 
-  uint256 internal immutable _oldDistributionEnd;
-
+  uint256 private immutable _distributionEnd;
+  
   address public immutable EMISSION_MANAGER;
-
+ 
   uint8 public constant PRECISION = 18;
 
   mapping(address => AssetData) public assets;
@@ -33,21 +33,23 @@ contract AaveDistributionManager is IAaveDistributionManager {
   event AssetIndexUpdated(address indexed asset, uint256 index);
   event UserIndexUpdated(address indexed user, address indexed asset, uint256 index);
 
-  constructor(address emissionManager, uint256 distributionDuration) public {
-    _oldDistributionEnd = block.timestamp.add(distributionDuration);
+  modifier onlyEmissionManager {
+    require(msg.sender == EMISSION_MANAGER, 'ONLY_EMISSION_MANAGER');
+    _;
+  }
+
+  constructor(address emissionManager, uint256 distributionEnd) public {
     EMISSION_MANAGER = emissionManager;
+    _distributionEnd = distributionEnd;
   }
 
   /**
    * @dev Configures the distribution of rewards for a list of assets
    * @param assetsConfigInput The list of configurations to apply
    **/
-  function configureAssets(DistributionTypes.AssetConfigInput[] calldata assetsConfigInput)
-    external
-    override
+  function _configureAssets(DistributionTypes.AssetConfigInput[] memory assetsConfigInput)
+    internal
   {
-    require(msg.sender == EMISSION_MANAGER, 'ONLY_EMISSION_MANAGER');
-
     for (uint256 i = 0; i < assetsConfigInput.length; i++) {
       AssetData storage assetConfig = assets[assetsConfigInput[i].underlyingAsset];
 
@@ -215,17 +217,18 @@ contract AaveDistributionManager is IAaveDistributionManager {
     uint128 lastUpdateTimestamp,
     uint256 totalBalance
   ) internal view returns (uint256) {
+    uint256 distributionEnd = _getDistributionEnd();
     if (
       emissionPerSecond == 0 ||
       totalBalance == 0 ||
       lastUpdateTimestamp == block.timestamp ||
-      lastUpdateTimestamp >= _getDistributionEnd()
+      lastUpdateTimestamp >= distributionEnd
     ) {
       return currentIndex;
     }
 
     uint256 currentTimestamp =
-      block.timestamp > _getDistributionEnd() ? _getDistributionEnd() : block.timestamp;
+      block.timestamp > distributionEnd ? distributionEnd : block.timestamp;
     uint256 timeDelta = currentTimestamp.sub(lastUpdateTimestamp);
     return
       emissionPerSecond.mul(timeDelta).mul(10**uint256(PRECISION)).div(totalBalance).add(
@@ -249,7 +252,7 @@ contract AaveDistributionManager is IAaveDistributionManager {
    * @return uint256 unix timestamp
    **/
   function _getDistributionEnd() internal view virtual returns (uint256) {
-    return _oldDistributionEnd;
+    return _distributionEnd;
   }
 
   /**
