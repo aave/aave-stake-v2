@@ -1,3 +1,6 @@
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Build pass](https://github.com/aave/aave-stake-v2/actions/workflows/node.js.yml/badge.svg)](https://github.com/aave/aave-stake-v2/actions/workflows/node.js.yml)
+
 # Aave Incentives contracts
 
 Sets of smart contracts to enable stake of Aave-related assets and rewards distribution based on them.
