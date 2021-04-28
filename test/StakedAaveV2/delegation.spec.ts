@@ -32,9 +32,11 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const zeroUser = await DRE.ethers.provider.getSigner(
       '0x0000000000000000000000000000000000000000'
     );
-    await user1.signer.sendTransaction({ to: ZERO_ADDRESS, value: parseEther('1') });
+    await waitForTx(
+      await user1.signer.sendTransaction({ to: ZERO_ADDRESS, value: parseEther('1') })
+    );
 
-    await stakedAaveV2.connect(zeroUser).delegateByType(user1.address, '0');
+    await waitForTx(await stakedAaveV2.connect(zeroUser).delegateByType(user1.address, '0'));
 
     const delegatee = await stakedAaveV2.getDelegateeByType(ZERO_ADDRESS, '0');
 
@@ -71,8 +73,10 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const aaveBalance = parseEther('1');
 
     // Stake
-    await aaveToken.connect(user.signer).approve(stakedAaveV2.address, aaveBalance);
-    await stakedAaveV2.connect(user.signer).stake(user.address, aaveBalance);
+    await waitForTx(
+      await aaveToken.connect(user.signer).approve(stakedAaveV2.address, aaveBalance)
+    );
+    await waitForTx(await stakedAaveV2.connect(user.signer).stake(user.address, aaveBalance));
 
     // Track current power
     const priorPowerUser = await stakedAaveV2.getPowerCurrent(user.address, '0');
@@ -96,8 +100,10 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const expectedStaked = parseEther('2');
 
     // Stake
-    await aaveToken.connect(user1.signer).approve(stakedAaveV2.address, aaveBalance);
-    await stakedAaveV2.connect(user1.signer).stake(user1.address, aaveBalance);
+    await waitForTx(
+      await aaveToken.connect(user1.signer).approve(stakedAaveV2.address, aaveBalance)
+    );
+    await waitForTx(await stakedAaveV2.connect(user1.signer).stake(user1.address, aaveBalance));
 
     const stkAaveBalanceAfterMigration = await stakedAaveV2.balanceOf(user1.address);
 
@@ -138,8 +144,10 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const expectedStkAaveBalanceAfterStake = parseEther('2');
 
     // Stake
-    await aaveToken.connect(user2.signer).approve(stakedAaveV2.address, aaveBalance);
-    await stakedAaveV2.connect(user2.signer).stake(user2.address, aaveBalance);
+    await waitForTx(
+      await aaveToken.connect(user2.signer).approve(stakedAaveV2.address, aaveBalance)
+    );
+    await waitForTx(await stakedAaveV2.connect(user2.signer).stake(user2.address, aaveBalance));
 
     const user2VotingPower = await stakedAaveV2.getPowerCurrent(user2.address, '0');
     const user2PropPower = await stakedAaveV2.getPowerCurrent(user2.address, '1');
@@ -162,8 +170,10 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const expectedStkAaveBalanceAfterStake = parseEther('2');
 
     // Stake
-    await aaveToken.connect(user3.signer).approve(stakedAaveV2.address, aaveBalance);
-    await stakedAaveV2.connect(user3.signer).stake(user3.address, aaveBalance);
+    await waitForTx(
+      await aaveToken.connect(user3.signer).approve(stakedAaveV2.address, aaveBalance)
+    );
+    await waitForTx(await stakedAaveV2.connect(user3.signer).stake(user3.address, aaveBalance));
 
     const user3VotingPower = await stakedAaveV2.getPowerCurrent(user3.address, '0');
     const user3PropPower = await stakedAaveV2.getPowerCurrent(user3.address, '1');
@@ -186,7 +196,7 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const expectedDelegatedVotingPower = parseEther('4');
     const expectedDelegatedPropPower = parseEther('6');
 
-    await stakedAaveV2.connect(user2.signer).delegate(user3.address);
+    await waitForTx(await stakedAaveV2.connect(user2.signer).delegate(user3.address));
 
     const user3VotingPower = await stakedAaveV2.getPowerCurrent(user3.address, '0');
     const user3PropPower = await stakedAaveV2.getPowerCurrent(user3.address, '1');
@@ -207,7 +217,7 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const user2 = users[2];
     const user3 = users[3];
 
-    await stakedAaveV2.connect(user1.signer).delegate(user1.address);
+    await waitForTx(await stakedAaveV2.connect(user1.signer).delegate(user1.address));
 
     const user2VotingPower = await stakedAaveV2.getPowerCurrent(user2.address, '0');
     const user2PropPower = await stakedAaveV2.getPowerCurrent(user2.address, '1');
@@ -377,7 +387,7 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
 
     const balance = await stakedAaveV2.balanceOf(user1.address);
 
-    await stakedAaveV2.connect(user1.signer).transfer(user1.address, balance);
+    await waitForTx(await stakedAaveV2.connect(user1.signer).transfer(user1.address, balance));
 
     const user1VotingPowerAfter = await stakedAaveV2.getPowerCurrent(user1.address, '0');
     const user1PropPowerAfter = await stakedAaveV2.getPowerCurrent(user1.address, '1');
@@ -540,7 +550,7 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
       stakedAaveV2,
     } = testEnv;
 
-    await stakedAaveV2.connect(user2.signer).delegate(user2.address);
+    await waitForTx(await stakedAaveV2.connect(user2.signer).delegate(user2.address));
 
     // Calculate expected powers
     const user4PropPower = await stakedAaveV2.getPowerCurrent(user4.address, '1');
@@ -936,8 +946,8 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     } = testEnv;
 
     // Reset delegations
-    await stakedAaveV2.connect(user1.signer).delegate(user1.address);
-    await stakedAaveV2.connect(receiver.signer).delegate(receiver.address);
+    await waitForTx(await stakedAaveV2.connect(user1.signer).delegate(user1.address));
+    await waitForTx(await stakedAaveV2.connect(receiver.signer).delegate(receiver.address));
 
     const user1PriorBalance = await stakedAaveV2.balanceOf(user1.address);
     const receiverPriorPower = await stakedAaveV2.getPowerCurrent(receiver.address, '0');
