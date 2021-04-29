@@ -106,11 +106,13 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     await waitForTx(
       await aaveToken.connect(user1.signer).approve(stakedAaveV2.address, aaveBalance)
     );
-    await waitForTx(await stakedAaveV2.connect(user1.signer).stake(user1.address, aaveBalance));
+    const tx = await waitForTx(
+      await stakedAaveV2.connect(user1.signer).stake(user1.address, aaveBalance)
+    );
 
     const stkAaveBalanceAfterMigration = await stakedAaveV2.balanceOf(user1.address);
 
-    firstActionBlockNumber = await getCurrentBlock();
+    firstActionBlockNumber = tx.blockNumber;
 
     const user1PropPower = await stakedAaveV2.getPowerCurrent(user1.address, '0');
     const user1VotingPower = await stakedAaveV2.getPowerCurrent(user1.address, '1');
@@ -518,6 +520,8 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
       .connect(user1.signer)
       .delegateByTypeBySig(user3.address, '1', nonce, expiration, v, r, s);
 
+    const awaitedTx = await waitForTx(tx);
+
     // Check tx success and DelegateChanged
     await expect(Promise.resolve(tx))
       .to.emit(stakedAaveV2, 'DelegateChanged')
@@ -544,7 +548,7 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     );
 
     // Save current block
-    secondActionBlockNumber = await getCurrentBlock();
+    secondActionBlockNumber = awaitedTx.blockNumber;
   });
 
   it('User 2 delegates all to User 4 via signature', async () => {
@@ -605,6 +609,8 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const tx = await stakedAaveV2
       .connect(user2.signer)
       .delegateBySig(user4.address, nonce, expiration, v, r, s);
+
+    await waitForTx(tx);
 
     // Check tx success and DelegateChanged for voting
     await expect(Promise.resolve(tx))
