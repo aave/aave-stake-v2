@@ -1,5 +1,6 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Build pass](https://github.com/aave/aave-stake-v2/actions/workflows/node.js.yml/badge.svg)](https://github.com/aave/aave-stake-v2/actions/workflows/node.js.yml)
+[![codecov](https://codecov.io/gh/aave/aave-stake-v2/branch/master/graph/badge.svg?token=0rtEtFEtgN)](https://codecov.io/gh/aave/aave-stake-v2)
 
 # Aave Incentives contracts
 
