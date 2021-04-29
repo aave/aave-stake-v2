@@ -5,6 +5,8 @@ import { WAD } from './constants';
 import { Wallet, ContractTransaction } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { iParamsPerNetwork, eEthereumNetwork, tEthereumAddress } from './types';
+import { getCurrentBlock } from './contracts-helpers';
+import { time } from 'console';
 
 export const toWad = (value: string | number) => new BigNumber(value).times(WAD).toFixed();
 
@@ -53,8 +55,15 @@ export const timeLatest = async () => {
   return new BigNumber(block.timestamp);
 };
 
-export const advanceBlock = async (timestamp: number) =>
-  await DRE.ethers.provider.send('evm_mine', [timestamp]);
+export const advanceBlock = async (timestamp?: number) => {
+  const priorBlock = await getCurrentBlock();
+  await DRE.ethers.provider.send('evm_mine', timestamp ? [timestamp] : []);
+  const nextBlock = await getCurrentBlock();
+  if (!timestamp && nextBlock == priorBlock) {
+    await advanceBlock();
+    return;
+  }
+};
 
 export const increaseTime = async (secondsToIncrease: number) =>
   await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
