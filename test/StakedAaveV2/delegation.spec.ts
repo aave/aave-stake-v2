@@ -46,7 +46,9 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
   it('User 1 tries to delegate voting power to user 2', async () => {
     const { users, stakedAaveV2 } = testEnv;
 
-    await stakedAaveV2.connect(users[1].signer).delegateByType(users[2].address, '0');
+    await waitForTx(
+      await stakedAaveV2.connect(users[1].signer).delegateByType(users[2].address, '0')
+    );
 
     const delegatee = await stakedAaveV2.getDelegateeByType(users[1].address, '0');
 
@@ -56,7 +58,9 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
   it('User 1 tries to delegate proposition power to user 3', async () => {
     const { users, stakedAaveV2 } = testEnv;
 
-    await stakedAaveV2.connect(users[1].signer).delegateByType(users[3].address, '1');
+    await waitForTx(
+      await stakedAaveV2.connect(users[1].signer).delegateByType(users[3].address, '1')
+    );
 
     const delegatee = await stakedAaveV2.getDelegateeByType(users[1].address, '1');
 
@@ -67,7 +71,6 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const {
       users: [, , , , , user],
       aaveToken,
-
       stakedAaveV2,
     } = testEnv;
     const aaveBalance = parseEther('1');
