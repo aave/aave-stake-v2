@@ -339,9 +339,13 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
 
     const currTime = await timeLatest();
 
-    await advanceBlock(currTime.toNumber() + 1);
+    const currentBlock4 = await getCurrentBlock();
+    console.log('priuor ', currentBlock4);
+
+    await advanceBlock();
 
     const currentBlock = await getCurrentBlock();
+    console.log('curr ', currentBlock);
 
     const votingPowerAtPreviousBlock = await stakedAaveV2.getPowerAtBlock(
       user1.address,

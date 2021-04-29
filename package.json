@@ -50,7 +50,7 @@
     "ethereum-waffle": "^3.2.1",
     "ethereumjs-util": "^7.0.7",
     "ethers": "^5.0.8",
-    "hardhat": "^2.0.4",
+    "hardhat": "^2.2.1",
     "hardhat-typechain": "^0.3.3",
     "husky": "^4.3.8",
     "lowdb": "1.0.0",
