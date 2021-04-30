@@ -402,7 +402,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint256 currentSupply = totalSupply();
 
     if (currentSupply == 0) {
-      return uint256(1).mul(EXCHANGE_RATE_PRECISION); //initial exchange rate is 1:1
+      return EXCHANGE_RATE_PRECISION; //initial exchange rate is 1:1
     }
 
     return STAKED_TOKEN.balanceOf(address(this)).mul(EXCHANGE_RATE_PRECISION).div(currentSupply);
