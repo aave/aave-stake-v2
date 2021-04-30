@@ -590,11 +590,11 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   function _searchExchangeRateByBlockNumber(uint256 blockNumber) internal view returns (uint256) {
     require(blockNumber <= block.number, 'INVALID_BLOCK_NUMBER');
 
-    uint256 snapshotsCount =_countExchangeRateSnapshots;
+    uint256 lastExchangeRateSnapshotIndex =_countExchangeRateSnapshots - 1;
 
     // First check most recent balance
-    if (_exchangeRateSnapshots[snapshotsCount - 1].blockNumber <= blockNumber) {
-      return _exchangeRateSnapshots[snapshotsCount - 1].value;
+    if (_exchangeRateSnapshots[lastExchangeRateSnapshotIndex].blockNumber <= blockNumber) {
+      return _exchangeRateSnapshots[lastExchangeRateSnapshotIndex].value;
     }
 
     // Next check implicit zero balance
@@ -603,7 +603,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     }
 
     uint256 lower = 0;
-    uint256 upper = snapshotsCount - 1;
+    uint256 upper = lastExchangeRateSnapshotIndex;
     while (upper > lower) {
       uint256 center = upper - (upper - lower) / 2; // ceil, avoiding overflow
       Snapshot memory snapshot = _exchangeRateSnapshots[center];
