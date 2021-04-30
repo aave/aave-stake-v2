@@ -458,7 +458,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     return (
       _searchByBlockNumber(snapshots, snapshotsCounts, user, blockNumber)
         .mul(_searchExchangeRateByBlockNumber(blockNumber))
-        .div(1e18)
+        .div(EXCHANGE_RATE_PRECISION)
     );
   }
 
@@ -482,7 +482,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
     return (
       _searchByBlockNumber(snapshots, snapshotsCounts, user, block.number).mul(exchangeRate()).div(
-        1e18
+        EXCHANGE_RATE_PRECISION
       )
     );
   }
@@ -599,7 +599,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
     // Next check implicit zero balance
     if (_exchangeRateSnapshots[0].blockNumber > blockNumber) {
-      return 1e18; //initial exchange rate is 1:1
+      return EXCHANGE_RATE_PRECISION; //initial exchange rate is 1:1
     }
 
     uint256 lower = 0;
