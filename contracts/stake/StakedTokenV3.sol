@@ -532,7 +532,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
     stakersCooldowns[to] = getNextCooldownTimestamp(0, amount, to, balanceOfUser);
 
-    uint256 sharesToMint = amount.mul(1e18).div(exchangeRate());
+    uint256 sharesToMint = amount.mul(EXCHANGE_RATE_PRECISION).div(exchangeRate());
     _mint(to, sharesToMint);
 
     if (pullFunds) {
@@ -570,7 +570,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
     _updateCurrentUnclaimedRewards(from, balanceOfFrom, true);
 
-    uint256 underlyingToRedeem = amountToRedeem.mul(exchangeRate()).div(1e18);
+    uint256 underlyingToRedeem = amountToRedeem.mul(exchangeRate()).div(EXCHANGE_RATE_PRECISION);
 
     _burn(from, amountToRedeem);
 
