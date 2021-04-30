@@ -12,6 +12,8 @@ interface IStakedTokenV3 is IStakedToken {
 
   function slash(address destination, uint256 amount) external;
 
+  function donate(uint256 amount) external;
+
   function getMaxSlashablePercentage() external view returns (uint256);
 
   function setMaxSlashablePercentage(uint256 percentage) external;
