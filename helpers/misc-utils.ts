@@ -56,7 +56,7 @@ export const timeLatest = async () => {
 };
 
 export const increaseTime = async (secondsToIncrease: number) => {
-  if (process.env.TENDERLY === 'true') {
+  if (DRE.network.name.includes('tenderly')) {
     await DRE.ethers.provider.send('evm_increaseTime', [`0x${secondsToIncrease.toString(16)}`]);
     return;
   }
@@ -75,8 +75,7 @@ export const advanceBlock = async (timestamp?: number) => {
 };
 
 export const increaseTimeAndMine = async (secondsToIncrease: number) => {
-  await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
-  await DRE.ethers.provider.send('evm_mine', []);
+  await increaseTime(secondsToIncrease);
 };
 
 export const impersonateAccountsHardhat = async (accounts: tEthereumAddress[]) => {
@@ -96,7 +95,7 @@ export const latestBlock = async () => DRE.ethers.provider.getBlockNumber();
 
 export const advanceBlockTo = async (target: number) => {
   const currentBlock = await latestBlock();
-  if (process.env.TENDERLY === 'true') {
+  if (DRE.network.name.includes('tenderly')) {
     const pendingBlocks = target - currentBlock - 1;
 
     const response = await DRE.ethers.provider.send('evm_increaseBlocks', [

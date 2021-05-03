@@ -181,7 +181,6 @@ describe('Proposal: Extend Staked Aave distribution', () => {
       longExecutor: AAVE_LONG_EXECUTOR,
       ipfsHash: IPFS_HASH,
     });
-    console.log('submited');
 
     // Mine block due flash loan voting protection
     await advanceBlockTo((await latestBlock()) + 1);
@@ -199,13 +198,9 @@ describe('Proposal: Extend Staked Aave distribution', () => {
   });
 
   it('Proposal should be queued', async () => {
-    const proposalState1 = await gov.getProposalState(proposalId);
-    console.log('wat', proposalState1);
-
     // Queue and advance block to Execution phase
     try {
       await (await gov.queue(proposalId, { gasLimit: 3000000 })).wait();
-      console.log('queued');
     } catch (error) {
       logError();
       throw error;
@@ -221,7 +216,6 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     // Execute payload
     try {
       await (await gov.execute(proposalId, { gasLimit: 3000000 })).wait();
-      console.log('executed');
     } catch (error) {
       logError();
       throw error;
@@ -236,23 +230,29 @@ describe('Proposal: Extend Staked Aave distribution', () => {
   it('Users should be able to stake AAVE', async () => {
     const amount = parseEther('1');
     await waitForTx(await aave.connect(proposer).approve(aaveStakeV2.address, amount));
-    await expect(aaveStakeV2.stake(proposer.address, amount)).to.be.ok;
+    await expect(aaveStakeV2.connect(proposer).stake(proposer.address, amount)).to.emit(
+      aaveStakeV2,
+      'Staked'
+    );
   });
 
   it('Users should be able to claim stkAave', async () => {
-    const staker = proposer;
+    const amount = parseEther('1');
+    await increaseTimeAndMine(48600);
 
-    await aaveStakeV2.cooldown();
-    const startedCooldownAt = BigNumber.from(
-      (await aaveStakeV2.stakersCooldowns(staker.address)).toString()
-    );
-    const COOLDOWN_SECONDS = await aaveStakeV2.COOLDOWN_SECONDS();
-    const currentTime = await timeLatest();
+    try {
+      await waitForTx(await aaveStakeV2.cooldown({ gasLimit: 3000000 }));
 
-    const remainingCooldown = startedCooldownAt.add(COOLDOWN_SECONDS).sub(currentTime.toString());
+      const COOLDOWN_SECONDS = await aaveStakeV2.COOLDOWN_SECONDS();
+      await increaseTimeAndMine(Number(COOLDOWN_SECONDS.toString()));
 
-    await increaseTimeAndMine(remainingCooldown.add(1).toNumber());
-    await expect(aaveStakeV2.redeem(staker.address, MAX_UINT_AMOUNT)).to.be.ok;
+      expect(
+        aaveStakeV2.connect(proposer).redeem(proposer.address, amount, { gasLimit: 3000000 })
+      ).to.emit(aaveStakeV2, 'Redeem');
+    } catch (error) {
+      logError();
+      throw error;
+    }
   });
   it('Staked Aave Distribution end should be extended', async () => {
     const implDistributionEnd = await stakedAaveV2Revision3Implementation.DISTRIBUTION_END();
@@ -265,6 +265,7 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     const revisionProxy = await aaveStakeV2.REVISION();
 
     expect(revisionImpl).to.be.eq(revisionProxy, 'DISTRIBUTION_END SHOULD MATCH');
+    expect(revisionProxy).to.be.eq('3', 'DISTRIBUTION_END SHOULD MATCH');
   });
   it('Users should be able to deposit DAI at Lending Pool', async () => {
     // Deposit DAI to LendingPool
