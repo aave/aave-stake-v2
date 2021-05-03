@@ -1,14 +1,15 @@
-import { HardhatUserConfig } from 'hardhat/config';
 import { eEthereumNetwork } from './helpers/types';
 // @ts-ignore
 import { accounts } from './test-wallets';
+import path from 'path';
+import fs from 'fs';
+import { HardhatUserConfig } from 'hardhat/types';
 
 import '@typechain/hardhat';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-etherscan';
-import path from 'path';
-import fs from 'fs';
+import '@tenderly/hardhat-tenderly';
 
 export const BUIDLEREVM_CHAIN_ID = 31337;
 
@@ -96,7 +97,13 @@ const config: HardhatUserConfig = {
   mocha: {
     timeout: 0,
   },
+  tenderly: {
+    project: process.env.TENDERLY_PROJECT || '',
+    username: process.env.TENDERLY_USERNAME || '',
+    forkNetwork: '3030', //Network id of the network we want to fork
+  },
   networks: {
+    tenderly: getCommonNetworkConfig(eEthereumNetwork.tenderly, 3030),
     kovan: getCommonNetworkConfig(eEthereumNetwork.kovan, 42),
     ropsten: getCommonNetworkConfig(eEthereumNetwork.ropsten, 3),
     main: getCommonNetworkConfig(eEthereumNetwork.main, 1),

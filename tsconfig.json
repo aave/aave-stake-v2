@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2019",
     "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
     "outDir": "dist",
+    "noImplicitAny": false,
     "resolveJsonModule": true
   },
-  "include": ["./tasks", "./test", "./test-fork"],
-  "files": ["hardhat.config.ts"]
+  "include": ["./tasks", "./test", "./test-fork", "./helpers", "./types"],
+  "files": ["hardhat.config.ts",    "node_modules/@hardhat/typechain/src/type-extensions.d.ts",
+  ]
 }

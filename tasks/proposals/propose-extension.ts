@@ -1,5 +1,9 @@
 import { task } from 'hardhat/config';
-import { IAaveGovernanceV2__factory } from '../../types';
+import {
+  IAaveGovernanceV2__factory,
+  StakedTokenV2Rev3,
+  StakedTokenV2Rev3__factory,
+} from '../../types';
 import { Signer } from 'ethers';
 import { getDefenderRelaySigner } from '../../helpers/defender-utils';
 import { DRE } from '../../helpers/misc-utils';
@@ -16,16 +20,19 @@ task('propose-extension', 'Create some proposals and votes')
       { aaveGovernance, longExecutor, defender, stkAaveProxy, stkAaveImpl },
       localBRE: any
     ) => {
-      await localBRE.run('set-DRE');
+      await localBRE.run('set-dre');
 
       let proposer: Signer;
-      [proposer] = await localBRE.ethers.getSigners();
+      [proposer] = await DRE.ethers.getSigners();
 
       if (defender) {
         const { signer } = await getDefenderRelaySigner();
         proposer = signer;
       }
-      const payload = '0x10';
+      const payload = StakedTokenV2Rev3__factory.connect(
+        stkAaveImpl,
+        proposer
+      ).interface.encodeFunctionData('initialize');
       const callData = DRE.ethers.utils.defaultAbiCoder.encode(
         ['address', 'bytes'],
         [stkAaveImpl, payload]

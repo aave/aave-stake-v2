@@ -55,6 +55,15 @@ export const timeLatest = async () => {
   return new BigNumber(block.timestamp);
 };
 
+export const increaseTime = async (secondsToIncrease: number) => {
+  if (process.env.TENDERLY === 'true') {
+    await DRE.ethers.provider.send('evm_increaseTime', [`0x${secondsToIncrease.toString(16)}`]);
+    return;
+  }
+  await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
+  await DRE.ethers.provider.send('evm_mine', []);
+};
+
 export const advanceBlock = async (timestamp?: number) => {
   const priorBlock = await getCurrentBlock();
   await DRE.ethers.provider.send('evm_mine', timestamp ? [timestamp] : []);
@@ -65,15 +74,16 @@ export const advanceBlock = async (timestamp?: number) => {
   }
 };
 
-export const increaseTime = async (secondsToIncrease: number) =>
-  await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
-
 export const increaseTimeAndMine = async (secondsToIncrease: number) => {
   await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
   await DRE.ethers.provider.send('evm_mine', []);
 };
 
 export const impersonateAccountsHardhat = async (accounts: tEthereumAddress[]) => {
+  if (DRE.network.name !== 'hardhat') {
+    return;
+  }
+
   for (const account of accounts) {
     await DRE.network.provider.request({
       method: 'hardhat_impersonateAccount',

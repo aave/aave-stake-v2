@@ -2,7 +2,7 @@ import { tEthereumAddress } from '../helpers/types';
 import {
   AaveProtocolDataProvider__factory,
   AToken__factory,
-  IERC20__factory,
+  Erc20__factory,
   ILendingPoolAddressesProvider__factory,
 } from '../types';
 import { expect } from 'chai';
@@ -10,7 +10,7 @@ import { parseUnits } from 'ethers/lib/utils';
 import { MAX_UINT_AMOUNT } from '../helpers/constants';
 import { DRE } from '../helpers/misc-utils';
 import { ILendingPool } from '../types/ILendingPool';
-import { Signer } from 'ethers/lib/ethers';
+import { Signer } from 'ethers';
 
 export const spendList: {
   [key: string]: { holder: string; transfer: string; deposit: string; decimals: string };
@@ -80,22 +80,19 @@ export const getReserveConfigs = async (
 export const fullCycleLendingPool = async (
   symbol: string,
   tokenAddress: string,
-  proposer: SignerWithAddress,
+  proposer: Signer,
   pool: ILendingPool
 ) => {
   const { aTokenAddress, variableDebtTokenAddress } = await pool.getReserveData(tokenAddress);
-  const reserve = IERC20__factory.connect(tokenAddress, proposer);
+  const reserve = Erc20__factory.connect(tokenAddress, proposer);
   const aToken = AToken__factory.connect(aTokenAddress, proposer);
   const holderSigner = DRE.ethers.provider.getSigner(spendList[symbol].holder);
-
+  const proposerAddress = await proposer.getAddress();
   // Transfer assets to proposer from reserve holder
   await (
     await reserve
       .connect(holderSigner)
-      .transfer(
-        proposer.address,
-        parseUnits(spendList[symbol].transfer, spendList[symbol].decimals)
-      )
+      .transfer(proposerAddress, parseUnits(spendList[symbol].transfer, spendList[symbol].decimals))
   ).wait();
 
   // Amounts
@@ -106,29 +103,29 @@ export const fullCycleLendingPool = async (
   await (await reserve.connect(proposer).approve(pool.address, depositAmount)).wait();
   const tx1 = await pool
     .connect(proposer)
-    .deposit(reserve.address, depositAmount, proposer.address, 0);
+    .deposit(reserve.address, depositAmount, proposerAddress, 0);
   await tx1.wait();
   expect(tx1).to.emit(pool, 'Deposit');
 
   // Request loan to LendingPool
-  const tx2 = await pool.borrow(reserve.address, borrowAmount, '2', '0', proposer.address);
+  const tx2 = await pool.borrow(reserve.address, borrowAmount, '2', '0', proposerAddress);
   await tx2.wait();
   expect(tx2).to.emit(pool, 'Borrow');
 
   // Repay variable loan to LendingPool
   await (await reserve.connect(proposer).approve(pool.address, MAX_UINT_AMOUNT)).wait();
-  const tx3 = await pool.repay(reserve.address, MAX_UINT_AMOUNT, '2', proposer.address);
+  const tx3 = await pool.repay(reserve.address, MAX_UINT_AMOUNT, '2', proposerAddress);
   await tx3.wait();
   expect(tx3).to.emit(pool, 'Repay');
 
   // Withdraw from LendingPool
-  const priorBalance = await reserve.balanceOf(proposer.address);
+  const priorBalance = await reserve.balanceOf(proposerAddress);
   await (await aToken.connect(proposer).approve(pool.address, MAX_UINT_AMOUNT)).wait();
-  const tx4 = await pool.withdraw(reserve.address, MAX_UINT_AMOUNT, proposer.address);
+  const tx4 = await pool.withdraw(reserve.address, MAX_UINT_AMOUNT, proposerAddress);
   await tx4.wait();
   expect(tx4).to.emit(pool, 'Withdraw');
 
-  const afterBalance = await reserve.balanceOf(proposer.address);
-  expect(await aToken.balanceOf(proposer.address)).to.be.eq('0');
+  const afterBalance = await reserve.balanceOf(proposerAddress);
+  expect(await aToken.balanceOf(proposerAddress)).to.be.eq('0');
   expect(afterBalance).to.be.gt(priorBalance);
 };

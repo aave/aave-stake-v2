@@ -6,6 +6,7 @@ export enum eEthereumNetwork {
   kovan = 'kovan',
   ropsten = 'ropsten',
   main = 'main',
+  tenderly = 'tenderly',
 }
 
 export enum eContractid {
