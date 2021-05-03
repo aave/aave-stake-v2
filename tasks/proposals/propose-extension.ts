@@ -51,7 +51,7 @@ task('propose-extension', 'Create some proposals and votes')
           ['0'],
           [executeSignature],
           [callData],
-          [true],
+          [false],
           ipfsEncoded,
           { gasLimit: 3000000 }
         );
