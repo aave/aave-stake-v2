@@ -3,7 +3,7 @@ import { eEthereumNetwork } from './helpers/types';
 // @ts-ignore
 import { accounts } from './test-wallets';
 
-import 'hardhat-typechain';
+import '@typechain/hardhat';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-etherscan';
@@ -26,7 +26,7 @@ const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '11633164');
 
 // Prevent to load scripts before compilation and typechain
 if (!SKIP_LOAD) {
-  ['misc', 'migrations', 'deployments'].forEach((folder) => {
+  ['misc', 'migrations', 'deployments', 'proposals'].forEach((folder) => {
     const tasksPath = path.join(__dirname, 'tasks', folder);
     fs.readdirSync(tasksPath)
       .filter((pth) => pth.includes('.ts'))

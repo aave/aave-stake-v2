@@ -81,3 +81,31 @@ export const impersonateAccountsHardhat = async (accounts: tEthereumAddress[]) =
     });
   }
 };
+
+export const latestBlock = async () => DRE.ethers.provider.getBlockNumber();
+
+export const advanceBlockTo = async (target: number) => {
+  const currentBlock = await latestBlock();
+  if (process.env.TENDERLY === 'true') {
+    const pendingBlocks = target - currentBlock - 1;
+
+    const response = await DRE.ethers.provider.send('evm_increaseBlocks', [
+      `0x${pendingBlocks.toString(16)}`,
+    ]);
+
+    return;
+  }
+  const start = Date.now();
+  let notified;
+  if (target < currentBlock)
+    throw Error(`Target block #(${target}) is lower than current block #(${currentBlock})`);
+  // eslint-disable-next-line no-await-in-loop
+  while ((await latestBlock()) < target) {
+    if (!notified && Date.now() - start >= 5000) {
+      notified = true;
+      console.log("advanceBlockTo: Advancing too many blocks is causing this test to be slow.'");
+    }
+    // eslint-disable-next-line no-await-in-loop
+    await advanceBlock(0);
+  }
+};
