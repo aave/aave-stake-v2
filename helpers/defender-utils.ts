@@ -1,6 +1,7 @@
 import { formatEther } from '@ethersproject/units';
 import { DefenderRelaySigner, DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 import { Signer } from 'ethers';
+import { exit } from 'process';
 import { DRE, impersonateAccountsHardhat } from './misc-utils';
 
 export const getDefenderRelaySigner = async () => {
@@ -31,6 +32,5 @@ export const getDefenderRelaySigner = async () => {
     signer = await DRE.ethers.provider.getSigner(defenderAddress);
   }
   console.log('  - Balance: ', formatEther(await signer.getBalance()));
-
   return { signer, address: defenderAddress };
 };
