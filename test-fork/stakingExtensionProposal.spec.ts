@@ -227,7 +227,7 @@ describe('Proposal: Extend Staked Aave distribution', () => {
   });
 
   it('Users should be able to stake AAVE', async () => {
-    const amount = parseEther('1');
+    const amount = parseEther('10');
     await waitForTx(await aave.connect(proposer).approve(aaveStakeV2.address, amount));
     await expect(aaveStakeV2.connect(proposer).stake(proposer.address, amount)).to.emit(
       aaveStakeV2,
@@ -235,7 +235,7 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     );
   });
 
-  it('Users should be able to claim stkAave', async () => {
+  it('Users should be able to redeem stkAave', async () => {
     const amount = parseEther('1');
     await increaseTimeAndMine(48600);
 
@@ -253,8 +253,9 @@ describe('Proposal: Extend Staked Aave distribution', () => {
       throw error;
     }
   });
+
   it('Users should be able to stake Aave Pool BPT', async () => {
-    const amount = parseEther('1');
+    const amount = parseEther('10');
     await waitForTx(await aaveBpt.connect(proposer).approve(bptStakeV2.address, amount));
     await expect(bptStakeV2.connect(proposer).stake(proposer.address, amount)).to.emit(
       bptStakeV2,
@@ -262,7 +263,7 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     );
   });
 
-  it('Users should be able to claim AAVE via redeem stkBpt', async () => {
+  it('Users should be able to redeem AAVE via redeem stkBpt', async () => {
     const amount = parseEther('1');
     await increaseTimeAndMine(48600);
 
@@ -280,6 +281,18 @@ describe('Proposal: Extend Staked Aave distribution', () => {
       throw error;
     }
   });
+
+  it('Users should be able to transfer stkAave', async () => {
+    await expect(aaveStakeV2.transfer(whale._address, parseEther('1'))).emit(
+      aaveStakeV2,
+      'Transfer'
+    );
+  });
+
+  it('Users should be able to transfer stkBPT', async () => {
+    await expect(bptStakeV2.transfer(whale._address, parseEther('1'))).emit(bptStakeV2, 'Transfer');
+  });
+
   it('Staked Aave Distribution End should be extended', async () => {
     const implDistributionEnd = await stakedAaveV2Revision3Implementation.DISTRIBUTION_END();
     const proxyDistributionEnd = await aaveStakeV2.DISTRIBUTION_END();
