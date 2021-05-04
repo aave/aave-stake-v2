@@ -1,6 +1,7 @@
 import { task } from 'hardhat/config';
 import {
   IAaveGovernanceV2__factory,
+  StakedTokenBptRev2__factory,
   StakedTokenV2Rev3,
   StakedTokenV2Rev3__factory,
 } from '../../types';
@@ -12,12 +13,22 @@ import { logError } from '../../helpers/tenderly-utils';
 task('propose-extension', 'Create some proposals and votes')
   .addParam('stkAaveProxy')
   .addParam('stkAaveImpl')
+  .addParam('stkBptProxy')
+  .addParam('stkBptImpl')
   .addParam('aaveGovernance')
   .addParam('longExecutor')
   .addFlag('defender')
   .setAction(
     async (
-      { aaveGovernance, longExecutor, defender, stkAaveProxy, stkAaveImpl },
+      {
+        aaveGovernance,
+        longExecutor,
+        defender,
+        stkAaveProxy,
+        stkAaveImpl,
+        stkBptProxy,
+        stkBptImpl,
+      },
       localBRE: any
     ) => {
       await localBRE.run('set-dre');
@@ -29,15 +40,26 @@ task('propose-extension', 'Create some proposals and votes')
         const { signer } = await getDefenderRelaySigner();
         proposer = signer;
       }
-      const payload = StakedTokenV2Rev3__factory.connect(
+      // Calldata for StkAave implementation
+      const payloadStkAave = StakedTokenV2Rev3__factory.connect(
         stkAaveImpl,
         proposer
       ).interface.encodeFunctionData('initialize');
-      const callData = DRE.ethers.utils.defaultAbiCoder.encode(
+      const callDataStkAave = DRE.ethers.utils.defaultAbiCoder.encode(
         ['address', 'bytes'],
-        [stkAaveImpl, payload]
+        [stkAaveImpl, payloadStkAave]
       );
 
+      // Calldata for StkBpt implementation
+      // Empty arguments for initializer due they are not used
+      const payloadStkBpt = StakedTokenBptRev2__factory.connect(
+        stkBptImpl,
+        proposer
+      ).interface.encodeFunctionData('initialize', ['', '', '18']);
+      const callDataStkBpt = DRE.ethers.utils.defaultAbiCoder.encode(
+        ['address', 'bytes'],
+        [stkBptImpl, payloadStkBpt]
+      );
       const executeSignature = 'upgradeToAndCall(address,bytes)';
       const gov = await IAaveGovernanceV2__factory.connect(aaveGovernance, proposer);
 
@@ -47,11 +69,11 @@ task('propose-extension', 'Create some proposals and votes')
       try {
         const tx = await gov.create(
           longExecutor,
-          [stkAaveProxy],
-          ['0'],
-          [executeSignature],
-          [callData],
-          [false],
+          [stkAaveProxy, stkBptProxy],
+          ['0', '0'],
+          [executeSignature, executeSignature],
+          [callDataStkAave, callDataStkBpt],
+          [false, false],
           ipfsEncoded,
           { gasLimit: 3000000 }
         );

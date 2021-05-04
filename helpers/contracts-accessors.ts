@@ -21,7 +21,7 @@ import { DoubleTransferHelper } from '../types/DoubleTransferHelper';
 import { zeroAddress } from 'ethereumjs-util';
 import { ZERO_ADDRESS } from './constants';
 import { Signer } from 'ethers';
-import { StakedTokenV2Rev3 } from '../types';
+import { StakedTokenBptRev2, StakedTokenV2Rev3 } from '../types';
 
 export const deployStakedAave = async (
   [
@@ -192,6 +192,56 @@ export const deployStakedTokenV2Revision3 = async (
     governance,
   ];
   const instance = await deployContract<StakedTokenV2Rev3>(id, args, '', signer);
+  if (verify) {
+    await verifyContract(instance.address, args);
+  }
+  return instance;
+};
+
+export const deployStakedTokenBptRevision2 = async (
+  [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    string,
+    string,
+    tEthereumAddress
+  ],
+  verify?: boolean,
+  signer?: Signer
+) => {
+  const id = eContractid.StakedTokenBptRev2;
+  const args: string[] = [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ];
+  const instance = await deployContract<StakedTokenBptRev2>(id, args, '', signer);
   if (verify) {
     await verifyContract(instance.address, args);
   }

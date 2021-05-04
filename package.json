@@ -26,6 +26,7 @@
     "test-proposal": "MAINNET_FORK=true hardhat test ./test-fork/stakingExtensionProposal.spec.ts",
     "test-proposal:tenderly": "TENDERLY=true npm run hardhat:tenderly -- test ./test-fork/stakingExtensionProposal.spec.ts",
     "proposal-extend-stkaave:tenderly": "TENDERLY=true npm run hardhat:tenderly -- proposal-stk-aave-extension:tenderly",
+    "proposal-extend-stkaave:tenderly:defender": "TENDERLY=true npm run hardhat:tenderly -- proposal-stk-aave-extension:tenderly --defender",
     "coverage": "npm run compile && npx hardhat coverage --testfiles \"test/**/*.spec.ts\"",
     "dev:deployment": "hardhat dev-deployment",
     "ropsten:deployment": "npm run hardhat-ropsten -- common-deployment --verify",

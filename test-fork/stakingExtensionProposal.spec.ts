@@ -15,18 +15,18 @@ import { MAX_UINT_AMOUNT } from '../helpers/constants';
 import { IAaveGovernanceV2 } from '../types/IAaveGovernanceV2';
 import { ILendingPool } from '../types/ILendingPool';
 import {
-  AToken,
-  StakedTokenV2Rev3,
   StakedAaveV2,
   StakedAaveV2__factory,
   Erc20,
   SelfdestructTransfer__factory,
   Erc20__factory,
-  AToken__factory,
   IDelegationAwareToken__factory,
+  StakedTokenV2Rev3,
+  StakedTokenBptRev2,
+  StakedTokenV2Rev3__factory,
+  StakedTokenBptRev2__factory,
 } from '../types';
 import { spendList } from './helpers';
-import { deployStakedTokenV2Revision3 } from '../helpers/contracts-accessors';
 import { logError } from '../helpers/tenderly-utils';
 
 const {
@@ -73,32 +73,17 @@ describe('Proposal: Extend Staked Aave distribution', () => {
   let pool: ILendingPool;
   let aave: Erc20;
   let dai: Erc20;
-  let aDAI: AToken;
+  let aDAI: Erc20;
   let proposalId: BigNumber;
-  let stakedAaveV2Revision3Implementation: StakedTokenV2Rev3;
   let aaveStakeV2: StakedAaveV2;
+  let stkAaveImplAddress: string;
+  let stkBptImplAddress: string;
+  let stakedAaveV2Revision3Implementation: StakedTokenV2Rev3;
+  let stakedBptV2Revision2Implementation: StakedTokenBptRev2;
   before(async () => {
     await rawHRE.run('set-dre');
     ethers = DRE.ethers;
     [proposer] = await DRE.ethers.getSigners();
-
-    // Deploy STKAaveV2 Revision 3 implementation
-    stakedAaveV2Revision3Implementation = await deployStakedTokenV2Revision3(
-      [
-        '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
-        '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
-        '864000',
-        '172800',
-        '0x25F2226B597E8F9514B3F68F00f494cF4f286491',
-        '0xEE56e2B3D491590B5b31738cC34d5232F378a8D5',
-        '3153600000',
-        'Staked AAVE',
-        'stkAAVE',
-        '18',
-        '0x0000000000000000000000000000000000000000',
-      ],
-      true
-    );
 
     // Send ether to the AAVE_WHALE, which is a non payable contract via selfdestruct
     const selfDestructContract = await new SelfdestructTransfer__factory(proposer).deploy();
@@ -134,13 +119,12 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     const {
       configuration: { data },
       aTokenAddress,
-      variableDebtTokenAddress,
     } = await pool.getReserveData(DAI_TOKEN);
 
     aave = Erc20__factory.connect(AAVE_TOKEN, whale);
     aaveStakeV2 = StakedAaveV2__factory.connect(AAVE_STAKE, proposer);
     dai = Erc20__factory.connect(DAI_TOKEN, daiHolder);
-    aDAI = AToken__factory.connect(aTokenAddress, proposer);
+    aDAI = Erc20__factory.connect(aTokenAddress, proposer);
 
     // Transfer enough AAVE to proposer
     await (await aave.transfer(proposer.address, parseEther('2000000'))).wait();
@@ -174,13 +158,21 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     // Submit proposal
     proposalId = await gov.getProposalsCount();
 
-    await DRE.run('propose-extension', {
-      stkAaveProxy: AAVE_STAKE,
-      stkAaveImpl: stakedAaveV2Revision3Implementation.address,
-      aaveGovernance: AAVE_GOVERNANCE_V2,
-      longExecutor: AAVE_LONG_EXECUTOR,
-      ipfsHash: IPFS_HASH,
-    });
+    const { stkAaveImpl, stkBptImpl }: { [key: string]: string } = await DRE.run(
+      'proposal-stk-extensions'
+    );
+
+    stkAaveImplAddress = stkAaveImpl;
+    stkBptImplAddress = stkBptImpl;
+
+    stakedAaveV2Revision3Implementation = StakedTokenV2Rev3__factory.connect(
+      stkAaveImplAddress,
+      proposer
+    );
+    stakedBptV2Revision2Implementation = StakedTokenBptRev2__factory.connect(
+      stkBptImplAddress,
+      proposer
+    );
 
     // Mine block due flash loan voting protection
     await advanceBlockTo((await latestBlock()) + 1);
