@@ -14,7 +14,7 @@ import '@tenderly/hardhat-tenderly';
 export const BUIDLEREVM_CHAIN_ID = 31337;
 
 const DEFAULT_BLOCK_GAS_LIMIT = 12500000;
-const DEFAULT_GAS_PRICE = 36000000000000000000;
+const DEFAULT_GAS_PRICE = 102 * 1000 * 1000 * 1000;
 const HARDFORK = 'istanbul';
 const INFURA_KEY = process.env.INFURA_KEY || '';
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
@@ -23,7 +23,7 @@ const MNEMONIC = process.env.MNEMONIC || '';
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
 const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
-const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '11633164');
+const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '12369243');
 
 // Prevent to load scripts before compilation and typechain
 if (!SKIP_LOAD) {

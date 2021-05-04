@@ -6,7 +6,7 @@ import {
   SelfdestructTransfer__factory,
   StakedAaveV2__factory,
 } from '../../types';
-import { advanceBlockTo, DRE, increaseTime, latestBlock } from '../../helpers/misc-utils';
+import { advanceBlockTo, DRE, increaseTimeTenderly, latestBlock } from '../../helpers/misc-utils';
 import { logError } from '../../helpers/tenderly-utils';
 import { parseEther, formatEther } from 'ethers/lib/utils';
 import { getDefenderRelaySigner } from '../../helpers/defender-utils';
@@ -28,12 +28,11 @@ task('proposal-stk-aave-extension:tenderly', 'Create proposal at Tenderly')
 
     const {
       AAVE_TOKEN = '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
-      IPFS_HASH = 'QmT9qk3CRYbFDWpDFYeAv8T8H1gnongwKhh5J68NLkLir6', // WIP
       AAVE_GOVERNANCE_V2 = '0xEC568fffba86c094cf06b22134B23074DFE2252c', // mainnet
       AAVE_LONG_EXECUTOR = '0x61910ecd7e8e942136ce7fe7943f956cea1cc2f7', // mainnet
     } = process.env;
 
-    if (!AAVE_TOKEN || !IPFS_HASH || !AAVE_GOVERNANCE_V2 || !AAVE_LONG_EXECUTOR) {
+    if (!AAVE_TOKEN || !AAVE_GOVERNANCE_V2 || !AAVE_LONG_EXECUTOR) {
       throw new Error('You have not set correctly the .env file, make sure to read the README.md');
     }
 
@@ -128,7 +127,7 @@ task('proposal-stk-aave-extension:tenderly', 'Create proposal at Tenderly')
       logError();
       throw error;
     }
-    await increaseTime(604800 + 10);
+    await increaseTimeTenderly(604800 + 10);
 
     // Execute
     try {

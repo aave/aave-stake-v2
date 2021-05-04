@@ -55,7 +55,10 @@ export const timeLatest = async () => {
   return new BigNumber(block.timestamp);
 };
 
-export const increaseTime = async (secondsToIncrease: number) => {
+export const increaseTime = async (secondsToIncrease: number) =>
+  await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
+
+export const increaseTimeTenderly = async (secondsToIncrease: number) => {
   if (DRE.network.name.includes('tenderly')) {
     await DRE.ethers.provider.send('evm_increaseTime', [`0x${secondsToIncrease.toString(16)}`]);
     return;
@@ -74,8 +77,13 @@ export const advanceBlock = async (timestamp?: number) => {
   }
 };
 
+export const increaseTimeAndMineTenderly = async (secondsToIncrease: number) => {
+  await increaseTimeTenderly(secondsToIncrease);
+};
+
 export const increaseTimeAndMine = async (secondsToIncrease: number) => {
-  await increaseTime(secondsToIncrease);
+  await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
+  await DRE.ethers.provider.send('evm_mine', []);
 };
 
 export const impersonateAccountsHardhat = async (accounts: tEthereumAddress[]) => {

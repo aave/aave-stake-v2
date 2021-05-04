@@ -19,9 +19,6 @@ task('proposal-stk-extensions', 'Deploy implementations and create proposal')
       deployer = signer;
     }
 
-    let stkAaveImplAddress = stkAaveImpl;
-    let stkBptImplAddress = stkBptImpl;
-
     const {
       AAVE_TOKEN = '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
       IPFS_HASH = 'QmT9qk3CRYbFDWpDFYeAv8T8H1gnongwKhh5J68NLkLir6', // WIP
@@ -36,18 +33,18 @@ task('proposal-stk-extensions', 'Deploy implementations and create proposal')
     const AAVE_STAKE = '0x4da27a545c0c5B758a6BA100e3a049001de870f5';
     const STK_BPT_STAKE = '0xa1116930326D21fB917d5A27F1E9943A9595fb47';
 
-    if (!stkAaveImplAddress) {
-      stkAaveImplAddress = await DRE.run('deploy-staked-aave-rev3', { defender: !!defender });
+    if (!stkAaveImpl) {
+      stkAaveImpl = await DRE.run('deploy-staked-aave-rev3', { defender: !!defender });
     }
-    if (!stkBptImplAddress) {
-      stkBptImplAddress = await DRE.run('deploy-staked-bpt-rev2', { defender: !!defender });
+    if (!stkBptImpl) {
+      stkBptImpl = await DRE.run('deploy-staked-bpt-rev2', { defender: !!defender });
     }
 
     await DRE.run('propose-extension', {
       stkAaveProxy: AAVE_STAKE,
-      stkAaveImpl: stkAaveImplAddress,
+      stkAaveImpl,
       stkBptProxy: STK_BPT_STAKE,
-      stkBptImpl: stkBptImplAddress,
+      stkBptImpl,
       aaveGovernance: AAVE_GOVERNANCE_V2,
       longExecutor: AAVE_LONG_EXECUTOR,
       ipfsHash: IPFS_HASH,

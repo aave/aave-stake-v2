@@ -4,9 +4,9 @@ import { BigNumber } from 'ethers';
 import { formatEther, parseEther } from 'ethers/lib/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { JsonRpcSigner } from '@ethersproject/providers';
-import { DRE, increaseTimeAndMine, timeLatest, waitForTx } from '../helpers/misc-utils';
+import { DRE, increaseTimeAndMineTenderly, timeLatest, waitForTx } from '../helpers/misc-utils';
 import {
-  increaseTime,
+  increaseTimeTenderly,
   latestBlock,
   advanceBlockTo,
   impersonateAccountsHardhat,
@@ -208,7 +208,7 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     const proposalState = await gov.getProposalState(proposalId);
     expect(proposalState).to.be.equal(5);
 
-    await increaseTime(604800 + 10);
+    await increaseTimeTenderly(604800 + 10);
   });
 
   it('Proposal should be executed', async () => {
@@ -237,13 +237,13 @@ describe('Proposal: Extend Staked Aave distribution', () => {
 
   it('Users should be able to redeem stkAave', async () => {
     const amount = parseEther('1');
-    await increaseTimeAndMine(48600);
+    await increaseTimeAndMineTenderly(48600);
 
     try {
       await waitForTx(await aaveStakeV2.cooldown({ gasLimit: 3000000 }));
 
       const COOLDOWN_SECONDS = await aaveStakeV2.COOLDOWN_SECONDS();
-      await increaseTimeAndMine(Number(COOLDOWN_SECONDS.toString()));
+      await increaseTimeAndMineTenderly(Number(COOLDOWN_SECONDS.toString()));
 
       await expect(
         aaveStakeV2.connect(proposer).redeem(proposer.address, amount, { gasLimit: 3000000 })
@@ -265,13 +265,13 @@ describe('Proposal: Extend Staked Aave distribution', () => {
 
   it('Users should be able to redeem AAVE via redeem stkBpt', async () => {
     const amount = parseEther('1');
-    await increaseTimeAndMine(48600);
+    await increaseTimeAndMineTenderly(48600);
 
     try {
       await waitForTx(await bptStakeV2.cooldown({ gasLimit: 3000000 }));
 
       const COOLDOWN_SECONDS = await bptStakeV2.COOLDOWN_SECONDS();
-      await increaseTimeAndMine(Number(COOLDOWN_SECONDS.toString()));
+      await increaseTimeAndMineTenderly(Number(COOLDOWN_SECONDS.toString()));
 
       await expect(
         bptStakeV2.connect(proposer).redeem(proposer.address, amount, { gasLimit: 3000000 })
