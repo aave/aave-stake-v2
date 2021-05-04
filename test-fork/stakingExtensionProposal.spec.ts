@@ -59,9 +59,12 @@ const VOTING_DURATION = 64000;
 const AAVE_WHALE = '0x25f2226b597e8f9514b3f68f00f494cf4f286491';
 const AAVE_WHALE_2 = '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8';
 
+const AAVE_BPT_POOL_TOKEN = '0x41a08648c3766f9f9d85598ff102a08f4ef84f84';
 const AAVE_STAKE = '0x4da27a545c0c5B758a6BA100e3a049001de870f5';
+const BPT_STAKE = '0xa1116930326D21fB917d5A27F1E9943A9595fb47';
 const DAI_TOKEN = '0x6b175474e89094c44da98b954eedeac495271d0f';
 const DAI_HOLDER = '0x72aabd13090af25dbb804f84de6280c697ed1150';
+const BPT_WHALE = '0xc1c3f183b71f52b4f5f8f0dd8eb023cdafd2fc93';
 
 describe('Proposal: Extend Staked Aave distribution', () => {
   let ethers;
@@ -72,10 +75,12 @@ describe('Proposal: Extend Staked Aave distribution', () => {
   let gov: IAaveGovernanceV2;
   let pool: ILendingPool;
   let aave: Erc20;
+  let aaveBpt: Erc20;
   let dai: Erc20;
   let aDAI: Erc20;
   let proposalId: BigNumber;
   let aaveStakeV2: StakedAaveV2;
+  let bptStakeV2: StakedAaveV2;
   let stkAaveImplAddress: string;
   let stkBptImplAddress: string;
   let stakedAaveV2Revision3Implementation: StakedTokenV2Rev3;
@@ -97,10 +102,12 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     await impersonateAccountsHardhat([
       AAVE_WHALE,
       AAVE_WHALE_2,
+      BPT_WHALE,
       ...Object.keys(spendList).map((k) => spendList[k].holder),
     ]);
 
     const whale2 = ethers.provider.getSigner(AAVE_WHALE_2);
+    const bptWhale = ethers.provider.getSigner(BPT_WHALE);
     whale = ethers.provider.getSigner(AAVE_WHALE);
     daiHolder = ethers.provider.getSigner(DAI_HOLDER);
 
@@ -116,13 +123,12 @@ describe('Proposal: Extend Staked Aave distribution', () => {
       proposer
     )) as ILendingPool;
 
-    const {
-      configuration: { data },
-      aTokenAddress,
-    } = await pool.getReserveData(DAI_TOKEN);
+    const { aTokenAddress } = await pool.getReserveData(DAI_TOKEN);
 
     aave = Erc20__factory.connect(AAVE_TOKEN, whale);
+    aaveBpt = Erc20__factory.connect(AAVE_BPT_POOL_TOKEN, bptWhale);
     aaveStakeV2 = StakedAaveV2__factory.connect(AAVE_STAKE, proposer);
+    bptStakeV2 = StakedAaveV2__factory.connect(BPT_STAKE, proposer);
     dai = Erc20__factory.connect(DAI_TOKEN, daiHolder);
     aDAI = Erc20__factory.connect(aTokenAddress, proposer);
 
@@ -130,9 +136,10 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     await (await aave.transfer(proposer.address, parseEther('2000000'))).wait();
     // Transfer enough AAVE to proposer
     await (await aave.connect(whale2).transfer(proposer.address, parseEther('1200000'))).wait();
-
     // Transfer DAI to repay future DAI loan
     await (await dai.transfer(proposer.address, parseEther('100000'))).wait();
+    // Transfer Aave BPT pool shares to proposer
+    await (await aaveBpt.transfer(proposer.address, parseEther('100'))).wait();
   });
 
   it('Proposal should be created', async () => {
@@ -238,7 +245,7 @@ describe('Proposal: Extend Staked Aave distribution', () => {
       const COOLDOWN_SECONDS = await aaveStakeV2.COOLDOWN_SECONDS();
       await increaseTimeAndMine(Number(COOLDOWN_SECONDS.toString()));
 
-      expect(
+      await expect(
         aaveStakeV2.connect(proposer).redeem(proposer.address, amount, { gasLimit: 3000000 })
       ).to.emit(aaveStakeV2, 'Redeem');
     } catch (error) {
@@ -246,18 +253,52 @@ describe('Proposal: Extend Staked Aave distribution', () => {
       throw error;
     }
   });
-  it('Staked Aave Distribution end should be extended', async () => {
+  it('Users should be able to stake Aave Pool BPT', async () => {
+    const amount = parseEther('1');
+    await waitForTx(await aaveBpt.connect(proposer).approve(bptStakeV2.address, amount));
+    await expect(bptStakeV2.connect(proposer).stake(proposer.address, amount)).to.emit(
+      bptStakeV2,
+      'Staked'
+    );
+  });
+
+  it('Users should be able to claim AAVE via redeem stkBpt', async () => {
+    const amount = parseEther('1');
+    await increaseTimeAndMine(48600);
+
+    try {
+      await waitForTx(await bptStakeV2.cooldown({ gasLimit: 3000000 }));
+
+      const COOLDOWN_SECONDS = await bptStakeV2.COOLDOWN_SECONDS();
+      await increaseTimeAndMine(Number(COOLDOWN_SECONDS.toString()));
+
+      await expect(
+        bptStakeV2.connect(proposer).redeem(proposer.address, amount, { gasLimit: 3000000 })
+      ).to.emit(bptStakeV2, 'Redeem');
+    } catch (error) {
+      logError();
+      throw error;
+    }
+  });
+  it('Staked Aave Distribution End should be extended', async () => {
     const implDistributionEnd = await stakedAaveV2Revision3Implementation.DISTRIBUTION_END();
     const proxyDistributionEnd = await aaveStakeV2.DISTRIBUTION_END();
 
     expect(implDistributionEnd).to.be.eq(proxyDistributionEnd, 'DISTRIBUTION_END SHOULD MATCH');
   });
-  it('Staked Aave Distribution revision should be 3', async () => {
+  it('Staked Aave revision should be 3', async () => {
     const revisionImpl = await stakedAaveV2Revision3Implementation.REVISION();
     const revisionProxy = await aaveStakeV2.REVISION();
 
     expect(revisionImpl).to.be.eq(revisionProxy, 'DISTRIBUTION_END SHOULD MATCH');
     expect(revisionProxy).to.be.eq('3', 'DISTRIBUTION_END SHOULD MATCH');
+  });
+  it('Staked BPT  revision should be 2', async () => {
+    const revisionImpl = await stakedBptV2Revision2Implementation.REVISION();
+    const revisionProxy = await bptStakeV2.REVISION();
+
+    expect(revisionImpl).to.be.eq(revisionProxy, 'DISTRIBUTION_END SHOULD MATCH');
+    expect(revisionProxy).to.be.eq('2', 'DISTRIBUTION_END SHOULD MATCH');
   });
   it('Users should be able to deposit DAI at Lending Pool', async () => {
     // Deposit DAI to LendingPool

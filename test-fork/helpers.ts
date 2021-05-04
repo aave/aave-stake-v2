@@ -1,7 +1,6 @@
 import { tEthereumAddress } from '../helpers/types';
 import {
   AaveProtocolDataProvider__factory,
-  AToken__factory,
   Erc20__factory,
   ILendingPoolAddressesProvider__factory,
 } from '../types';
@@ -85,7 +84,7 @@ export const fullCycleLendingPool = async (
 ) => {
   const { aTokenAddress, variableDebtTokenAddress } = await pool.getReserveData(tokenAddress);
   const reserve = Erc20__factory.connect(tokenAddress, proposer);
-  const aToken = AToken__factory.connect(aTokenAddress, proposer);
+  const aToken = Erc20__factory.connect(aTokenAddress, proposer);
   const holderSigner = DRE.ethers.provider.getSigner(spendList[symbol].holder);
   const proposerAddress = await proposer.getAddress();
   // Transfer assets to proposer from reserve holder
