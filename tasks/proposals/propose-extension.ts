@@ -40,6 +40,23 @@ task('propose-extension', 'Create some proposals and votes')
         const { signer } = await getDefenderRelaySigner();
         proposer = signer;
       }
+
+      if (!stkAaveImpl) {
+        throw '[hh-task][propose-extension] stkAaveImpl param is missing';
+      }
+      if (!stkBptImpl) {
+        throw '[hh-task][propose-extension] stkBptImpl param is missing';
+      }
+      if (!longExecutor) {
+        throw '[hh-task][propose-extension] longExecutor param is missing';
+      }
+      if (!stkAaveProxy) {
+        throw '[hh-task][propose-extension] stkAaveProxy param is missing';
+      }
+      if (!stkBptProxy) {
+        throw '[hh-task][propose-extension] stkBptProxy param is missing';
+      }
+
       // Calldata for StkAave implementation
       const payloadStkAave = StakedTokenV2Rev3__factory.connect(
         stkAaveImpl,

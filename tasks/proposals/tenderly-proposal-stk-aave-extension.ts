@@ -10,12 +10,16 @@ import { advanceBlockTo, DRE, increaseTime, latestBlock } from '../../helpers/mi
 import { logError } from '../../helpers/tenderly-utils';
 import { parseEther, formatEther } from 'ethers/lib/utils';
 import { getDefenderRelaySigner } from '../../helpers/defender-utils';
+import { Signer } from '@ethersproject/abstract-signer';
 
 task('proposal-stk-aave-extension:tenderly', 'Create proposal at Tenderly')
   .addFlag('defender')
   .setAction(async ({ defender }, localBRE: any) => {
     await localBRE.run('set-dre');
-    let { signer: proposer } = await getDefenderRelaySigner();
+
+    let proposer: Signer;
+
+    [proposer] = await DRE.ethers.getSigners();
 
     if (defender) {
       const { signer } = await getDefenderRelaySigner();
