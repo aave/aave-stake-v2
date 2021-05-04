@@ -37,10 +37,10 @@ task('proposal-stk-extensions', 'Deploy implementations and create proposal')
     const STK_BPT_STAKE = '0xa1116930326D21fB917d5A27F1E9943A9595fb47';
 
     if (!stkAaveImplAddress) {
-      stkAaveImplAddress = await DRE.run('deploy-staked-aave-rev3', { defender });
+      stkAaveImplAddress = await DRE.run('deploy-staked-aave-rev3', { defender: !!defender });
     }
     if (!stkBptImplAddress) {
-      stkBptImplAddress = await DRE.run('deploy-staked-bpt-rev2', { defender });
+      stkBptImplAddress = await DRE.run('deploy-staked-bpt-rev2', { defender: !!defender });
     }
 
     await DRE.run('propose-extension', {
@@ -51,7 +51,7 @@ task('proposal-stk-extensions', 'Deploy implementations and create proposal')
       aaveGovernance: AAVE_GOVERNANCE_V2,
       longExecutor: AAVE_LONG_EXECUTOR,
       ipfsHash: IPFS_HASH,
-      defender: defender,
+      defender: !!defender,
     });
 
     return {

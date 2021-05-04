@@ -101,7 +101,7 @@ task('proposal-stk-aave-extension:tenderly', 'Create proposal at Tenderly')
     const proposalId = await gov.getProposalsCount();
 
     await DRE.run('proposal-stk-extensions', {
-      defender,
+      defender: !!defender,
     });
 
     // Mine block due flash loan voting protection
