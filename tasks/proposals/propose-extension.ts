@@ -17,6 +17,7 @@ task('propose-extension', 'Create some proposals and votes')
   .addParam('stkBptImpl')
   .addParam('aaveGovernance')
   .addParam('longExecutor')
+  .addParam('ipfsHash')
   .addFlag('defender')
   .setAction(
     async (
@@ -28,6 +29,7 @@ task('propose-extension', 'Create some proposals and votes')
         stkAaveImpl,
         stkBptProxy,
         stkBptImpl,
+        ipfsHash
       },
       localBRE: any
     ) => {
@@ -56,6 +58,9 @@ task('propose-extension', 'Create some proposals and votes')
       if (!stkBptProxy) {
         throw '[hh-task][propose-extension] stkBptProxy param is missing';
       }
+      if (!ipfsHash) {
+        throw '[hh-task][propose-extension] ipfsHash param is missing';
+      }
 
       // Calldata for StkAave implementation
       const payloadStkAave = StakedTokenV2Rev3__factory.connect(
@@ -80,9 +85,6 @@ task('propose-extension', 'Create some proposals and votes')
       const executeSignature = 'upgradeToAndCall(address,bytes)';
       const gov = await IAaveGovernanceV2__factory.connect(aaveGovernance, proposer);
 
-      // WIP IPFS
-      const ipfsEncoded = '0xf7a1f565fcd7684fba6fea5d77c5e699653e21cb6ae25fbf8c5dbc8d694c7949';
-
       try {
         const tx = await gov.create(
           longExecutor,
@@ -91,8 +93,8 @@ task('propose-extension', 'Create some proposals and votes')
           [executeSignature, executeSignature],
           [callDataStkAave, callDataStkBpt],
           [false, false],
-          ipfsEncoded,
-          { gasLimit: 3000000 }
+          ipfsHash,
+          { gasLimit: 1000000 }
         );
         console.log('- Proposal submitted to Governance');
         await tx.wait();
