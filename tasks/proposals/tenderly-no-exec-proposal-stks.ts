@@ -17,6 +17,8 @@ import { parseEther, formatEther } from 'ethers/lib/utils';
 import { getDefenderRelaySigner } from '../../helpers/defender-utils';
 import { Signer } from '@ethersproject/abstract-signer';
 import { MAX_UINT_AMOUNT } from '../../helpers/constants';
+import { tEthereumAddress } from '../../helpers/types';
+import { logError } from '../../helpers/tenderly-utils';
 
 task('no-exec-stks:tenderly', 'Execute staking extension proposal at Tenderly fork')
   .addFlag('defender')
@@ -62,8 +64,32 @@ task('no-exec-stks:tenderly', 'Execute staking extension proposal at Tenderly fo
     ).wait();
 
     // Impersonating holders
-    const whale2 = ethers.provider.getSigner(AAVE_WHALE_2);
     const whale = ethers.provider.getSigner(AAVE_WHALE);
+
+    const top10stkAaveHolders = [
+      '0x4a49985b14bd0ce42c25efde5d8c379a48ab02f3',
+      '0xdd709cae362972cb3b92dcead77127f7b8d58202',
+      '0x9b5ea8c719e29a5bd0959faf79c9e5c8206d0499',
+      '0xdb5aa12ad695ef2a28c6cdb69f2bb04bed20a48e',
+      '0xc4a936b003bc223df757b35ee52f6da66b062935',
+      '0x36c4bd54d54dd898c242f5f634f5d0cef3be2a8a',
+      '0xa3f09fcce3e340e251e23263b15d89623564b233',
+      '0xf5fb27b912d987b5b6e02a1b1be0c1f0740e2c6f',
+      '0xbad1990c2967231bc9a4fa9562ea68e65dd2b25d',
+    ].map((x) => ethers.provider.getSigner(x));
+
+    const top10stkBptHolders = [
+      '0x4a49985b14bd0ce42c25efde5d8c379a48ab02f3',
+      '0x43d74a0080094d4f188eb8896a968712a7ad0391',
+      '0x681ada67950d96dcc9f2951d32353663ed6e59c9',
+      '0x9b5ea8c719e29a5bd0959faf79c9e5c8206d0490',
+      '0xdd709cae362972cb3b92dcead77127f7b8d58202',
+      '0xab262d7b21a667b8c5b23b14e25d75be9ac6c3e2',
+      '0x36c4bd54d54dd898c242f5f634f5d0cef3be2a8a',
+      '0x0af9aeddba36b1a9f9cb983ec5083d06f948041c',
+      '0xf5fb27b912d987b5b6e02a1b1be0c1f0740e2c6f',
+      '0x0f0eae91990140c560d4156db4f00c854dc8f09e',
+    ].map((x) => ethers.provider.getSigner(x));
 
     // Initialize contracts and tokens
     const gov = (await ethers.getContractAt(
@@ -101,30 +127,70 @@ task('no-exec-stks:tenderly', 'Execute staking extension proposal at Tenderly fo
     console.log('  - Symbol', await bptStakeV2.symbol());
     console.log('  - Decimals', await bptStakeV2.decimals());
 
-    const amount = ethers.utils.parseEther('50');
+    const rewardAndRedeem = async (
+      signer: Signer,
+      stakeTokenAddress: tEthereumAddress,
+      tokenName: string
+    ) => {
+      const stakedToken = await StakedAaveV2__factory.connect(stakeTokenAddress, signer);
+      const underlyingToken = Erc20__factory.connect(await stakedToken.STAKED_TOKEN(), signer);
+
+      console.log();
+      try {
+        await waitForTx(await stakedToken.cooldown({ gasLimit: 3000000 }));
+        const startedCooldownAt = await stakedToken.stakersCooldowns(await signer.getAddress());
+        const currentTime = await timeLatest();
+
+        const remainingCooldown = startedCooldownAt
+          .add(await stakedToken.COOLDOWN_SECONDS())
+          .sub(currentTime.toString());
+
+        console.log('Address', await signer.getAddress());
+        const aaveBalanceBefore = await aave.balanceOf(await signer.getAddress());
+        await waitForTx(
+          await stakedToken.claimRewards(await signer.getAddress(), MAX_UINT_AMOUNT, {
+            gasLimit: 3000000,
+          })
+        );
+        const aaveBalanceAfter = await aave.balanceOf(await signer.getAddress());
+        const rewards = aaveBalanceAfter.sub(aaveBalanceBefore);
+        console.log(`- Claimed AAVE:`, await formatEther(rewards));
+
+        await increaseTimeTenderly(remainingCooldown.add('1').toNumber());
+        const underlyingBalanceBefore = await underlyingToken.balanceOf(await signer.getAddress());
+        await waitForTx(
+          await stakedToken.approve(stakedToken.address, MAX_UINT_AMOUNT, { gasLimit: 3000000 })
+        );
+        await waitForTx(await stakedToken.redeem(await signer.getAddress(), MAX_UINT_AMOUNT));
+        const underlyingBalanceAfter = await underlyingToken.balanceOf(await signer.getAddress());
+
+        const redeemed = underlyingBalanceAfter
+          .sub(underlyingBalanceBefore)
+          .sub(tokenName === 'aave' ? rewards : '0');
+
+        console.log(`- Redeemed ${tokenName}`, formatEther(redeemed));
+        await waitForTx(
+          await underlyingToken.approve(stakedToken.address, underlyingBalanceAfter, {
+            gasLimit: 3000000,
+          })
+        );
+        await waitForTx(
+          await stakedToken.stake(await signer.getAddress(), underlyingBalanceAfter, {
+            gasLimit: 3000000,
+          })
+        );
+        const sktBalanceAfter = await stakedToken.balanceOf(await signer.getAddress());
+        console.log(`- Staked ${tokenName}`, formatEther(sktBalanceAfter));
+      } catch (error) {
+        logError();
+      }
+    };
+
     // Iterate staking and redeem to check if there is still rewards
-    for (let x = 0; x < 2; x++) {
-      await waitForTx(await aave.connect(proposer).approve(aaveStakeV2.address, amount));
-      await waitForTx(
-        await aaveStakeV2.connect(proposer).stake(await proposer.getAddress(), amount)
-      );
-
-      await waitForTx(await aaveStakeV2.connect(proposer).cooldown());
-      const startedCooldownAt = await aaveStakeV2.stakersCooldowns(await proposer.getAddress());
-      const currentTime = await timeLatest();
-
-      const remainingCooldown = startedCooldownAt
-        .add(await aaveStakeV2.COOLDOWN_SECONDS())
-        .sub(currentTime.toString());
-
-      await increaseTimeTenderly(remainingCooldown.add('1').toNumber());
-      const aaveBalanceBefore = await aave.balanceOf(await proposer.getAddress());
-      await waitForTx(await aaveStakeV2.claimRewards(await proposer.getAddress(), MAX_UINT_AMOUNT));
-      await waitForTx(
-        await aaveStakeV2.connect(proposer).redeem(await proposer.getAddress(), MAX_UINT_AMOUNT)
-      );
-      const aaveBalanceAfter = await aave.balanceOf(await proposer.getAddress());
-      console.log('BALANCE BEFORE', formatEther(aaveBalanceBefore));
-      console.log('BALANCE AFTER: ', formatEther(aaveBalanceAfter));
+    for (let x = 0; x < 3; x++) {
+      for (let y = 0; y < 10; y++) {
+        await rewardAndRedeem(top10stkAaveHolders[y], aaveStakeV2.address, 'aave');
+        await rewardAndRedeem(top10stkBptHolders[y], bptStakeV2.address, 'bpt');
+      }
     }
   });
