@@ -66,8 +66,11 @@ task('proposal-vault-approval:tenderly', 'Create proposal at Tenderly')
     )) as IAaveGovernanceV2;
 
     const aave = Erc20__factory.connect(AAVE_TOKEN, whale);
-    const aaveStakeV2 = StakedAaveV2__factory.connect(AAVE_STAKE, proposer);
-    const bptStakeV2 = StakedAaveV2__factory.connect(STK_BPT_STAKE, proposer);
+
+    console.log('- Prior proposal:');
+    console.log('- Rewards Vault Allowance');
+    console.log('  - StakedAave', formatEther(await aave.allowance(REWARDS_VAULT, AAVE_STAKE)));
+    console.log('  - StakedBPT', formatEther(await aave.allowance(REWARDS_VAULT, STK_BPT_STAKE)));
 
     // Transfer enough AAVE to proposer
     await (await aave.transfer(await proposer.getAddress(), parseEther('2000000'))).wait();
@@ -77,24 +80,7 @@ task('proposal-vault-approval:tenderly', 'Create proposal at Tenderly')
     ).wait();
 
     await advanceBlockTo((await latestBlock()) + 10);
-    const aaveGovToken = IDelegationAwareToken__factory.connect(AAVE_TOKEN, proposer);
 
-    try {
-      const balance = await aave.balanceOf(await proposer.getAddress());
-      console.log('AAVE Balance proposer', formatEther(balance));
-      const propositionPower = await aaveGovToken.getPowerAtBlock(
-        await proposer.getAddress(),
-        ((await latestBlock()) - 1).toString(),
-        '1'
-      );
-
-      console.log(
-        `Proposition power of ${await proposer.getAddress()} at block - 1`,
-        formatEther(propositionPower)
-      );
-    } catch (error) {
-      console.log(error);
-    }
     // Submit proposal
     const proposalId = await gov.getProposalsCount();
 
@@ -106,25 +92,13 @@ task('proposal-vault-approval:tenderly', 'Create proposal at Tenderly')
     // Mine block due flash loan voting protection
     await advanceBlockTo((await latestBlock()) + 1);
 
-    const votingPower = await aaveGovToken.getPowerAtBlock(
-      await proposer.getAddress(),
-      ((await latestBlock()) - 1).toString(),
-      '0'
-    );
-    console.log(
-      `Voting power of ${await proposer.getAddress()} at block - 1`,
-      formatEther(votingPower)
-    );
-
     // Submit vote and advance block to Queue phase
     await (await gov.submitVote(proposalId, true)).wait();
-    console.log('VOTED');
     await advanceBlockTo((await latestBlock()) + VOTING_DURATION + 1);
 
     // Queue and advance block to Execution phase
     try {
       await (await gov.queue(proposalId)).wait();
-      console.log('QUEUE');
     } catch (error) {
       logError();
       throw error;
@@ -134,12 +108,12 @@ task('proposal-vault-approval:tenderly', 'Create proposal at Tenderly')
     // Execute
     try {
       await (await gov.execute(proposalId, { gasLimit: 3000000 })).wait();
-      console.log('exec');
     } catch (error) {
       logError();
       throw error;
     }
 
+    console.log('');
     console.log('- Proposal executed:');
     console.log('- Rewards Vault Allowance');
     console.log('  - StakedAave', formatEther(await aave.allowance(REWARDS_VAULT, AAVE_STAKE)));
