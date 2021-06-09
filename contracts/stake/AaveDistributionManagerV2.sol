@@ -31,7 +31,7 @@ contract AaveDistributionManagerV2 is AaveDistributionManager {
    * @dev Extends the end of the distribution in regards of current timestamp.
    * @param distributionEnd The unix timestamp of the next distribution end
    **/
-  function setDistributionEnd(uint256 distributionEnd) public onlyEmissionManager  {
+  function setDistributionEnd(uint256 distributionEnd) public onlyEmissionManager {
     _distributionEnd = distributionEnd;
     emit DistributionEndUpdated(_distributionEnd);
   }
@@ -43,5 +43,26 @@ contract AaveDistributionManagerV2 is AaveDistributionManager {
    **/
   function _getDistributionEnd() internal view override returns (uint256) {
     return _distributionEnd;
+  }
+
+  /**
+   * @dev Returns the configuration of the distribution for a certain asset
+   * @param asset The address of the reference asset of the distribution
+   * @return The asset index, the emission per second and the last updated timestamp
+   **/
+  function getAssetData(address asset)
+    public
+    view
+    returns (
+      uint256,
+      uint256,
+      uint256
+    )
+  {
+    return (
+      assets[asset].index,
+      assets[asset].emissionPerSecond,
+      assets[asset].lastUpdateTimestamp
+    );
   }
 }
