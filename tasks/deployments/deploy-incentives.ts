@@ -13,75 +13,64 @@ const { AaveIncentivesController: id } = eContractid;
 
 task(`deploy-incentives`, `Deploy and initializes the ${id} contract`)
   .addFlag('verify')
+  .addFlag('deployProxy')
   .addParam('rewardToken')
-  .addParam('rewardsVault')
-  .addOptionalParam('psm')
-  .addOptionalParam('extraPsmReward')
-  .addOptionalParam('emissionManager')
-  .addOptionalParam('distributionDuration')
-  .addParam('proxyAdmin', `The address to be added as an Admin role in ${id} Transparent Proxy.`)
-  .addParam('rewardsAdmin', `The address to be added as an Admin role in ${id} Transparent Proxy.`)
+  .addParam('emissionManager')
+  .addOptionalParam('rewardsVault')
+  .addOptionalParam(
+    'proxyAdmin',
+    `The address to be added as an Admin role in ${id} Transparent Proxy.`
+  )
   .setAction(
     async (
-      {
-        verify,
-        rewardToken,
-        rewardsVault,
-        psm,
-        extraPsmReward,
-        emissionManager,
-        distributionDuration,
-        proxyAdmin,
-        rewardsAdmin,
-      },
+      { deployProxy, verify, rewardToken, rewardsVault, emissionManager, proxyAdmin },
       localBRE
     ) => {
       await localBRE.run('set-dre');
-      if (!isAddress(proxyAdmin)) {
-        throw Error('Missing or incorrect admin param');
-      }
-      if (!isAddress(rewardsAdmin)) {
-        throw Error('Missing or incorrect admin param');
-      }
+
       if (!isAddress(rewardToken)) {
         throw Error('Missing or incorrect rewardToken param');
       }
-      if (!isAddress(rewardsVault)) {
+      if (!isAddress(emissionManager)) {
+        throw Error('Missing or incorrect emissionManager param');
+      }
+      if (deployProxy && !isAddress(proxyAdmin)) {
+        throw Error('Missing or incorrect admin param');
+      }
+      if (deployProxy && !isAddress(rewardsVault)) {
         throw Error('Missing or incorrect rewardsVault param');
       }
-      psm = isAddress(psm) ? psm : ZERO_ADDRESS;
-      extraPsmReward = extraPsmReward ? BigNumber.from(extraPsmReward) : BigNumber.from('0');
-      emissionManager = isAddress(emissionManager) ? emissionManager : ZERO_ADDRESS;
-      distributionDuration = distributionDuration
-        ? BigNumber.from(distributionDuration)
-        : BigNumber.from('0');
 
       console.log(`\n- ${id} implementation deployment:`);
 
       const aaveIncentivesControllerImpl = await deployAaveIncentivesController(
-        [rewardToken, psm, extraPsmReward, emissionManager],
+        [rewardToken, emissionManager],
         verify
       );
 
-      console.log(`\tInitializing ${id} proxy`);
+      if (deployProxy) {
+        console.log(`\tDeploying${id} proxy`);
+        const aaveIncentivesProxy = await deployInitializableAdminUpgradeabilityProxy(verify);
 
-      const aaveIncentivesProxy = await deployInitializableAdminUpgradeabilityProxy(verify);
+        console.log(`\tInitializing ${id} proxy`);
+        const encodedParams = aaveIncentivesControllerImpl.interface.encodeFunctionData(
+          'initialize',
+          [rewardsVault]
+        );
 
-      const encodedParams = aaveIncentivesControllerImpl.interface.encodeFunctionData(
-        'initialize',
-        [rewardsVault, distributionDuration, rewardsAdmin]
-      );
-
-      await waitForTx(
-        await aaveIncentivesProxy.functions['initialize(address,address,bytes)'](
-          aaveIncentivesControllerImpl.address,
-          proxyAdmin,
-          encodedParams
-        )
-      );
-
-      console.log(`\tFinished ${id} deployment and initialization`);
-      console.log(`\t- Proxy: ${aaveIncentivesProxy.address}`);
-      console.log(`\t- Impl: ${aaveIncentivesControllerImpl.address}`);
+        await waitForTx(
+          await aaveIncentivesProxy.functions['initialize(address,address,bytes)'](
+            aaveIncentivesControllerImpl.address,
+            proxyAdmin,
+            encodedParams
+          )
+        );
+        console.log(`\tFinished ${id} deployment and initialization`);
+        console.log(`\t- Proxy: ${aaveIncentivesProxy.address}`);
+        console.log(`\t- Impl: ${aaveIncentivesControllerImpl.address}`);
+      } else {
+        console.log(`\tFinished ${id} deployment and initialization`);
+        console.log(`\t- Impl: ${aaveIncentivesControllerImpl.address}`);
+      }
     }
   );

@@ -44,7 +44,10 @@ task('configure-asset', 'Deployment in for Main, Kovan and Ropsten networks')
 
     console.log('CONFIGURATION: \n ', config);
     if (execute) {
-      await incentivesControllerContract.configureAssets(config);
+      await incentivesControllerContract.configureAssets(
+        config.map((x) => x.underlyingAsset),
+        config.map((x) => x.emissionPerSecond)
+      );
       console.log('\n INCENTIVES CONTROLLER CONFIGURED');
     }
   });

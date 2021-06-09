@@ -238,16 +238,11 @@ export const deployStakedAaveV3 = async (
 };
 
 export const deployAaveIncentivesController = async (
-  [rewardToken, aavePsm, extraPsmReward, emissionManager]: [
-    tEthereumAddress,
-    tEthereumAddress,
-    string,
-    tEthereumAddress
-  ],
+  [rewardToken, emissionManager]: [tEthereumAddress, tEthereumAddress],
   verify?: boolean
 ) => {
   const id = eContractid.AaveIncentivesController;
-  const args: string[] = [rewardToken, aavePsm, extraPsmReward, emissionManager];
+  const args: string[] = [rewardToken, emissionManager];
   const instance = await deployContract<AaveIncentivesController>(id, args);
   await instance.deployTransaction.wait();
   if (verify) {
