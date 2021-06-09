@@ -25,9 +25,9 @@ contract AaveIncentivesController is
   RoleManager
 {
   using SafeMath for uint256;
-  uint256 public constant REVISION = 2;
+  uint256 public constant REVISION = 3;
 
-  address public override immutable REWARD_TOKEN;
+  address public immutable override REWARD_TOKEN;
   address internal _rewardsVault;
 
   mapping(address => uint256) internal _usersUnclaimedRewards;
@@ -42,10 +42,10 @@ contract AaveIncentivesController is
   }
   event RewardsVaultUpdated(address indexed vault);
 
-  constructor(
-    IERC20 rewardToken,
-    address emissionManager
-  ) public AaveDistributionManagerV2(emissionManager) {
+  constructor(IERC20 rewardToken, address emissionManager)
+    public
+    AaveDistributionManagerV2(emissionManager)
+  {
     REWARD_TOKEN = address(rewardToken);
   }
 
@@ -53,9 +53,7 @@ contract AaveIncentivesController is
    * @dev Initialize AaveIncentivesController
    * @param rewardsVault rewards vault to pull funds
    **/
-  function initialize(
-    address rewardsVault
-  ) external initializer {
+  function initialize(address rewardsVault) external initializer {
     _rewardsVault = rewardsVault;
   }
 
@@ -80,7 +78,7 @@ contract AaveIncentivesController is
     }
     _configureAssets(assetsConfig);
   }
-  
+
   /// @inheritdoc IAaveIncentivesController
   function setClaimer(address user, address caller) external override onlyEmissionManager {
     _authorizedClaimers[user] = caller;
@@ -125,7 +123,7 @@ contract AaveIncentivesController is
     return unclaimedRewards;
   }
 
-/// @inheritdoc IAaveIncentivesController
+  /// @inheritdoc IAaveIncentivesController
   function claimRewards(
     address[] calldata assets,
     uint256 amount,
@@ -148,7 +146,7 @@ contract AaveIncentivesController is
   }
 
   /// @inheritdoc IAaveIncentivesController
-  function getUserUnclaimedRewards(address _user) external override view returns (uint256) {
+  function getUserUnclaimedRewards(address _user) external view override returns (uint256) {
     return _usersUnclaimedRewards[_user];
   }
 
@@ -217,10 +215,9 @@ contract AaveIncentivesController is
     _usersUnclaimedRewards[user] = unclaimedRewards - amountToClaim; // Safe due to the previous line
 
     IERC20(REWARD_TOKEN).transferFrom(_rewardsVault, to, amountToClaim);
-   
+
     emit RewardsClaimed(claimer, user, to, amountToClaim);
 
     return amountToClaim;
   }
-
 }
