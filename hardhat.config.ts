@@ -6,6 +6,7 @@ import { accounts } from './test-wallets';
 import 'hardhat-typechain';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-waffle';
+import '@tenderly/hardhat-tenderly';
 import '@nomiclabs/hardhat-etherscan';
 import path from 'path';
 import fs from 'fs';
@@ -102,6 +103,11 @@ const config: HardhatUserConfig = {
   mocha: {
     timeout: 0,
   },
+  tenderly: {
+    project: process.env.TENDERLY_PROJECT || '',
+    username: process.env.TENDERLY_USERNAME || '',
+    forkNetwork: '1', //Network id of the network we want to fork
+  },
   networks: {
     kovan: getCommonNetworkConfig(eEthereumNetwork.kovan, 42),
     ropsten: getCommonNetworkConfig(eEthereumNetwork.ropsten, 3),
@@ -109,6 +115,7 @@ const config: HardhatUserConfig = {
     matic: getCommonNetworkConfig(ePolygonNetwork.matic, 137),
     mumbai: getCommonNetworkConfig(ePolygonNetwork.mumbai, 80001),
     xdai: getCommonNetworkConfig(eXDaiNetwork.xdai, 100),
+    tenderly: getCommonNetworkConfig(eEthereumNetwork.tenderly, 3030),
     hardhat: {
       hardfork: 'istanbul',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
