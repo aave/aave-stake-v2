@@ -65,7 +65,6 @@ export const compareRewardsAtAction = async (
     await (await stakedAave.getTotalRewardsBalance(userAddress)).toString()
   );
   const expectedAccruedRewards = getRewards(userBalance, userIndexAfter, userIndexBefore);
-
   expect(rewardsBalanceAfter).to.bignumber.eq(rewardsBalanceBefore.add(expectedAccruedRewards));
 
   // Explicit check rewards when the test case expects rewards to the user

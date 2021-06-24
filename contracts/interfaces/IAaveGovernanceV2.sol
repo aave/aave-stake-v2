@@ -4,6 +4,11 @@ pragma abicoder v2;
 
 // simplified interface to expose functions added events for tests
 interface IAaveGovernanceV2 {
+  struct Vote {
+    bool support;
+    uint248 votingPower;
+  }
+
   /**
    Added for test purposes
    **/
@@ -88,4 +93,13 @@ interface IAaveGovernanceV2 {
   function getProposalState(uint256 proposalId) external view returns (ProposalState);
 
   function getGuardian() external view returns (address);
+
+  /**
+   * @dev Getter of the Vote of a voter about a proposal
+   * Note: Vote is a struct: ({bool support, uint248 votingPower})
+   * @param proposalId id of the proposal
+   * @param voter address of the voter
+   * @return The associated Vote memory object
+   **/
+  function getVoteOnProposal(uint256 proposalId, address voter) external view returns (Vote memory);
 }

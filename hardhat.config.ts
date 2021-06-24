@@ -1,19 +1,20 @@
-import { HardhatUserConfig } from 'hardhat/config';
 import { eEthereumNetwork } from './helpers/types';
 // @ts-ignore
 import { accounts } from './test-wallets';
+import path from 'path';
+import fs from 'fs';
+import { HardhatUserConfig } from 'hardhat/types';
 
-import 'hardhat-typechain';
+import '@typechain/hardhat';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-etherscan';
-import path from 'path';
-import fs from 'fs';
+import '@tenderly/hardhat-tenderly';
 
 export const BUIDLEREVM_CHAIN_ID = 31337;
 
 const DEFAULT_BLOCK_GAS_LIMIT = 12500000;
-const DEFAULT_GAS_PRICE = 100 * 1000 * 1000 * 1000; // 75 gwei
+const DEFAULT_GAS_PRICE = 102 * 1000 * 1000 * 1000;
 const HARDFORK = 'istanbul';
 const INFURA_KEY = process.env.INFURA_KEY || '';
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
@@ -22,11 +23,11 @@ const MNEMONIC = process.env.MNEMONIC || '';
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
 const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
-const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '11633164');
+const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '12369243');
 
 // Prevent to load scripts before compilation and typechain
 if (!SKIP_LOAD) {
-  ['misc', 'migrations', 'deployments'].forEach((folder) => {
+  ['misc', 'migrations', 'deployments', 'proposals'].forEach((folder) => {
     const tasksPath = path.join(__dirname, 'tasks', folder);
     fs.readdirSync(tasksPath)
       .filter((pth) => pth.includes('.ts'))
@@ -96,7 +97,13 @@ const config: HardhatUserConfig = {
   mocha: {
     timeout: 0,
   },
+  tenderly: {
+    project: process.env.TENDERLY_PROJECT || '',
+    username: process.env.TENDERLY_USERNAME || '',
+    forkNetwork: '3030', //Network id of the network we want to fork
+  },
   networks: {
+    tenderly: getCommonNetworkConfig(eEthereumNetwork.tenderly, 3030),
     kovan: getCommonNetworkConfig(eEthereumNetwork.kovan, 42),
     ropsten: getCommonNetworkConfig(eEthereumNetwork.ropsten, 3),
     main: getCommonNetworkConfig(eEthereumNetwork.main, 1),

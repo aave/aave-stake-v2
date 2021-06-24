@@ -6,6 +6,7 @@ export enum eEthereumNetwork {
   kovan = 'kovan',
   ropsten = 'ropsten',
   main = 'main',
+  tenderly = 'tenderly',
 }
 
 export enum eContractid {
@@ -29,6 +30,8 @@ export enum eContractid {
   IBPool = 'IBPool',
   IControllerAaveEcosystemReserve = 'IControllerAaveEcosystemReserve',
   MockSelfDestruct = 'SelfdestructTransfer',
+  StakedTokenV2Rev3 = 'StakedTokenV2Rev3',
+  StakedTokenBptRev2 = 'StakedTokenBptRev2',
 }
 
 export type tEthereumAddress = string;

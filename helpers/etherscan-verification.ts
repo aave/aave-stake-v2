@@ -31,9 +31,10 @@ export const verifyContract = async (
     throw Error('Missing process.env.ETHERSCAN_KEY.');
   }
   if (!SUPPORTED_ETHERSCAN_NETWORKS.includes(currentNetwork)) {
-    throw Error(
-      `Current network ${currentNetwork} not supported. Please change to one of the next networks: ${SUPPORTED_ETHERSCAN_NETWORKS.toString()}`
+    console.error(
+      `[Etherscan] Current network ${currentNetwork} not supported. Please change to one of the next networks: ${SUPPORTED_ETHERSCAN_NETWORKS.toString()}`
     );
+    return;
   }
 
   try {
