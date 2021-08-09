@@ -1,5 +1,23 @@
 import BigNumber from 'bignumber.js';
 
+export enum eEthereumNetwork {
+  coverage = 'coverage',
+  hardhat = 'hardhat',
+  kovan = 'kovan',
+  ropsten = 'ropsten',
+  main = 'main',
+  tenderly = 'tenderly',
+}
+
+export enum ePolygonNetwork {
+  matic = 'matic',
+  mumbai = 'mumbai',
+}
+
+export enum eXDaiNetwork {
+  xdai = 'xdai',
+}
+
 export enum eContractid {
   DistributionManager = 'DistributionManager',
   StakedAave = 'StakedAave',
@@ -22,40 +40,9 @@ export enum eContractid {
   IBPool = 'IBPool',
   IControllerAaveEcosystemReserve = 'IControllerAaveEcosystemReserve',
   MockSelfDestruct = 'SelfdestructTransfer',
+  StakedTokenV2Rev3 = 'StakedTokenV2Rev3',
+  StakedTokenBptRev2 = 'StakedTokenBptRev2',
   AaveEcosystemReserve = 'AaveEcosystemReserve',
-}
-
-export interface SymbolMap<T> {
-  [symbol: string]: T;
-}
-
-export type eNetwork = eEthereumNetwork | ePolygonNetwork | eXDaiNetwork;
-
-export enum eEthereumNetwork {
-  kovan = 'kovan',
-  ropsten = 'ropsten',
-  main = 'main',
-  coverage = 'coverage',
-  hardhat = 'hardhat',
-}
-
-export enum ePolygonNetwork {
-  matic = 'matic',
-  mumbai = 'mumbai',
-}
-
-export enum eXDaiNetwork {
-  xdai = 'xdai',
-}
-
-export enum EthereumNetworkNames {
-  kovan = 'kovan',
-  ropsten = 'ropsten',
-  hardhat = 'hardhat',
-  main = 'main',
-  matic = 'matic',
-  mumbai = 'mumbai',
-  xdai = 'xdai',
 }
 
 export type tEthereumAddress = string;
@@ -88,6 +75,7 @@ export interface iEthereumParamsPerNetwork<T> {
   [eEthereumNetwork.ropsten]: T;
   [eEthereumNetwork.main]: T;
   [eEthereumNetwork.hardhat]: T;
+  [eEthereumNetwork.tenderly]: T;
 }
 
 export interface iPolygonParamsPerNetwork<T> {

@@ -10,6 +10,7 @@ import {
   tEthereumAddress,
   iEthereumParamsPerNetwork,
 } from './types';
+import { getCurrentBlock } from './contracts-helpers';
 
 export const toWad = (value: string | number) => new BigNumber(value).times(WAD).toFixed();
 
@@ -56,11 +57,31 @@ export const timeLatest = async () => {
   return new BigNumber(block.timestamp);
 };
 
-export const advanceBlock = async (timestamp: number) =>
-  await DRE.ethers.provider.send('evm_mine', [timestamp]);
-
 export const increaseTime = async (secondsToIncrease: number) =>
   await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
+
+export const increaseTimeTenderly = async (secondsToIncrease: number) => {
+  if (DRE.network.name.includes('tenderly')) {
+    await DRE.ethers.provider.send('evm_increaseTime', [`0x${secondsToIncrease.toString(16)}`]);
+    return;
+  }
+  await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
+  await DRE.ethers.provider.send('evm_mine', []);
+};
+
+export const advanceBlock = async (timestamp?: number) => {
+  const priorBlock = await getCurrentBlock();
+  await DRE.ethers.provider.send('evm_mine', timestamp ? [timestamp] : []);
+  const nextBlock = await getCurrentBlock();
+  if (!timestamp && nextBlock == priorBlock) {
+    await advanceBlock();
+    return;
+  }
+};
+
+export const increaseTimeAndMineTenderly = async (secondsToIncrease: number) => {
+  await increaseTimeTenderly(secondsToIncrease);
+};
 
 export const increaseTimeAndMine = async (secondsToIncrease: number) => {
   await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
@@ -68,10 +89,42 @@ export const increaseTimeAndMine = async (secondsToIncrease: number) => {
 };
 
 export const impersonateAccountsHardhat = async (accounts: tEthereumAddress[]) => {
+  if (DRE.network.name !== 'hardhat') {
+    return;
+  }
+
   for (const account of accounts) {
     await DRE.network.provider.request({
       method: 'hardhat_impersonateAccount',
       params: [account],
     });
+  }
+};
+
+export const latestBlock = async () => DRE.ethers.provider.getBlockNumber();
+
+export const advanceBlockTo = async (target: number) => {
+  const currentBlock = await latestBlock();
+  if (DRE.network.name.includes('tenderly')) {
+    const pendingBlocks = target - currentBlock - 1;
+
+    const response = await DRE.ethers.provider.send('evm_increaseBlocks', [
+      `0x${pendingBlocks.toString(16)}`,
+    ]);
+
+    return;
+  }
+  const start = Date.now();
+  let notified;
+  if (target < currentBlock)
+    throw Error(`Target block #(${target}) is lower than current block #(${currentBlock})`);
+  // eslint-disable-next-line no-await-in-loop
+  while ((await latestBlock()) < target) {
+    if (!notified && Date.now() - start >= 5000) {
+      notified = true;
+      console.log("advanceBlockTo: Advancing too many blocks is causing this test to be slow.'");
+    }
+    // eslint-disable-next-line no-await-in-loop
+    await advanceBlock(0);
   }
 };

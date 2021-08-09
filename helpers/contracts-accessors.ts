@@ -20,9 +20,9 @@ import { verifyContract } from './contracts-helpers';
 import { ATokenMock } from '../types/ATokenMock';
 import { getDb, DRE } from './misc-utils';
 import { DoubleTransferHelper } from '../types/DoubleTransferHelper';
-import { zeroAddress } from 'ethereumjs-util';
 import { ZERO_ADDRESS } from './constants';
 import { Signer } from 'ethers';
+import { StakedTokenBptRev2, StakedTokenV2Rev3 } from '../types';
 
 export const deployStakedAave = async (
   [
@@ -149,6 +149,106 @@ export const deployStakedTokenV2 = async (
   return instance;
 };
 
+export const deployStakedTokenV2Revision3 = async (
+  [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    string,
+    string,
+    tEthereumAddress
+  ],
+  verify?: boolean,
+  signer?: Signer
+) => {
+  const id = eContractid.StakedTokenV2Rev3;
+  const args: string[] = [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ];
+  const instance = await deployContract<StakedTokenV2Rev3>(id, args, '', signer);
+  if (verify) {
+    await verifyContract(id, instance, args);
+  }
+  return instance;
+};
+
+export const deployStakedTokenBptRevision2 = async (
+  [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    string,
+    string,
+    tEthereumAddress
+  ],
+  verify?: boolean,
+  signer?: Signer
+) => {
+  const id = eContractid.StakedTokenBptRev2;
+  const args: string[] = [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    name,
+    symbol,
+    decimals,
+    governance,
+  ];
+  const instance = await deployContract<StakedTokenBptRev2>(id, args, '', signer);
+  if (verify) {
+    await verifyContract(id, instance, args);
+  }
+  return instance;
+};
+
 export const deployStakedTokenV3 = async (
   [
     stakedToken,
@@ -238,16 +338,11 @@ export const deployStakedAaveV3 = async (
 };
 
 export const deployAaveIncentivesController = async (
-  [rewardToken, aavePsm, extraPsmReward, emissionManager]: [
-    tEthereumAddress,
-    tEthereumAddress,
-    string,
-    tEthereumAddress
-  ],
+  [rewardToken, aavePsm]: [tEthereumAddress, tEthereumAddress],
   verify?: boolean
 ) => {
   const id = eContractid.AaveIncentivesController;
-  const args: string[] = [rewardToken, aavePsm, extraPsmReward, emissionManager];
+  const args: string[] = [rewardToken, aavePsm];
   const instance = await deployContract<AaveIncentivesController>(id, args);
   await instance.deployTransaction.wait();
   if (verify) {
@@ -347,8 +442,13 @@ export const getStakedTokenV3 = async (address?: tEthereumAddress) => {
   );
 };
 
-export const getAaveIncentivesController = async (address: tEthereumAddress) =>
-  await getContract<AaveIncentivesController>(eContractid.AaveIncentivesController, address);
+export const getAaveIncentivesController = async (address?: tEthereumAddress) =>
+  await getContract<AaveIncentivesController>(
+    eContractid.AaveIncentivesController,
+    address ||
+      (await getDb().get(`${eContractid.AaveIncentivesController}.${DRE.network.name}`).value())
+        .address
+  );
 
 export const getIErc20Detailed = getContractFactory<Ierc20Detailed>(eContractid.IERC20Detailed);
 

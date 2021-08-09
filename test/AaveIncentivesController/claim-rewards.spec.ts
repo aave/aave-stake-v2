@@ -91,9 +91,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
 
       // update emissionPerSecond in advance to not affect user calculations
       if (emissionPerSecond) {
-        await aaveIncentivesController.configureAssets([
-          { emissionPerSecond, underlyingAsset, totalStaked },
-        ]);
+        await aaveIncentivesController.configureAssets([underlyingAsset], [emissionPerSecond]);
       }
 
       const destinationAddress = to || userAddress;
@@ -118,8 +116,7 @@ makeSuite('AaveIncentivesController claimRewards tests', (testEnv) => {
         await aaveIncentivesController.claimRewards(
           [underlyingAsset],
           amountToClaim,
-          destinationAddress,
-          toStake || false
+          destinationAddress
         )
       );
       const eventsEmitted = claimRewardsReceipt.events || [];

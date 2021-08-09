@@ -122,7 +122,7 @@ makeSuite('AaveIncentivesController configureAssets', (testEnv: TestEnv) => {
   it('Tries to submit config updates not from emission manager', async () => {
     const { aaveIncentivesController, users } = testEnv;
     await expect(
-      aaveIncentivesController.connect(users[2].signer).configureAssets([])
+      aaveIncentivesController.connect(users[2].signer).configureAssets([], [])
     ).to.be.revertedWith('ONLY_EMISSION_MANAGER');
   });
 

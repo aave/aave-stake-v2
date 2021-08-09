@@ -250,7 +250,7 @@ contract StakedToken is
     uint256 amountToReceive,
     address toAddress,
     uint256 toBalance
-  ) public returns (uint256) {
+  ) public view returns (uint256) {
     uint256 toCooldownTimestamp = stakersCooldowns[toAddress];
     if (toCooldownTimestamp == 0) {
       return 0;
@@ -276,8 +276,6 @@ contract StakedToken is
           .div(amountToReceive.add(toBalance));
       }
     }
-    stakersCooldowns[toAddress] = toCooldownTimestamp;
-
     return toCooldownTimestamp;
   }
 

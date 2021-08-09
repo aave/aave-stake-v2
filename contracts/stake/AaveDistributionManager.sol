@@ -22,9 +22,9 @@ contract AaveDistributionManager {
   }
 
   uint256 private immutable _distributionEnd;
-  
+
   address public immutable EMISSION_MANAGER;
- 
+
   uint8 public constant PRECISION = 18;
 
   mapping(address => AssetData) public assets;

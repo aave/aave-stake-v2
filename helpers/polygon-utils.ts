@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Contract } from 'ethers/lib/ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DRE } from './misc-utils';
-import { ePolygonNetwork, EthereumNetworkNames } from './types';
+import { ePolygonNetwork } from './types';
 
 const TASK_FLATTEN_GET_FLATTENED_SOURCE = 'flatten:get-flattened-sources';
 const TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS = 'compile:solidity:get-source-paths';
@@ -75,7 +75,7 @@ export const verifyAtPolygon = async (
     &contractSourceCode={contractSourceCode}
   */
   const network = (DRE as HardhatRuntimeEnvironment).network.name;
-  const net = network === EthereumNetworkNames.matic ? 'mainnet' : network;
+  const net = network === ePolygonNetwork.matic ? 'mainnet' : network;
   const filePath = await findPath(id);
   const encodedConstructorParams = encodeDeployParams(instance, args);
   const flattenSourceCode = await hardhatFlattener(filePath);

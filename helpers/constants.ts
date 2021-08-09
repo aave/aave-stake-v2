@@ -51,6 +51,7 @@ export const getAaveTokenPerNetwork = (network: eEthereumNetwork): tEthereumAddr
     {
       [eEthereumNetwork.coverage]: ZERO_ADDRESS,
       [eEthereumNetwork.hardhat]: ZERO_ADDRESS,
+      [eEthereumNetwork.tenderly]: ZERO_ADDRESS,
       [eEthereumNetwork.kovan]: '0xe4483afcf0d612c011679C76B61F5b0d27bAF93C',
       [eEthereumNetwork.ropsten]: '0x74dA004A1B81b4d0C79F5820f9FF22647cb1dD95',
       [eEthereumNetwork.main]: '0x9c0435779F5E52CEC404D957C9bAa6f7d674C8bA',
@@ -63,6 +64,7 @@ export const getCooldownSecondsPerNetwork = (network: eEthereumNetwork): tEthere
     {
       [eEthereumNetwork.coverage]: COOLDOWN_SECONDS,
       [eEthereumNetwork.hardhat]: COOLDOWN_SECONDS,
+      [eEthereumNetwork.tenderly]: COOLDOWN_SECONDS,
       [eEthereumNetwork.kovan]: '21600', // 8h
       [eEthereumNetwork.ropsten]: '180', // 3m
       [eEthereumNetwork.main]: '864000', // 10d
@@ -75,6 +77,7 @@ export const getUnstakeWindowPerNetwork = (network: eEthereumNetwork): tEthereum
     {
       [eEthereumNetwork.coverage]: UNSTAKE_WINDOW,
       [eEthereumNetwork.hardhat]: UNSTAKE_WINDOW,
+      [eEthereumNetwork.tenderly]: UNSTAKE_WINDOW,
       [eEthereumNetwork.kovan]: '10800', // 4h
       [eEthereumNetwork.ropsten]: '240', // 4m
       [eEthereumNetwork.main]: '172800', // 2d
@@ -87,6 +90,7 @@ export const getAaveAdminPerNetwork = (network: eEthereumNetwork): tEthereumAddr
     {
       [eEthereumNetwork.coverage]: ZERO_ADDRESS,
       [eEthereumNetwork.hardhat]: ZERO_ADDRESS,
+      [eEthereumNetwork.tenderly]: ZERO_ADDRESS,
       [eEthereumNetwork.kovan]: '0x8134929c3dcb1b8b82f27f53424b959fb82182f2', // Aave Governance
       [eEthereumNetwork.ropsten]: '0xEd93e49A2d75beA505fD4D1A0Dff745f69F2E997', // Aave Governance
       [eEthereumNetwork.main]: '0x8a2Efd9A790199F4c94c6effE210fce0B4724f52', // Aave Governance
@@ -99,6 +103,7 @@ export const getDistributionDurationPerNetwork = (network: eEthereumNetwork): tE
     {
       [eEthereumNetwork.coverage]: DISTRIBUTION_DURATION,
       [eEthereumNetwork.hardhat]: DISTRIBUTION_DURATION,
+      [eEthereumNetwork.tenderly]: DISTRIBUTION_DURATION,
       [eEthereumNetwork.kovan]: '864000',
       [eEthereumNetwork.ropsten]: '864000',
       [eEthereumNetwork.main]: '12960000', // 5 months (30 days) in seconds
@@ -113,6 +118,7 @@ export const getAaveIncentivesVaultPerNetwork = (network: eEthereumNetwork): tEt
       [eEthereumNetwork.hardhat]: '',
       [eEthereumNetwork.kovan]: '',
       [eEthereumNetwork.ropsten]: '',
+      [eEthereumNetwork.tenderly]: '',
       [eEthereumNetwork.main]: '0x253f7b06c1d60c1fbbc9d82c301327eb86e3ba81',
     },
     network

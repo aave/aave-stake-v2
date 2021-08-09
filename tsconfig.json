@@ -8,6 +8,7 @@
     "noImplicitAny": false,
     "resolveJsonModule": true
   },
-  "include": ["./tasks", "./test", "./helpers"],
-  "files": ["./hardhat.config.ts"]
+  "include": ["./tasks", "./test", "./test-fork", "./helpers", "./types"],
+  "files": ["hardhat.config.ts",    "node_modules/@hardhat/typechain/src/type-extensions.d.ts",
+  ]
 }

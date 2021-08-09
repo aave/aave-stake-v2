@@ -6,9 +6,8 @@ import { StakedAave } from '../../../types/StakedAave';
 import { AaveIncentivesController } from '../../../types/AaveIncentivesController';
 
 export type AssetUpdateData = {
-  emissionPerSecond: BigNumberish;
-  totalStaked: BigNumberish;
-  underlyingAsset: string;
+  underlyingAssets: string[];
+  emissionsPerSecond: BigNumberish[];
 };
 export type AssetData = {
   emissionPerSecond: BigNumber;

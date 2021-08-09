@@ -59,7 +59,7 @@ task(`deploy-incentives`, `Deploy and initializes the ${id} contract`)
       console.log(`\n- ${id} implementation deployment:`);
 
       const aaveIncentivesControllerImpl = await deployAaveIncentivesController(
-        [rewardToken, psm, extraPsmReward, emissionManager],
+        [rewardToken, emissionManager],
         verify
       );
 
@@ -69,7 +69,7 @@ task(`deploy-incentives`, `Deploy and initializes the ${id} contract`)
 
       const encodedParams = aaveIncentivesControllerImpl.interface.encodeFunctionData(
         'initialize',
-        [rewardsVault, distributionDuration, rewardsAdmin]
+        [rewardsVault]
       );
 
       await waitForTx(

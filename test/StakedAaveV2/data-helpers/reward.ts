@@ -31,28 +31,16 @@ export const compareRewardsAtAction = async (
 ): Promise<void> => {
   const underlyingAsset = stakedAave.address;
   // To prevent coverage to fail, add 5 seconds per comparisson.
-  await increaseTime(5);
+  await increaseTime(15);
 
   const rewardsBalanceBefore = BigNumber.from(
     await (await stakedAave.getTotalRewardsBalance(userAddress)).toString()
   );
 
-  // Configure assets of stake token
-  const assetConfiguration = assetConfig
-    ? {
-        ...assetConfig,
-        underlyingAsset,
-      }
-    : {
-        emissionPerSecond: '100',
-        totalStaked: await stakedAave.totalSupply(),
-        underlyingAsset,
-      };
-  await stakedAave.configureAssets([assetConfiguration]);
-
   const userBalance = await stakedAave.balanceOf(userAddress);
   // Get index before actions
   const userIndexBefore = await getUserIndex(stakedAave, userAddress, underlyingAsset);
+  console.log('uI Before:', userIndexBefore, userAddress);
 
   // Dispatch actions that can or not update the user index
   const receipts: ethers.ContractReceipt[] = await Promise.all(
@@ -61,6 +49,7 @@ export const compareRewardsAtAction = async (
   // Get index after actions
   const userIndexAfter = await getUserIndex(stakedAave, userAddress, underlyingAsset);
 
+  console.log('uI After:', userIndexAfter);
   // Compare calculated JS rewards versus Solidity user rewards
   const rewardsBalanceAfter = BigNumber.from(
     await (await stakedAave.getTotalRewardsBalance(userAddress)).toString()

@@ -307,7 +307,6 @@ contract StakedTokenV2 is
           .div(amountToReceive.add(toBalance));
       }
     }
-
     return toCooldownTimestamp;
   }
 
