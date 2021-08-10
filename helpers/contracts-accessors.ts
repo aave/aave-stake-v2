@@ -18,10 +18,9 @@ import { verifyContract } from './etherscan-verification';
 import { ATokenMock } from '../types/ATokenMock';
 import { getDb, DRE } from './misc-utils';
 import { DoubleTransferHelper } from '../types/DoubleTransferHelper';
-import { zeroAddress } from 'ethereumjs-util';
 import { ZERO_ADDRESS } from './constants';
 import { Signer } from 'ethers';
-import { StakedTokenBptRev2, StakedTokenV2Rev3 } from '../types';
+import { StakedAaveV3, StakedTokenBptRev2, StakedTokenV2Rev3 } from '../types';
 
 export const deployStakedAave = async (
   [
@@ -292,6 +291,44 @@ export const deployStakedTokenV3 = async (
     governance,
   ];
   const instance = await deployContract<StakedTokenV3>(id, args, '', signer);
+  if (verify) {
+    await verifyContract(instance.address, args);
+  }
+  return instance;
+};
+
+export const deployStakedAaveV3 = async (
+  [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+  ]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    string,
+    string,
+    tEthereumAddress,
+    tEthereumAddress,
+    string
+  ],
+  verify?: boolean
+) => {
+  const id = eContractid.StakedAaveV3;
+  const args: string[] = [
+    stakedToken,
+    rewardsToken,
+    cooldownSeconds,
+    unstakeWindow,
+    rewardsVault,
+    emissionManager,
+    distributionDuration,
+    ZERO_ADDRESS, // gov address
+  ];
+  const instance = await deployContract<StakedAaveV3>(id, args);
   if (verify) {
     await verifyContract(instance.address, args);
   }
