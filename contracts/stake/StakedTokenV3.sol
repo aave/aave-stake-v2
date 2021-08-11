@@ -43,17 +43,17 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   uint256 internal _maxSlashablePercentage;
   bool _cooldownPaused;
 
-  modifier onlySlashingAdmin {
+  modifier onlySlashingAdmin() {
     require(msg.sender == getAdmin(SLASH_ADMIN_ROLE), 'CALLER_NOT_SLASHING_ADMIN');
     _;
   }
 
-  modifier onlyCooldownAdmin {
+  modifier onlyCooldownAdmin() {
     require(msg.sender == getAdmin(COOLDOWN_ADMIN_ROLE), 'CALLER_NOT_COOLDOWN_ADMIN');
     _;
   }
 
-  modifier onlyClaimHelper {
+  modifier onlyClaimHelper() {
     require(msg.sender == getAdmin(CLAIM_HELPER_ROLE), 'CALLER_NOT_CLAIM_HELPER');
     _;
   }
@@ -236,18 +236,23 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   }
 
   /**
-   * @dev Claims an `amount` of `REWARD_TOKEN` amd restakes
+   * @dev Claims an `amount` of `REWARD_TOKEN` and restakes
    * @param to Address to stake to
    * @param amount Amount to claim
    **/
   function claimRewardsAndStake(address to, uint256 amount) external override returns (uint256) {
     require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
 
-    uint256 rewardsClaimed = _claimRewards(msg.sender, address(this), amount);
-    if (rewardsClaimed != 0) {
-      _stake(address(this), to, rewardsClaimed, false);
+    uint256 userUpdatedRewards =
+      _updateCurrentUnclaimedRewards(msg.sender, balanceOf(msg.sender), true);
+    uint256 amountToClaim = (amount == type(uint256).max) ? userUpdatedRewards : amount;
+
+    if (amountToClaim != 0) {
+      _stake(address(this), to, amountToClaim, false);
+      _claimRewards(msg.sender, address(this), amountToClaim);
     }
-    return rewardsClaimed;
+
+    return amountToClaim;
   }
 
   /**
@@ -263,13 +268,19 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   ) external override onlyClaimHelper returns (uint256) {
     require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
 
-    uint256 rewardsClaimed = _claimRewards(from, address(this), amount);
-    _stake(address(this), to, rewardsClaimed, false);
-    return (rewardsClaimed);
+    uint256 userUpdatedRewards = _updateCurrentUnclaimedRewards(from, balanceOf(from), true);
+    uint256 amountToClaim = (amount == type(uint256).max) ? userUpdatedRewards : amount;
+
+    if (amountToClaim != 0) {
+      _stake(address(this), to, amountToClaim, false);
+      _claimRewards(from, address(this), amountToClaim);
+    }
+
+    return (amountToClaim);
   }
 
   /**
-   * @dev Claims an `amount` of `REWARD_TOKEN` amd redeem
+   * @dev Claims an `amount` of `REWARD_TOKEN` and redeem
    * @param claimAmount Amount to claim
    * @param redeemAmount Amount to redeem
    * @param to Address to claim and unstake to
