@@ -238,16 +238,11 @@ export const deployStakedAaveV3 = async (
 };
 
 export const deployAaveIncentivesController = async (
-  [rewardToken, aavePsm, extraPsmReward, emissionManager]: [
-    tEthereumAddress,
-    tEthereumAddress,
-    string,
-    tEthereumAddress
-  ],
+  [rewardToken, emissionManager]: [tEthereumAddress, tEthereumAddress],
   verify?: boolean
 ) => {
   const id = eContractid.AaveIncentivesController;
-  const args: string[] = [rewardToken, aavePsm, extraPsmReward, emissionManager];
+  const args: string[] = [rewardToken, emissionManager];
   const instance = await deployContract<AaveIncentivesController>(id, args);
   await instance.deployTransaction.wait();
   if (verify) {
@@ -347,8 +342,13 @@ export const getStakedTokenV3 = async (address?: tEthereumAddress) => {
   );
 };
 
-export const getAaveIncentivesController = async (address: tEthereumAddress) =>
-  await getContract<AaveIncentivesController>(eContractid.AaveIncentivesController, address);
+export const getAaveIncentivesController = async (address?: tEthereumAddress) =>
+  await getContract<AaveIncentivesController>(
+    eContractid.AaveIncentivesController,
+    address ||
+      (await getDb().get(`${eContractid.AaveIncentivesController}.${DRE.network.name}`).value())
+        .address
+  );
 
 export const getIErc20Detailed = getContractFactory<Ierc20Detailed>(eContractid.IERC20Detailed);
 

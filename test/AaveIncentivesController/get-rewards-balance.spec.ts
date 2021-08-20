@@ -44,9 +44,7 @@ makeSuite('AaveIncentivesController getRewardsBalance tests', (testEnv) => {
       // update emissionPerSecond in advance to not affect user calculations
       await advanceBlock((await timeLatest()).plus(100).toNumber());
       if (emissionPerSecond) {
-        await aaveIncentivesController.configureAssets([
-          { emissionPerSecond, underlyingAsset, totalStaked },
-        ]);
+        await aaveIncentivesController.configureAssets([underlyingAsset], [emissionPerSecond]);
       }
       await aDaiMock.handleActionOnAic(userAddress, stakedByUser, totalStaked);
       await advanceBlock((await timeLatest()).plus(100).toNumber());

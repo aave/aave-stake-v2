@@ -54,7 +54,7 @@ let forkRpc = MAINNET_FORK
   : MATIC_FORK
   ? {
       blockNumber: FORKING_BLOCK,
-      url: `https://rpc-aave-mainnet.maticvigil.com/v1/${MATIC_KEY}`,
+      url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
     }
   : undefined;
 

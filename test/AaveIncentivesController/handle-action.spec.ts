@@ -67,9 +67,7 @@ makeSuite('AaveIncentivesController handleAction tests', (testEnv) => {
 
       // update emissionPerSecond in advance to not affect user calculations
       if (emissionPerSecond) {
-        await aaveIncentivesController.configureAssets([
-          { emissionPerSecond, underlyingAsset, totalStaked: totalSupply },
-        ]);
+        await aaveIncentivesController.configureAssets([underlyingAsset], [emissionPerSecond]);
       }
 
       const distributionEndTimestamp = await aaveIncentivesController.getDistributionEnd();

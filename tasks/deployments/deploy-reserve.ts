@@ -3,12 +3,9 @@ import { eContractid } from '../../helpers/types';
 import { waitForTx } from '../../helpers/misc-utils';
 import {
   deployAaveEcosystemReserve,
-  deployAaveIncentivesController,
   deployInitializableAdminUpgradeabilityProxy,
 } from '../../helpers/contracts-accessors';
 import { isAddress } from '@ethersproject/address';
-import { ZERO_ADDRESS } from '../../helpers/constants';
-import { BigNumber } from '@ethersproject/bignumber';
 
 const { AaveEcosystemReserve: id } = eContractid;
 task(`deploy-reserve`, `Deploy and initializes the ${id} contract`)

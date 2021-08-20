@@ -11,6 +11,8 @@ import {
   AssetUpdateData,
   getAssetsData,
 } from '../DistributionManager/data-helpers/asset-data';
+import { ATokenMock } from '../../types/ATokenMock';
+import { deployATokenMock } from '../../helpers/contracts-accessors';
 
 type ScenarioAction = {
   caseName: string;
@@ -122,7 +124,7 @@ makeSuite('AaveIncentivesController configureAssets', (testEnv: TestEnv) => {
   it('Tries to submit config updates not from emission manager', async () => {
     const { aaveIncentivesController, users } = testEnv;
     await expect(
-      aaveIncentivesController.connect(users[2].signer).configureAssets([])
+      aaveIncentivesController.connect(users[2].signer).configureAssets([], [])
     ).to.be.revertedWith('ONLY_EMISSION_MANAGER');
   });
 
@@ -135,13 +137,11 @@ makeSuite('AaveIncentivesController configureAssets', (testEnv: TestEnv) => {
 
       const assetConfigsUpdate: AssetUpdateData[] = [];
 
-      assets.forEach((assetConfig, i) => {
-        if (i > RANDOM_ADDRESSES.length) {
-          throw new Error('to many assets to test');
-        }
-        const underlyingAsset = RANDOM_ADDRESSES[i];
-        assetConfigsUpdate.push({ ...assetConfig, underlyingAsset });
-      });
+      for (let a = 0; a < assets.length; a++) {
+        const underlyingAsset = (await deployATokenMock(aaveIncentivesController.address, 'aDai'))
+          .address;
+        assetConfigsUpdate.push({ ...assets[a], underlyingAsset });
+      }
 
       const assetsConfigBefore = await getAssetsData(aaveIncentivesController, assetConfigsUpdate);
 
@@ -150,7 +150,10 @@ makeSuite('AaveIncentivesController configureAssets', (testEnv: TestEnv) => {
       }
 
       const txReceipt = await waitForTx(
-        await aaveIncentivesController.configureAssets(assetConfigsUpdate)
+        await aaveIncentivesController.configureAssets(
+          assetConfigsUpdate.map(({ underlyingAsset }) => underlyingAsset),
+          assetConfigsUpdate.map(({ emissionPerSecond }) => emissionPerSecond)
+        )
       );
       const configsUpdateBlockTimestamp = await getBlockTimestamp(txReceipt.blockNumber);
       const assetsConfigAfter = await getAssetsData(aaveIncentivesController, assetConfigsUpdate);

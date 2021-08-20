@@ -49,7 +49,7 @@ describe('AaveIncentivesController configuration test', () => {
   let tokens: token[] = [];
 
   before(async () => {
-    setDRE(hre);
+    await hre.run('set-dre');
     user = (await ethers.getSigners())[0];
     incentiveController = AaveIncentivesController__factory.connect(
       deployedAssets.matic.incentivesController,
@@ -209,7 +209,7 @@ describe('AaveIncentivesController configuration test', () => {
       const wmaticBalanceBefore = await wmatic.asset.connect(token.holder).balanceOf(holderAddress);
       await incentiveController
         .connect(token.holder)
-        .claimRewards([token.aToken.address], MAX_UINT_AMOUNT, holderAddress, false);
+        .claimRewards([token.aToken.address], MAX_UINT_AMOUNT, holderAddress);
       const wmaticBalanceAfter = await wmatic.asset.connect(token.holder).balanceOf(holderAddress);
       console.log(wmaticBalanceBefore.toString());
       console.log(wmaticBalanceAfter.toString());
@@ -222,8 +222,7 @@ describe('AaveIncentivesController configuration test', () => {
         await incentiveController.connect(token.holder).claimRewards(
           tokens.filter(({ name }) => name != 'AAVE').map((token) => token.debtToken.address),
           MAX_UINT_AMOUNT,
-          holderAddress,
-          false
+          holderAddress
         );
         const wmaticBalanceAfter = await wmatic.asset
           .connect(token.holder)
