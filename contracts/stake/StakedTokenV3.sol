@@ -245,7 +245,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
     uint256 userUpdatedRewards =
       _updateCurrentUnclaimedRewards(msg.sender, balanceOf(msg.sender), true);
-    uint256 amountToClaim = (amount == type(uint256).max) ? userUpdatedRewards : amount;
+    uint256 amountToClaim = (amount > userUpdatedRewards) ? userUpdatedRewards : amount;
 
     if (amountToClaim != 0) {
       _stake(address(this), to, amountToClaim, false);
@@ -269,7 +269,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
 
     uint256 userUpdatedRewards = _updateCurrentUnclaimedRewards(from, balanceOf(from), true);
-    uint256 amountToClaim = (amount == type(uint256).max) ? userUpdatedRewards : amount;
+    uint256 amountToClaim = (amount > userUpdatedRewards) ? userUpdatedRewards : amount;
 
     if (amountToClaim != 0) {
       _stake(address(this), to, amountToClaim, false);
@@ -393,7 +393,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   ) internal returns (uint256) {
     uint256 newTotalRewards = _updateCurrentUnclaimedRewards(from, balanceOf(from), false);
 
-    uint256 amountToClaim = (amount == type(uint256).max) ? newTotalRewards : amount;
+    uint256 amountToClaim = (amount > newTotalRewards) ? newTotalRewards : amount;
 
     stakerRewardsToClaim[from] = newTotalRewards.sub(amountToClaim, 'INVALID_AMOUNT');
     REWARD_TOKEN.safeTransferFrom(REWARDS_VAULT, to, amountToClaim);
