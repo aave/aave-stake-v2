@@ -119,6 +119,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     string calldata symbol,
     uint8 decimals
   ) external initializer {
+    require(maxSlashablePercentage <= PercentageMath.PERCENTAGE_FACTOR, 'INVALID_SLASHING_PERCENTAGE');
     uint256 chainId;
 
     //solium-disable-next-line
