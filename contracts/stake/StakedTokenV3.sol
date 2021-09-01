@@ -34,6 +34,8 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   uint256 public constant SLASH_ADMIN_ROLE = 0;
   uint256 public constant COOLDOWN_ADMIN_ROLE = 1;
   uint256 public constant CLAIM_HELPER_ROLE = 2;
+  uint256 public constant INITIAL_EXCHANGE_RATE = 1e18;
+  uint256 public constant TOKEN_UNIT = 1e18;
 
   function REVISION() public pure virtual override returns (uint256) {
     return 3;
@@ -321,10 +323,10 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint256 currentSupply = totalSupply();
 
     if (currentSupply == 0) {
-      return 1e18; //initial exchange rate is 1:1
+      return INITIAL_EXCHANGE_RATE; //initial exchange rate is 1:1
     }
 
-    return STAKED_TOKEN.balanceOf(address(this)).mul(1e18).div(currentSupply);
+    return STAKED_TOKEN.balanceOf(address(this)).mul(TOKEN_UNIT).div(currentSupply);
   }
 
   /**
@@ -422,7 +424,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
     stakersCooldowns[to] = getNextCooldownTimestamp(0, amount, to, balanceOfUser);
 
-    uint256 sharesToMint = amount.mul(1e18).div(exchangeRate());
+    uint256 sharesToMint = amount.mul(TOKEN_UNIT).div(exchangeRate());
     _mint(to, sharesToMint);
 
     if (pullFunds) {
