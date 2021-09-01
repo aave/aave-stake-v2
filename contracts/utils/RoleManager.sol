@@ -10,7 +10,7 @@ contract RoleManager {
   mapping(uint256 => address) private _admins;
   mapping(uint256 => address) private _pendingAdmins;
 
-  event PendingAdminChanged(address indexed newPendingAdmin);
+  event PendingAdminChanged(address indexed newPendingAdmin, uint256 role);
   event RoleClaimed(address indexed newAdming, uint256 role);
 
   modifier onlyRoleAdmin(uint256 role) {
@@ -46,7 +46,7 @@ contract RoleManager {
    **/
   function setPendingAdmin(uint256 role, address newPendingAdmin) public onlyRoleAdmin(role) {
     _pendingAdmins[role] = newPendingAdmin;
-    emit PendingAdminChanged(newPendingAdmin);
+    emit PendingAdminChanged(newPendingAdmin, role);
   }
 
   /**
