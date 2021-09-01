@@ -9,6 +9,7 @@ import {
   evmRevert,
   evmSnapshot,
   increaseTime,
+  setBlocktime,
 } from '../../helpers/misc-utils';
 import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
@@ -167,15 +168,21 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
       users: [, staker],
     } = testEnv;
 
-    const saveUserBalance = await aaveToken.balanceOf(staker.address);
+    const time = await timeLatest();
+
+    await setBlocktime(time.toNumber() + 1);
+
+    const userBalanceBefore = await aaveToken.balanceOf(staker.address, { blockTag: 'pending' });
+    const rewards = await stakeV3.getTotalRewardsBalance(staker.address, { blockTag: 'pending' });
 
     // Try to claim more amount than accumulated
-    await expect(
-      stakeV3.connect(staker.signer).claimRewards(staker.address, ethers.utils.parseEther('10000'))
-    ).to.be.revertedWith('INVALID_AMOUNT');
-
-    const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
-    expect(userBalanceAfterActions).eq(saveUserBalance);
+    await waitForTx(
+      await stakeV3
+        .connect(staker.signer)
+        .claimRewards(staker.address, ethers.utils.parseEther('10000'))
+    );
+    const userBalanceAfter = await aaveToken.balanceOf(staker.address);
+    expect(userBalanceAfter).eq(userBalanceBefore.add(rewards));
   });
 
   it('User 1 claim all rewards', async () => {
@@ -724,17 +731,21 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
       users: [, staker, helper, someone],
     } = testEnv;
 
-    const saveUserBalance = await aaveToken.balanceOf(someone.address);
+    const time = await timeLatest();
+
+    await setBlocktime(time.toNumber() + 1);
+
+    const userBalanceBefore = await aaveToken.balanceOf(someone.address, { blockTag: 'pending' });
+    const rewards = await stakeV3.getTotalRewardsBalance(staker.address, { blockTag: 'pending' });
 
     // Try to claim more amount than accumulated
-    await expect(
-      stakeV3
-        .connect(helper.signer)
-        .claimRewardsOnBehalf(staker.address, someone.address, ethers.utils.parseEther('10000'))
-    ).to.be.revertedWith('INVALID_AMOUNT');
+    await stakeV3
+      .connect(helper.signer)
+      .claimRewardsOnBehalf(staker.address, someone.address, ethers.utils.parseEther('10000'));
 
-    const userBalanceAfterActions = await aaveToken.balanceOf(someone.address);
-    expect(userBalanceAfterActions).eq(saveUserBalance);
+    const userBalanceAfter = await aaveToken.balanceOf(someone.address);
+
+    expect(userBalanceAfter).eq(userBalanceBefore.add(rewards));
   });
 
   it('Helper 1 claim all for staker to someone', async () => {
@@ -834,25 +845,6 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     expect(afterExchangeRate).to.be.equal(currentExchangeRate);
   });
 
-  it('Claim & stake higher reward than current rewards balance', async () => {
-    const {
-      aaveToken,
-      users: [, staker],
-    } = testEnv;
-
-    const saveUserBalance = await aaveToken.balanceOf(staker.address);
-
-    // Try to claim more amount than accumulated
-    await expect(
-      stakeV3
-        .connect(staker.signer)
-        .claimRewardsAndStake(staker.address, ethers.utils.parseEther('10000'))
-    ).to.be.revertedWith('INVALID_AMOUNT');
-
-    const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
-    expect(userBalanceAfterActions).eq(saveUserBalance);
-  });
-
   it('Claim & stake all', async () => {
     const {
       aaveToken,
@@ -943,25 +935,6 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     expect(afterExchangeRate)
       .to.be.equal(currentExchangeRate)
       .equal(ethers.utils.parseEther('0.8'));
-  });
-
-  it('Claim & stake higher reward than current rewards balance to someone else', async () => {
-    const {
-      aaveToken,
-      users: [, staker, someone],
-    } = testEnv;
-
-    const saveUserBalance = await aaveToken.balanceOf(someone.address);
-
-    // Try to claim more amount than accumulated
-    await expect(
-      stakeV3
-        .connect(staker.signer)
-        .claimRewardsAndStake(someone.address, ethers.utils.parseEther('10000'))
-    ).to.be.revertedWith('INVALID_AMOUNT');
-
-    const userBalanceAfterActions = await aaveToken.balanceOf(someone.address);
-    expect(userBalanceAfterActions.eq(saveUserBalance));
   });
 
   it('Claim & stake all to someone else', async () => {
@@ -1069,29 +1042,6 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     );
   });
 
-  it('Helper tries to claim & stake higher reward than current rewards balance', async () => {
-    const {
-      aaveToken,
-      users: [, staker, helper],
-    } = testEnv;
-
-    const saveUserBalance = await aaveToken.balanceOf(staker.address);
-
-    // Try to claim more amount than accumulated
-    await expect(
-      stakeV3
-        .connect(helper.signer)
-        .claimRewardsAndStakeOnBehalf(
-          staker.address,
-          staker.address,
-          ethers.utils.parseEther('10000')
-        )
-    ).to.be.revertedWith('INVALID_AMOUNT');
-
-    const userBalanceAfterActions = await aaveToken.balanceOf(staker.address);
-    expect(userBalanceAfterActions).eq(saveUserBalance);
-  });
-
   it('Helper 1 claims & stakes all for staker', async () => {
     const {
       aaveToken,
@@ -1193,29 +1143,6 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     expect(userBalanceAfterActions[1]).eq(
       saveUserBalance[1].add(halfRewards.mul(ether).div(currentExchangeRate))
     );
-  });
-
-  it('Helper tries to claim & stake higher reward than current rewards balance', async () => {
-    const {
-      aaveToken,
-      users: [, staker, helper, someone],
-    } = testEnv;
-
-    const saveUserBalance = await aaveToken.balanceOf(someone.address);
-
-    // Try to claim more amount than accumulated
-    await expect(
-      stakeV3
-        .connect(helper.signer)
-        .claimRewardsAndStakeOnBehalf(
-          staker.address,
-          someone.address,
-          ethers.utils.parseEther('10000')
-        )
-    ).to.be.revertedWith('INVALID_AMOUNT');
-
-    const userBalanceAfterActions = await aaveToken.balanceOf(someone.address);
-    expect(userBalanceAfterActions).eq(saveUserBalance);
   });
 
   it('Helper 1 claim & staker all for staker to someone', async () => {
