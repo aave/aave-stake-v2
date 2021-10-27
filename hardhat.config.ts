@@ -11,6 +11,8 @@ import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-etherscan';
 import '@tenderly/hardhat-tenderly';
 
+require('dotenv').config();
+
 export const BUIDLEREVM_CHAIN_ID = 31337;
 
 const DEFAULT_BLOCK_GAS_LIMIT = 12500000;
