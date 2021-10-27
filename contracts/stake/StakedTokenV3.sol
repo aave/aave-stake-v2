@@ -79,6 +79,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint256 underlyingTransferred
   );
   event CooldownPauseChanged(bool pause);
+  event EmergencyShutdownChanged(bool emergencyShutdown);
   event MaxSlashablePercentageChanged(uint256 newPercentage);
   event Slashed(address indexed destination, uint256 amount);
   event CooldownPauseAdminChanged(address indexed newAdmin);
@@ -175,11 +176,12 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     _maxSlashablePercentage = maxSlashablePercentage;
   }
 
-  function setEmergencyShutdown(bool state) public {
-    _emergencyShutdown = state;
+  function setEmergencyShutdown(bool emergencyShutdown) external override onlyCooldownAdmin {
+    _emergencyShutdown = emergencyShutdown;
+    emit EmergencyShutdownChanged(emergencyShutdown);
   }
 
-  function getEmergencyShutdown() external view returns (bool) {
+  function getEmergencyShutdown() external view override returns (bool) {
     return _emergencyShutdown;
   }
 
@@ -385,12 +387,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param destination the address where seized funds will be transferred
    * @param amount the amount
    **/
-  function slash(address destination, uint256 amount)
-    external
-    override
-    noEmergency
-    onlySlashingAdmin
-  {
+  function slash(address destination, uint256 amount) external override onlySlashingAdmin {
     uint256 balance = STAKED_TOKEN.balanceOf(address(this));
 
     uint256 maxSlashable = balance.percentMul(_maxSlashablePercentage);
@@ -413,7 +410,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @dev sets the state of the cooldown pause
    * @param paused true if the cooldown needs to be paused, false otherwise
    */
-  function setCooldownPause(bool paused) external override onlyCooldownAdmin noEmergency {
+  function setCooldownPause(bool paused) external override onlyCooldownAdmin {
     _cooldownPaused = paused;
     emit CooldownPauseChanged(paused);
   }
@@ -422,12 +419,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @dev sets the admin of the slashing pausing function
    * @param percentage the new maximum slashable percentage
    */
-  function setMaxSlashablePercentage(uint256 percentage)
-    external
-    override
-    noEmergency
-    onlySlashingAdmin
-  {
+  function setMaxSlashablePercentage(uint256 percentage) external override onlySlashingAdmin {
     require(percentage <= PercentageMath.PERCENTAGE_FACTOR, 'INVALID_SLASHING_PERCENTAGE');
 
     _maxSlashablePercentage = percentage;

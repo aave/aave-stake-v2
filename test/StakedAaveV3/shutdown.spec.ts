@@ -104,8 +104,14 @@ makeSuite('StakedAave V3 emergency', (testEnv: TestEnv) => {
   });
 
   it('Enter an emergency', async () => {
+    const {
+      users: [slashingAdmin, cooldownAdmin],
+    } = testEnv;
     expect(await stakeV3.getEmergencyShutdown()).to.be.false;
-    expect(await stakeV3.setEmergencyShutdown(true));
+    await expect(
+      stakeV3.connect(slashingAdmin.signer).setEmergencyShutdown(true)
+    ).to.be.revertedWith('CALLER_NOT_COOLDOWN_ADMIN');
+    expect(await stakeV3.connect(cooldownAdmin.signer).setEmergencyShutdown(true));
     expect(await stakeV3.getEmergencyShutdown()).to.be.true;
   });
 
@@ -504,8 +510,12 @@ makeSuite('StakedAave V3 emergency', (testEnv: TestEnv) => {
 
     await stakeV3.connect(slashingAdmin.signer).slash(auctionModule.address, parseUnits('10'));
 
-    expect(await aaveToken.balanceOf(stakeV3.address)).to.be.eq(stakeBalanceBefore);
-    expect(await aaveToken.balanceOf(auctionModule.address)).to.be.eq(auctionModuleBalanceBefore);
-    expect(await stakeV3.exchangeRate()).to.be.eq(exchangeRate);
+    expect(await aaveToken.balanceOf(stakeV3.address)).to.be.eq(
+      stakeBalanceBefore.sub(parseUnits('10'))
+    );
+    expect(await aaveToken.balanceOf(auctionModule.address)).to.be.eq(
+      auctionModuleBalanceBefore.add(parseUnits('10'))
+    );
+    expect(await stakeV3.exchangeRate()).to.be.eq(exchangeRate.mul(9).div(10));
   });
 });
