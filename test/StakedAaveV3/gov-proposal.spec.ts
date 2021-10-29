@@ -5,6 +5,7 @@ import {
   MAX_UINT_AMOUNT,
   AAVE_GOVERNANCE_V2,
   AAVE_TOKEN,
+  SHORT_EXECUTOR,
 } from '../../helpers/constants';
 import {
   waitForTx,
@@ -21,6 +22,7 @@ import {
   Executor__factory,
   IAaveGovernanceV2,
   IBaseAdminUpgradabilityProxy__factory,
+  ITransferHook,
   SelfdestructTransfer__factory,
   StakedAaveV3__factory,
   StakeTokenUpgradeProposalExecutor__factory,
@@ -82,15 +84,18 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     const rewardsVaultAddress = (await rewardsVault.getAddress()).toString();
     const emissionManager = await deployer.getAddress();
 
-    implementation = await deployStakedAaveV3([
-      aaveToken.address,
-      aaveToken.address,
-      COOLDOWN_SECONDS,
-      UNSTAKE_WINDOW,
-      rewardsVaultAddress,
-      emissionManager,
-      (10000 * 60 * 60).toString(),
-    ]);
+    implementation = await (
+      await new StakedAaveV3__factory(deployer).deploy(
+        aaveToken.address,
+        aaveToken.address,
+        COOLDOWN_SECONDS,
+        UNSTAKE_WINDOW,
+        rewardsVaultAddress,
+        emissionManager,
+        (10000 * 60 * 60).toString(),
+        AAVE_GOVERNANCE_V2
+      )
+    ).deployed();
 
     await aaveToken.connect(rewardsVault).approve(implementation.address, MAX_UINT_AMOUNT);
 
@@ -100,7 +105,7 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
         users[0].address,
         users[1].address,
         users[2].address,
-        '2000',
+        '3000',
         'Staked AAVE',
         'stkAAVE',
         18
@@ -109,7 +114,7 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
   });
 
   it('Governance to upgrade contract', async () => {
-    const { users, aaveToken } = testEnv;
+    const { users } = testEnv;
 
     const executor = Executor__factory.connect(LONG_EXECUTOR, users[0].signer);
 
@@ -219,11 +224,17 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     ).to.be.eq(implementation.address);
   });
 
-  it('Read emergency shutdown value only in updated contract', async () => {
+  it('Read values only in updated contract', async () => {
     const {
       users: [, , , , user],
     } = testEnv;
 
     expect(await stakedAave.connect(user.signer).getEmergencyShutdown()).to.be.eq(false);
+
+    const slashingAdmin = await stakedAave
+      .connect(user.signer)
+      .getAdmin(await stakedAave.connect(user.signer).SLASH_ADMIN_ROLE());
+
+    expect(slashingAdmin).to.be.eq(SHORT_EXECUTOR);
   });
 });

@@ -38,7 +38,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   uint256 public constant TOKEN_UNIT = 1e18;
 
   function REVISION() public pure virtual override returns (uint256) {
-    return 3;
+    return 4;
   }
 
   //maximum percentage of the underlying that can be slashed in a single realization event
