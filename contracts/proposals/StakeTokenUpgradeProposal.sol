@@ -8,9 +8,9 @@ contract StakeTokenUpgradeProposalExecutor {
   address constant SHORT_EXECUTOR = address(0xEE56e2B3D491590B5b31738cC34d5232F378a8D5);
 
   // TODO: Replace immutable with constant address when implementation is deployed
-  // TODO: replace claimhelper address(0) for the real address when decided decided
+  // TODO: replace claimhelper for the real address when decided decided
   address immutable NEW_STAKED_AAVE_TOKEN_IMPLEMENTATION;
-  address constant claimHelper = address(0);
+  address constant claimHelper = SHORT_EXECUTOR;
 
   address constant slashingAdmin = SHORT_EXECUTOR;
   address constant cooldownPauseAdmin = SHORT_EXECUTOR;
@@ -31,7 +31,7 @@ contract StakeTokenUpgradeProposalExecutor {
       'initialize(address,address,address,uint256,string,string,uint8)',
       slashingAdmin,
       cooldownPauseAdmin,
-      SHORT_EXECUTOR,
+      claimHelper,
       maxSlashablePercentage,
       name,
       symbol,

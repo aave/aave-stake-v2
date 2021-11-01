@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "test-update-staking:tenderly": "hardhat --network tenderly test test/__setup.spec.ts test/StakedAaveV3/gov-proposal.spec.ts",
+    "test-update-staking": "hardhat test test/__setup.spec.ts test/StakedAaveV3/gov-proposal.spec.ts",
     "run-env": "npm i && tail -f /dev/null",
     "hardhat": "hardhat",
     "hardhat-kovan": "hardhat --network kovan",
