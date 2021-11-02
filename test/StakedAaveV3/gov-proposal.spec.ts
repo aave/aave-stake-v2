@@ -125,12 +125,6 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
 
     await user4.signer.sendTransaction({ to: abptSigner._address, value: parseEther('10') });
 
-    console.log(
-      `Bal: ${formatUnits(
-        await abpt.connect(abptSigner).balanceOf(abptSigner._address)
-      )}, Bal: ${formatUnits(await stakedAbpt.connect(abptSigner).balanceOf(abptSigner._address))}`
-    );
-
     await abpt.connect(abptSigner).approve(stakedAbpt.address, MAX_UINT_AMOUNT);
     await stakedAbpt.connect(abptSigner).stake(abptSigner._address, parseUnits('100'));
   });
@@ -423,6 +417,7 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
       .connect(user3.signer)
       .getUserAssetData(user3.address, stakedAave.address);
 
+    const aaveBalanceBefore = await aaveToken.connect(user3.signer).balanceOf(user3.address);
     const alreadyClaimable = await stakedAave
       .connect(user3.signer)
       .stakerRewardsToClaim(user3.address);
@@ -433,7 +428,10 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     const expectedRewards = alreadyClaimable.add(getRewards(userBalance, indexFinal, userIndex));
 
     expect(await aaveToken.connect(user3.signer).balanceOf(user3.address)).to.be.eq(
-      expectedRewards
+      aaveBalanceBefore.add(expectedRewards)
+    );
+    expect(await aaveToken.connect(user3.signer).balanceOf(user3.address)).to.be.gt(
+      aaveBalanceBefore
     );
   });
 
@@ -455,6 +453,9 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
 
     expect(await aaveToken.connect(abptSigner).balanceOf(abptSigner._address)).to.be.eq(
       aaveBalanceBefore.add(expectedRewards)
+    );
+    expect(await aaveToken.connect(abptSigner).balanceOf(abptSigner._address)).to.be.gt(
+      aaveBalanceBefore
     );
   });
 });
