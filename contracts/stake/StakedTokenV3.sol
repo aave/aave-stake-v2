@@ -137,22 +137,6 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
       maxSlashablePercentage <= PercentageMath.PERCENTAGE_FACTOR,
       'INVALID_SLASHING_PERCENTAGE'
     );
-    uint256 chainId;
-
-    //solium-disable-next-line
-    assembly {
-      chainId := chainid()
-    }
-
-    DOMAIN_SEPARATOR = keccak256(
-      abi.encode(
-        EIP712_DOMAIN,
-        keccak256(bytes(super.name())),
-        keccak256(EIP712_REVISION),
-        chainId,
-        address(this)
-      )
-    );
 
     if (REVISION() == 1) {
       _name = name;

@@ -56,7 +56,7 @@ contract StakedTokenV2 is
   mapping(address => uint256) internal _propositionPowerSnapshotsCounts;
   mapping(address => address) internal _propositionPowerDelegates;
 
-  bytes32 public DOMAIN_SEPARATOR;
+  bytes32 internal UNUSED_STORAGE_PLACEHOLDER; // old DOMAIN_SEPARATOR;
   bytes public constant EIP712_REVISION = bytes('1');
   bytes32 internal constant EIP712_DOMAIN =
     keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');
@@ -99,23 +99,27 @@ contract StakedTokenV2 is
   /**
    * @dev Called by the proxy contract
    **/
-  function initialize() external virtual initializer {
+  function initialize() external virtual initializer {}
+
+  function DOMAIN_SEPARATOR() public view returns (bytes32) {
     uint256 chainId;
 
     //solium-disable-next-line
+
     assembly {
       chainId := chainid()
     }
 
-    DOMAIN_SEPARATOR = keccak256(
-      abi.encode(
-        EIP712_DOMAIN,
-        keccak256(bytes(name())),
-        keccak256(EIP712_REVISION),
-        chainId,
-        address(this)
-      )
-    );
+    return
+      keccak256(
+        abi.encode(
+          EIP712_DOMAIN,
+          keccak256(bytes(name())),
+          keccak256(EIP712_REVISION),
+          chainId,
+          address(this)
+        )
+      );
   }
 
   function stake(address onBehalfOf, uint256 amount) external virtual override {
@@ -371,7 +375,7 @@ contract StakedTokenV2 is
     bytes32 digest = keccak256(
       abi.encodePacked(
         '\x19\x01',
-        DOMAIN_SEPARATOR,
+        DOMAIN_SEPARATOR(),
         keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
       )
     );
@@ -479,7 +483,7 @@ contract StakedTokenV2 is
     bytes32 structHash = keccak256(
       abi.encode(DELEGATE_BY_TYPE_TYPEHASH, delegatee, uint256(delegationType), nonce, expiry)
     );
-    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR, structHash));
+    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR(), structHash));
     address signatory = ecrecover(digest, v, r, s);
     require(signatory != address(0), 'INVALID_SIGNATURE');
     require(nonce == _nonces[signatory]++, 'INVALID_NONCE');
@@ -505,7 +509,7 @@ contract StakedTokenV2 is
     bytes32 s
   ) public {
     bytes32 structHash = keccak256(abi.encode(DELEGATE_TYPEHASH, delegatee, nonce, expiry));
-    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR, structHash));
+    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR(), structHash));
     address signatory = ecrecover(digest, v, r, s);
     require(signatory != address(0), 'INVALID_SIGNATURE');
     require(nonce == _nonces[signatory]++, 'INVALID_NONCE');
