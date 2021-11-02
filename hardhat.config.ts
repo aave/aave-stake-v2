@@ -25,7 +25,7 @@ const MNEMONIC = process.env.MNEMONIC || '';
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
 const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
-const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '12369243');
+const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '13537170');
 
 // Prevent to load scripts before compilation and typechain
 if (!SKIP_LOAD) {
