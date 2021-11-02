@@ -7,8 +7,6 @@
     "artifacts"
   ],
   "scripts": {
-    "test-update-staking:tenderly": "hardhat --network tenderly test test/__setup.spec.ts test/StakedAaveV3/gov-proposal.spec.ts",
-    "test-update-staking": "hardhat test test/__setup.spec.ts test/StakedAaveV3/gov-proposal.spec.ts",
     "run-env": "npm i && tail -f /dev/null",
     "hardhat": "hardhat",
     "hardhat-kovan": "hardhat --network kovan",
@@ -28,6 +26,8 @@
     "test-bpt": "npm run compile:force:quiet && FORKING_BLOCK=11730175 MAINNET_FORK=true hardhat test test/StakedBPT/create-bpt-and-stakebpt.fork.ts",
     "test-proposal": "MAINNET_FORK=true hardhat test ./test-fork/stakingExtensionProposal.spec.ts",
     "test-proposal:tenderly": "TENDERLY=true npm run hardhat:tenderly -- test ./test-fork/stakingExtensionProposal.spec.ts",
+    "test-update-staking": "MAINNET_FORK=true hardhat test test/__setup.spec.ts test/StakedAaveV3/gov-proposal.spec.ts",
+    "test-update-staking:tenderly": "TENDERLY=true npm run hardhat:tenderly test test/__setup.spec.ts test/StakedAaveV3/gov-proposal.spec.ts",
     "proposal-extend-stkaave:tenderly": "TENDERLY=true npm run hardhat:tenderly -- proposal-stk-aave-extension:tenderly",
     "proposal-extend-stkaave:tenderly:defender": "TENDERLY=true npm run hardhat:tenderly -- proposal-stk-aave-extension:tenderly --defender",
     "coverage": "npm run compile && npx hardhat coverage --testfiles \"test/**/*.spec.ts\"",
