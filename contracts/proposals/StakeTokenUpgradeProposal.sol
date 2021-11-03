@@ -29,42 +29,28 @@ contract StakeTokenUpgradeProposalExecutor {
 
   function execute() external {
     _upgradeStakedAave();
-    _upgradeStakedAbp();
+    _upgradeStakedAbpt();
   }
 
   function _upgradeStakedAave() internal {
-    string memory name = 'Staked AAVE';
-    string memory symbol = 'stkAAVE';
-    uint8 decimals = 18;
-
     bytes memory params = abi.encodeWithSignature(
-      'initialize(address,address,address,uint256,string,string,uint8)',
+      'initialize(address,address,address,uint256)',
       SLASHING_ADMIN,
       COOLDOWN_PAUSE_ADMIN,
       CLAIM_HELPER,
-      MAX_SLASHABLE_PERCENTAGE,
-      name,
-      symbol,
-      decimals
+      MAX_SLASHABLE_PERCENTAGE
     );
 
     STAKED_AAVE_TOKEN_PROXY.upgradeToAndCall(NEW_STAKED_AAVE_TOKEN_IMPLEMENTATION, params);
   }
 
-  function _upgradeStakedAbp() internal {
-    string memory name = 'Staked Aave Balance Pool Token';
-    string memory symbol = 'stkABPT';
-    uint8 decimals = 18;
-
+  function _upgradeStakedAbpt() internal {
     bytes memory params = abi.encodeWithSignature(
-      'initialize(address,address,address,uint256,string,string,uint8)',
+      'initialize(address,address,address,uint256)',
       SLASHING_ADMIN,
       COOLDOWN_PAUSE_ADMIN,
       CLAIM_HELPER,
-      MAX_SLASHABLE_PERCENTAGE,
-      name,
-      symbol,
-      decimals
+      MAX_SLASHABLE_PERCENTAGE
     );
 
     STAKED_ABP_TOKEN_PROXY.upgradeToAndCall(NEW_STAKED_ABP_TOKEN_IMPLEMENTATION, params);

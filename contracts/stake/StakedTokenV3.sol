@@ -128,21 +128,12 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address slashingAdmin,
     address cooldownPauseAdmin,
     address claimHelper,
-    uint256 maxSlashablePercentage,
-    string calldata name,
-    string calldata symbol,
-    uint8 decimals
+    uint256 maxSlashablePercentage
   ) external initializer {
     require(
       maxSlashablePercentage <= PercentageMath.PERCENTAGE_FACTOR,
       'INVALID_SLASHING_PERCENTAGE'
     );
-
-    if (REVISION() == 1) {
-      _name = name;
-      _symbol = symbol;
-      _setupDecimals(decimals);
-    }
 
     uint256 chainId;
     //solium-disable-next-line

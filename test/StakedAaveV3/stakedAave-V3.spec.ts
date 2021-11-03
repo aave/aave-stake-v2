@@ -59,14 +59,11 @@ makeSuite('StakedAave V3 slashing tests', (testEnv: TestEnv) => {
     //initialize the stake instance
 
     await waitForTx(
-      await stakeV3['initialize(address,address,address,uint256,string,string,uint8)'](
+      await stakeV3['initialize(address,address,address,uint256)'](
         users[0].address,
         users[1].address,
         users[2].address,
-        '2000',
-        'Staked AAVE',
-        'stkAAVE',
-        18
+        '2000'
       )
     );
 
