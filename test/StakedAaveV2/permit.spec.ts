@@ -149,6 +149,40 @@ makeSuite('StakedAaveV2. Permit', (testEnv: TestEnv) => {
     expect((await stakedAaveV2._nonces(owner)).toNumber()).to.be.equal(2);
   });
 
+  it('Tries to submit a permit with invalid chainid', async () => {
+    const { deployer, users, stakedAaveV2 } = testEnv;
+    const owner = deployer.address;
+    const spender = users[1].address;
+
+    const { chainId } = await DRE.ethers.provider.getNetwork();
+    if (!chainId) {
+      fail("Current network doesn't have CHAIN ID");
+    }
+    const deadline = MAX_UINT_AMOUNT;
+    const nonce = (await stakedAaveV2._nonces(owner)).toNumber();
+    const permitAmount = '0';
+    const msgParams = buildPermitParams(
+      chainId + 1,
+      stakedAaveV2.address,
+      owner,
+      spender,
+      nonce,
+      deadline,
+      permitAmount
+    );
+
+    const ownerPrivateKey = require('../../test-wallets').accounts[0].secretKey;
+    if (!ownerPrivateKey) {
+      throw new Error('INVALID_OWNER_PK');
+    }
+
+    const { v, r, s } = getSignatureFromTypedData(ownerPrivateKey, msgParams);
+
+    await expect(
+      stakedAaveV2.connect(users[1].signer).permit(owner, spender, permitAmount, deadline, v, r, s)
+    ).to.be.revertedWith('INVALID_SIGNATURE');
+  });
+
   it('Tries to submit a permit with invalid nonce', async () => {
     const { deployer, users, stakedAaveV2 } = testEnv;
     const owner = deployer.address;

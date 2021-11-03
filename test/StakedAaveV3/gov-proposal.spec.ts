@@ -27,14 +27,14 @@ import {
   SelfdestructTransfer__factory,
   StakedAaveV3__factory,
   StakedAbptV3,
+  StakedAbptV3__factory,
   StakeTokenUpgradeProposalExecutor__factory,
 } from '../../types';
-import { formatUnits, parseEther, parseUnits } from '@ethersproject/units';
+import { parseEther, parseUnits } from '@ethersproject/units';
 import { expect } from 'chai';
 import { ethers } from 'ethers';
 import { getRewards } from '../DistributionManager/data-helpers/base-math';
 import { eEthereumNetwork } from '../../helpers/types';
-import { StakedBptV3__factory } from '../../types/factories/StakedBptV3__factory';
 
 const STAKED_AAVE_PROXY = '0x4da27a545c0c5B758a6BA100e3a049001de870f5';
 const STAKED_ABPT_PROXY = '0xa1116930326D21fB917d5A27F1E9943A9595fb47';
@@ -101,7 +101,7 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     aaveToken = StakedAaveV3__factory.connect(AAVE_TOKEN, await DRE.ethers.getSigners()[0]);
     abpt = Ierc20__factory.connect(AAVE_BALANCER_POOL_TOKEN, await DRE.ethers.getSigners()[0]);
     stakedAave = StakedAaveV3__factory.connect(STAKED_AAVE_PROXY, await DRE.ethers.getSigners()[0]);
-    stakedAbpt = StakedBptV3__factory.connect(STAKED_ABPT_PROXY, await DRE.ethers.getSigners()[0]);
+    stakedAbpt = StakedAbptV3__factory.connect(STAKED_ABPT_PROXY, await DRE.ethers.getSigners()[0]);
   });
 
   it('User stakes aave before upgrade', async () => {
@@ -124,12 +124,6 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     } = testEnv;
 
     await user4.signer.sendTransaction({ to: abptSigner._address, value: parseEther('10') });
-
-    console.log(
-      `Bal: ${formatUnits(
-        await abpt.connect(abptSigner).balanceOf(abptSigner._address)
-      )}, Bal: ${formatUnits(await stakedAbpt.connect(abptSigner).balanceOf(abptSigner._address))}`
-    );
 
     await abpt.connect(abptSigner).approve(stakedAbpt.address, MAX_UINT_AMOUNT);
     await stakedAbpt.connect(abptSigner).stake(abptSigner._address, parseUnits('100'));
@@ -155,9 +149,12 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     ).deployed();
 
     await waitForTx(
-      await stakedAaveImplementation[
-        'initialize(address,address,address,uint256,string,string,uint8)'
-      ](SHORT_EXECUTOR, SHORT_EXECUTOR, SHORT_EXECUTOR, '3000', 'Staked AAVE', 'stkAAVE', 18)
+      await stakedAaveImplementation['initialize(address,address,address,uint256)'](
+        SHORT_EXECUTOR,
+        SHORT_EXECUTOR,
+        SHORT_EXECUTOR,
+        '3000'
+      )
     );
   });
 
@@ -168,7 +165,7 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     const emissionManager = await stakedAave.connect(deployer).EMISSION_MANAGER();
 
     stakedAbptImplementation = await (
-      await new StakedBptV3__factory(deployer).deploy(
+      await new StakedAbptV3__factory(deployer).deploy(
         AAVE_BALANCER_POOL_TOKEN,
         aaveToken.address,
         COOLDOWN_SECONDS,
@@ -181,16 +178,11 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     ).deployed();
 
     await waitForTx(
-      await stakedAbptImplementation[
-        'initialize(address,address,address,uint256,string,string,uint8)'
-      ](
+      await stakedAbptImplementation['initialize(address,address,address,uint256)'](
         SHORT_EXECUTOR,
         SHORT_EXECUTOR,
         SHORT_EXECUTOR,
-        '3000',
-        'Staked Aave Balance Pool Token',
-        'stkABPT',
-        18
+        '3000'
       )
     );
   });
@@ -314,8 +306,8 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     );
 
     const populatedAaveTx = await stakedAave.populateTransaction[
-      'initialize(address,address,address,uint256,string,string,uint8)'
-    ](SHORT_EXECUTOR, SHORT_EXECUTOR, SHORT_EXECUTOR, 3000, 'Staked AAVE', 'stkAAVE', 18);
+      'initialize(address,address,address,uint256)'
+    ](SHORT_EXECUTOR, SHORT_EXECUTOR, SHORT_EXECUTOR, 3000);
     const aaveCalldata = populatedAaveTx.data ? populatedAaveTx.data : '0x';
 
     await waitForTx(
@@ -340,16 +332,8 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     );
 
     const populatedBptTx = await stakedAbpt.populateTransaction[
-      'initialize(address,address,address,uint256,string,string,uint8)'
-    ](
-      SHORT_EXECUTOR,
-      SHORT_EXECUTOR,
-      SHORT_EXECUTOR,
-      '3000',
-      'Staked Aave Balance Pool Token',
-      'stkABPT',
-      18
-    );
+      'initialize(address,address,address,uint256)'
+    ](SHORT_EXECUTOR, SHORT_EXECUTOR, SHORT_EXECUTOR, '3000');
     const abptCalldata = populatedBptTx.data ? populatedBptTx.data : '0x';
 
     await waitForTx(
@@ -414,6 +398,18 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     );
   });
 
+  it('Check names, symbol and decimal after upgrade', async () => {
+    const { deployer } = testEnv;
+    expect(await stakedAave.connect(deployer.signer).name()).to.be.eq('Staked Aave');
+    expect(await stakedAave.connect(deployer.signer).symbol()).to.be.eq('stkAAVE');
+    expect(await stakedAave.connect(deployer.signer).decimals()).to.be.eq(18);
+    expect(await stakedAbpt.connect(deployer.signer).name()).to.be.eq(
+      'Staked Aave Balance Pool Token'
+    );
+    expect(await stakedAbpt.connect(deployer.signer).symbol()).to.be.eq('stkABPT');
+    expect(await stakedAbpt.connect(deployer.signer).decimals()).to.be.eq(18);
+  });
+
   it('Check accrual after update of staked aave token', async () => {
     const {
       users: [, , , user3],
@@ -423,6 +419,7 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
       .connect(user3.signer)
       .getUserAssetData(user3.address, stakedAave.address);
 
+    const aaveBalanceBefore = await aaveToken.connect(user3.signer).balanceOf(user3.address);
     const alreadyClaimable = await stakedAave
       .connect(user3.signer)
       .stakerRewardsToClaim(user3.address);
@@ -433,7 +430,10 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     const expectedRewards = alreadyClaimable.add(getRewards(userBalance, indexFinal, userIndex));
 
     expect(await aaveToken.connect(user3.signer).balanceOf(user3.address)).to.be.eq(
-      expectedRewards
+      aaveBalanceBefore.add(expectedRewards)
+    );
+    expect(await aaveToken.connect(user3.signer).balanceOf(user3.address)).to.be.gt(
+      aaveBalanceBefore
     );
   });
 
@@ -455,6 +455,9 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
 
     expect(await aaveToken.connect(abptSigner).balanceOf(abptSigner._address)).to.be.eq(
       aaveBalanceBefore.add(expectedRewards)
+    );
+    expect(await aaveToken.connect(abptSigner).balanceOf(abptSigner._address)).to.be.gt(
+      aaveBalanceBefore
     );
   });
 });

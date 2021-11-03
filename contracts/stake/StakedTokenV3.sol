@@ -128,23 +128,19 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address slashingAdmin,
     address cooldownPauseAdmin,
     address claimHelper,
-    uint256 maxSlashablePercentage,
-    string calldata name,
-    string calldata symbol,
-    uint8 decimals
+    uint256 maxSlashablePercentage
   ) external initializer {
     require(
       maxSlashablePercentage <= PercentageMath.PERCENTAGE_FACTOR,
       'INVALID_SLASHING_PERCENTAGE'
     );
-    uint256 chainId;
 
+    uint256 chainId;
     //solium-disable-next-line
     assembly {
       chainId := chainid()
     }
-
-    DOMAIN_SEPARATOR = keccak256(
+    CACHED_DOMAIN_SEPARATOR = keccak256(
       abi.encode(
         EIP712_DOMAIN,
         keccak256(bytes(super.name())),
@@ -153,12 +149,6 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
         address(this)
       )
     );
-
-    if (REVISION() == 1) {
-      _name = name;
-      _symbol = symbol;
-      _setupDecimals(decimals);
-    }
 
     address[] memory adminsAddresses = new address[](3);
     uint256[] memory adminsRoles = new uint256[](3);

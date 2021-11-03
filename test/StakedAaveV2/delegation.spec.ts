@@ -740,6 +740,43 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     ).to.be.revertedWith('INVALID_NONCE');
   });
 
+  it('User 1 should not be able to delegate with bad chainid', async () => {
+    const {
+      users: [, user1, user2],
+      stakedAaveV2,
+    } = testEnv;
+
+    // Prepare params to sign message
+    const { chainId } = await DRE.ethers.provider.getNetwork();
+    if (!chainId) {
+      fail("Current network doesn't have CHAIN ID");
+    }
+    const nonce = (await stakedAaveV2._nonces(user1.address)).toString();
+    const expiration = MAX_UINT_AMOUNT;
+    const msgParams = buildDelegateByTypeParams(
+      chainId + 1,
+      stakedAaveV2.address,
+      user2.address,
+      '0',
+      nonce,
+      expiration
+    );
+    const ownerPrivateKey = require('../../test-wallets').accounts[1].secretKey;
+    if (!ownerPrivateKey) {
+      throw new Error('INVALID_OWNER_PK');
+    }
+
+    const { v, r, s } = getSignatureFromTypedData(ownerPrivateKey, msgParams);
+
+    // Transmit message via delegateByTypeBySig.
+    // Signature don't recover address 0, so will fail due to nonce.
+    await expect(
+      stakedAaveV2
+        .connect(user1.signer)
+        .delegateByTypeBySig(user2.address, '0', nonce, expiration, v, r, s)
+    ).to.be.revertedWith('INVALID_NONCE');
+  });
+
   it('User 1 should not be able to delegate if signature expired', async () => {
     const {
       users: [, user1, user2],
