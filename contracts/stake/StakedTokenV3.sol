@@ -144,6 +144,21 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
       _setupDecimals(decimals);
     }
 
+    uint256 chainId;
+    //solium-disable-next-line
+    assembly {
+      chainId := chainid()
+    }
+    CACHED_DOMAIN_SEPARATOR = keccak256(
+      abi.encode(
+        EIP712_DOMAIN,
+        keccak256(bytes(super.name())),
+        keccak256(EIP712_REVISION),
+        chainId,
+        address(this)
+      )
+    );
+
     address[] memory adminsAddresses = new address[](3);
     uint256[] memory adminsRoles = new uint256[](3);
 

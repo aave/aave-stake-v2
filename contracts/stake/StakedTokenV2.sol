@@ -56,7 +56,7 @@ contract StakedTokenV2 is
   mapping(address => uint256) internal _propositionPowerSnapshotsCounts;
   mapping(address => address) internal _propositionPowerDelegates;
 
-  bytes32 internal UNUSED_STORAGE_PLACEHOLDER; // old DOMAIN_SEPARATOR;
+  bytes32 internal CACHED_DOMAIN_SEPARATOR; // old DOMAIN_SEPARATOR;
   bytes public constant EIP712_REVISION = bytes('1');
   bytes32 internal constant EIP712_DOMAIN =
     keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');
@@ -65,6 +65,8 @@ contract StakedTokenV2 is
 
   /// @dev owner => next valid nonce to submit with permit()
   mapping(address => uint256) public _nonces;
+
+  uint256 internal immutable CACHED_CHAIN_ID;
 
   event Staked(address indexed from, address indexed onBehalfOf, uint256 amount);
   event Redeem(address indexed from, address indexed to, uint256 amount);
@@ -94,22 +96,44 @@ contract StakedTokenV2 is
     REWARDS_VAULT = rewardsVault;
     _aaveGovernance = ITransferHook(governance);
     ERC20._setupDecimals(decimals);
+
+    uint256 chainId;
+    //solium-disable-next-line
+    assembly {
+      chainId := chainid()
+    }
+    CACHED_CHAIN_ID = chainId;
   }
 
   /**
    * @dev Called by the proxy contract
    **/
-  function initialize() external virtual initializer {}
-
-  function DOMAIN_SEPARATOR() public view returns (bytes32) {
+  function initialize() external virtual initializer {
     uint256 chainId;
-
     //solium-disable-next-line
-
     assembly {
       chainId := chainid()
     }
+    CACHED_DOMAIN_SEPARATOR = keccak256(
+      abi.encode(
+        EIP712_DOMAIN,
+        keccak256(bytes(name())),
+        keccak256(EIP712_REVISION),
+        chainId,
+        address(this)
+      )
+    );
+  }
 
+  function DOMAIN_SEPARATOR() public view returns (bytes32) {
+    uint256 chainId;
+    //solium-disable-next-line
+    assembly {
+      chainId := chainid()
+    }
+    if (chainId == CACHED_CHAIN_ID) {
+      return CACHED_DOMAIN_SEPARATOR;
+    }
     return
       keccak256(
         abi.encode(
