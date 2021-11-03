@@ -754,7 +754,7 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
     const nonce = (await stakedAaveV2._nonces(user1.address)).toString();
     const expiration = MAX_UINT_AMOUNT;
     const msgParams = buildDelegateByTypeParams(
-      chainId,
+      chainId + 1,
       stakedAaveV2.address,
       user2.address,
       '0',
@@ -768,7 +768,7 @@ makeSuite('StakedAaveV2. Power Delegations', (testEnv: TestEnv) => {
 
     const { v, r, s } = getSignatureFromTypedData(ownerPrivateKey, msgParams);
 
-    // Transmit message via delegateByTypeBySig. 
+    // Transmit message via delegateByTypeBySig.
     // Signature don't recover address 0, so will fail due to nonce.
     await expect(
       stakedAaveV2

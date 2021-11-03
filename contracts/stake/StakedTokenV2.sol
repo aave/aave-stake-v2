@@ -56,7 +56,7 @@ contract StakedTokenV2 is
   mapping(address => uint256) internal _propositionPowerSnapshotsCounts;
   mapping(address => address) internal _propositionPowerDelegates;
 
-  bytes32 internal CACHED_DOMAIN_SEPARATOR; // old DOMAIN_SEPARATOR;
+  bytes32 internal CACHED_DOMAIN_SEPARATOR;
   bytes public constant EIP712_REVISION = bytes('1');
   bytes32 internal constant EIP712_DOMAIN =
     keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');

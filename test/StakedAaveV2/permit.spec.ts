@@ -159,7 +159,7 @@ makeSuite('StakedAaveV2. Permit', (testEnv: TestEnv) => {
       fail("Current network doesn't have CHAIN ID");
     }
     const deadline = MAX_UINT_AMOUNT;
-    const nonce = 1000;
+    const nonce = (await stakedAaveV2._nonces(owner)).toNumber();
     const permitAmount = '0';
     const msgParams = buildPermitParams(
       chainId + 1,
