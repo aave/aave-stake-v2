@@ -14,6 +14,7 @@ import {
   impersonateAccountsHardhat,
   advanceBlockTo,
   advanceBlock,
+  increaseTimeAndMine,
 } from '../../helpers/misc-utils';
 import { getEthersSigners } from '../../helpers/contracts-helpers';
 import { StakedAaveV3 } from '../../types/StakedAaveV3';
@@ -197,7 +198,7 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
       .assets(stakedAbpt.address);
   });
 
-  it('Governance proposal to upgrade contract', async () => {
+  it.skip('Governance proposal to upgrade contract', async () => {
     const { users } = testEnv;
 
     const executor = Executor__factory.connect(LONG_EXECUTOR, users[0].signer);
@@ -295,7 +296,7 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     expect(await gov.getProposalState(proposalId)).to.be.eq(proposalStates.EXECUTED);
   });
 
-  it.skip('Upgrade contracts by impersonating executor', async () => {
+  it('Upgrade contracts by impersonating executor', async () => {
     // Upgrade stakeAave
     const stakedAaveImplementationAddressBeforeUpgrade = await stakedAaveProxy
       .connect(longExecutorSigner)
@@ -458,6 +459,28 @@ makeSuite('Governance proposal for updating staked aave', (testEnv: TestEnv) => 
     );
     expect(await aaveToken.connect(abptSigner).balanceOf(abptSigner._address)).to.be.gt(
       aaveBalanceBefore
+    );
+  });
+
+  it('Activate cooldown and redeem', async () => {
+    const {
+      users: [, , , user3],
+    } = testEnv;
+
+    await waitForTx(await stakedAave.connect(user3.signer).cooldown());
+
+    const COOLDOWN_SECONDS = await stakedAave.connect(user3.signer).COOLDOWN_SECONDS();
+
+    await increaseTimeAndMine(COOLDOWN_SECONDS.add(1).toNumber());
+
+    const aaveBalanceBefore = await aaveToken.connect(user3.signer).balanceOf(user3.address);
+    const userBalance = await stakedAave.connect(user3.signer).balanceOf(user3.address);
+    const exchangeRate = await stakedAave.connect(user3.signer).exchangeRate();
+    await waitForTx(await stakedAave.connect(user3.signer).redeem(user3.address, MAX_UINT_AMOUNT));
+
+    expect(await stakedAave.connect(user3.signer).balanceOf(user3.address)).to.be.eq(0);
+    expect(await aaveToken.connect(user3.signer).balanceOf(user3.address)).to.be.eq(
+      userBalance.mul(exchangeRate).div(parseEther('1')).add(aaveBalanceBefore)
     );
   });
 });
