@@ -207,7 +207,7 @@ contract StakedTokenV2 is
    * @dev Activates the cooldown period to unstake
    * - It can't be called if the user is not staking
    **/
-  function cooldown() external virtual override {
+  function cooldown() public virtual override {
     require(balanceOf(msg.sender) != 0, 'INVALID_BALANCE_ON_COOLDOWN');
     //solium-disable-next-line
     stakersCooldowns[msg.sender] = block.timestamp;

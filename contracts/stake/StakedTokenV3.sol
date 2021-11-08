@@ -188,12 +188,8 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     _stake(msg.sender, to, amount, true);
   }
 
-  function cooldown() external override(IStakedToken, StakedTokenV2) noEmergency {
-    require(balanceOf(msg.sender) != 0, 'INVALID_BALANCE_ON_COOLDOWN');
-    //solium-disable-next-line
-    stakersCooldowns[msg.sender] = block.timestamp;
-
-    emit Cooldown(msg.sender);
+  function cooldown() public override(IStakedToken, StakedTokenV2) noEmergency {
+    super.cooldown();
   }
 
   /**
