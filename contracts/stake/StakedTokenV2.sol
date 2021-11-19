@@ -56,7 +56,7 @@ contract StakedTokenV2 is
   mapping(address => uint256) internal _propositionPowerSnapshotsCounts;
   mapping(address => address) internal _propositionPowerDelegates;
 
-  bytes32 public DOMAIN_SEPARATOR;
+  bytes32 internal CACHED_DOMAIN_SEPARATOR;
   bytes public constant EIP712_REVISION = bytes('1');
   bytes32 internal constant EIP712_DOMAIN =
     keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');
@@ -65,6 +65,8 @@ contract StakedTokenV2 is
 
   /// @dev owner => next valid nonce to submit with permit()
   mapping(address => uint256) public _nonces;
+
+  uint256 internal immutable CACHED_CHAIN_ID;
 
   event Staked(address indexed from, address indexed onBehalfOf, uint256 amount);
   event Redeem(address indexed from, address indexed to, uint256 amount);
@@ -94,6 +96,13 @@ contract StakedTokenV2 is
     REWARDS_VAULT = rewardsVault;
     _aaveGovernance = ITransferHook(governance);
     ERC20._setupDecimals(decimals);
+
+    uint256 chainId;
+    //solium-disable-next-line
+    assembly {
+      chainId := chainid()
+    }
+    CACHED_CHAIN_ID = chainId;
   }
 
   /**
@@ -101,13 +110,11 @@ contract StakedTokenV2 is
    **/
   function initialize() external virtual initializer {
     uint256 chainId;
-
     //solium-disable-next-line
     assembly {
       chainId := chainid()
     }
-
-    DOMAIN_SEPARATOR = keccak256(
+    CACHED_DOMAIN_SEPARATOR = keccak256(
       abi.encode(
         EIP712_DOMAIN,
         keccak256(bytes(name())),
@@ -118,12 +125,37 @@ contract StakedTokenV2 is
     );
   }
 
+  function DOMAIN_SEPARATOR() public view returns (bytes32) {
+    uint256 chainId;
+    //solium-disable-next-line
+    assembly {
+      chainId := chainid()
+    }
+    if (chainId == CACHED_CHAIN_ID) {
+      return CACHED_DOMAIN_SEPARATOR;
+    }
+    return
+      keccak256(
+        abi.encode(
+          EIP712_DOMAIN,
+          keccak256(bytes(name())),
+          keccak256(EIP712_REVISION),
+          chainId,
+          address(this)
+        )
+      );
+  }
+
   function stake(address onBehalfOf, uint256 amount) external virtual override {
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
     uint256 balanceOfUser = balanceOf(onBehalfOf);
 
-    uint256 accruedRewards =
-      _updateUserAssetInternal(onBehalfOf, address(this), balanceOfUser, totalSupply());
+    uint256 accruedRewards = _updateUserAssetInternal(
+      onBehalfOf,
+      address(this),
+      balanceOfUser,
+      totalSupply()
+    );
     if (accruedRewards != 0) {
       emit RewardsAccrued(onBehalfOf, accruedRewards);
       stakerRewardsToClaim[onBehalfOf] = stakerRewardsToClaim[onBehalfOf].add(accruedRewards);
@@ -175,7 +207,7 @@ contract StakedTokenV2 is
    * @dev Activates the cooldown period to unstake
    * - It can't be called if the user is not staking
    **/
-  function cooldown() external override {
+  function cooldown() public virtual override {
     require(balanceOf(msg.sender) != 0, 'INVALID_BALANCE_ON_COOLDOWN');
     //solium-disable-next-line
     stakersCooldowns[msg.sender] = block.timestamp;
@@ -189,8 +221,11 @@ contract StakedTokenV2 is
    * @param amount Amount to stake
    **/
   function claimRewards(address to, uint256 amount) external virtual override {
-    uint256 newTotalRewards =
-      _updateCurrentUnclaimedRewards(msg.sender, balanceOf(msg.sender), false);
+    uint256 newTotalRewards = _updateCurrentUnclaimedRewards(
+      msg.sender,
+      balanceOf(msg.sender),
+      false
+    );
     uint256 amountToClaim = (amount == type(uint256).max) ? newTotalRewards : amount;
 
     stakerRewardsToClaim[msg.sender] = newTotalRewards.sub(amountToClaim, 'INVALID_AMOUNT');
@@ -248,8 +283,12 @@ contract StakedTokenV2 is
     uint256 userBalance,
     bool updateStorage
   ) internal returns (uint256) {
-    uint256 accruedRewards =
-      _updateUserAssetInternal(user, address(this), userBalance, totalSupply());
+    uint256 accruedRewards = _updateUserAssetInternal(
+      user,
+      address(this),
+      userBalance,
+      totalSupply()
+    );
     uint256 unclaimedRewards = stakerRewardsToClaim[user].add(accruedRewards);
 
     if (accruedRewards != 0) {
@@ -287,24 +326,23 @@ contract StakedTokenV2 is
       return 0;
     }
 
-    uint256 minimalValidCooldownTimestamp =
-      block.timestamp.sub(COOLDOWN_SECONDS).sub(UNSTAKE_WINDOW);
+    uint256 minimalValidCooldownTimestamp = block.timestamp.sub(COOLDOWN_SECONDS).sub(
+      UNSTAKE_WINDOW
+    );
 
     if (minimalValidCooldownTimestamp > toCooldownTimestamp) {
       toCooldownTimestamp = 0;
     } else {
-      uint256 fromCooldownTimestamp =
-        (minimalValidCooldownTimestamp > fromCooldownTimestamp)
-          ? block.timestamp
-          : fromCooldownTimestamp;
+      fromCooldownTimestamp = (minimalValidCooldownTimestamp > fromCooldownTimestamp)
+        ? block.timestamp
+        : fromCooldownTimestamp;
 
       if (fromCooldownTimestamp < toCooldownTimestamp) {
         return toCooldownTimestamp;
       } else {
         toCooldownTimestamp = (
           amountToReceive.mul(fromCooldownTimestamp).add(toBalance.mul(toCooldownTimestamp))
-        )
-          .div(amountToReceive.add(toBalance));
+        ).div(amountToReceive.add(toBalance));
       }
     }
     return toCooldownTimestamp;
@@ -316,8 +354,8 @@ contract StakedTokenV2 is
    * @return The rewards
    */
   function getTotalRewardsBalance(address staker) external view returns (uint256) {
-    DistributionTypes.UserStakeInput[] memory userStakeInputs =
-      new DistributionTypes.UserStakeInput[](1);
+    DistributionTypes.UserStakeInput[]
+      memory userStakeInputs = new DistributionTypes.UserStakeInput[](1);
     userStakeInputs[0] = DistributionTypes.UserStakeInput({
       underlyingAsset: address(this),
       stakedByUser: balanceOf(staker),
@@ -358,14 +396,13 @@ contract StakedTokenV2 is
     //solium-disable-next-line
     require(block.timestamp <= deadline, 'INVALID_EXPIRATION');
     uint256 currentValidNonce = _nonces[owner];
-    bytes32 digest =
-      keccak256(
-        abi.encodePacked(
-          '\x19\x01',
-          DOMAIN_SEPARATOR,
-          keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
-        )
-      );
+    bytes32 digest = keccak256(
+      abi.encodePacked(
+        '\x19\x01',
+        DOMAIN_SEPARATOR(),
+        keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
+      )
+    );
 
     require(owner == ecrecover(digest, v, r, s), 'INVALID_SIGNATURE');
     _nonces[owner] = currentValidNonce.add(1);
@@ -467,11 +504,10 @@ contract StakedTokenV2 is
     bytes32 r,
     bytes32 s
   ) public {
-    bytes32 structHash =
-      keccak256(
-        abi.encode(DELEGATE_BY_TYPE_TYPEHASH, delegatee, uint256(delegationType), nonce, expiry)
-      );
-    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR, structHash));
+    bytes32 structHash = keccak256(
+      abi.encode(DELEGATE_BY_TYPE_TYPEHASH, delegatee, uint256(delegationType), nonce, expiry)
+    );
+    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR(), structHash));
     address signatory = ecrecover(digest, v, r, s);
     require(signatory != address(0), 'INVALID_SIGNATURE');
     require(nonce == _nonces[signatory]++, 'INVALID_NONCE');
@@ -497,7 +533,7 @@ contract StakedTokenV2 is
     bytes32 s
   ) public {
     bytes32 structHash = keccak256(abi.encode(DELEGATE_TYPEHASH, delegatee, nonce, expiry));
-    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR, structHash));
+    bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR(), structHash));
     address signatory = ecrecover(digest, v, r, s);
     require(signatory != address(0), 'INVALID_SIGNATURE');
     require(nonce == _nonces[signatory]++, 'INVALID_NONCE');

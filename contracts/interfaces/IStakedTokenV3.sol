@@ -10,6 +10,10 @@ interface IStakedTokenV3 is IStakedToken {
 
   function setCooldownPause(bool paused) external;
 
+  function getEmergencyShutdown() external view returns (bool);
+
+  function setEmergencyShutdown(bool emergencyShutdown) external;
+
   function slash(address destination, uint256 amount) external;
 
   function getMaxSlashablePercentage() external view returns (uint256);

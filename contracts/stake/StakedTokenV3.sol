@@ -38,12 +38,23 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
   uint256 public constant TOKEN_UNIT = 1e18;
 
   function REVISION() public pure virtual override returns (uint256) {
-    return 3;
+    return 4;
   }
 
   //maximum percentage of the underlying that can be slashed in a single realization event
   uint256 internal _maxSlashablePercentage;
   bool _cooldownPaused;
+
+  bool internal _emergencyShutdown;
+
+  modifier noEmergency() {
+    // In an emergency, functions with this modifier becomes no-operations (noop).
+    // Noop used instead of revert to not break contracts using these calls in flow.
+    // Example could be withdrawal from vault that also performs a claim.
+    if (!_emergencyShutdown) {
+      _;
+    }
+  }
 
   modifier onlySlashingAdmin() {
     require(msg.sender == getAdmin(SLASH_ADMIN_ROLE), 'CALLER_NOT_SLASHING_ADMIN');
@@ -68,6 +79,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint256 underlyingTransferred
   );
   event CooldownPauseChanged(bool pause);
+  event EmergencyShutdownChanged(bool emergencyShutdown);
   event MaxSlashablePercentageChanged(uint256 newPercentage);
   event Slashed(address indexed destination, uint256 amount);
   event CooldownPauseAdminChanged(address indexed newAdmin);
@@ -116,20 +128,19 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address slashingAdmin,
     address cooldownPauseAdmin,
     address claimHelper,
-    uint256 maxSlashablePercentage,
-    string calldata name,
-    string calldata symbol,
-    uint8 decimals
+    uint256 maxSlashablePercentage
   ) external initializer {
-    require(maxSlashablePercentage <= PercentageMath.PERCENTAGE_FACTOR, 'INVALID_SLASHING_PERCENTAGE');
-    uint256 chainId;
+    require(
+      maxSlashablePercentage <= PercentageMath.PERCENTAGE_FACTOR,
+      'INVALID_SLASHING_PERCENTAGE'
+    );
 
+    uint256 chainId;
     //solium-disable-next-line
     assembly {
       chainId := chainid()
     }
-
-    DOMAIN_SEPARATOR = keccak256(
+    CACHED_DOMAIN_SEPARATOR = keccak256(
       abi.encode(
         EIP712_DOMAIN,
         keccak256(bytes(super.name())),
@@ -138,12 +149,6 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
         address(this)
       )
     );
-
-    if (REVISION() == 1) {
-      _name = name;
-      _symbol = symbol;
-      _setupDecimals(decimals);
-    }
 
     address[] memory adminsAddresses = new address[](3);
     uint256[] memory adminsRoles = new uint256[](3);
@@ -161,13 +166,30 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     _maxSlashablePercentage = maxSlashablePercentage;
   }
 
+  function setEmergencyShutdown(bool emergencyShutdown) external override onlyCooldownAdmin {
+    _emergencyShutdown = emergencyShutdown;
+    emit EmergencyShutdownChanged(emergencyShutdown);
+  }
+
+  function getEmergencyShutdown() external view override returns (bool) {
+    return _emergencyShutdown;
+  }
+
   /**
    * @dev Allows a from to stake STAKED_TOKEN
    * @param to Address of the from that will receive stake token shares
    * @param amount The amount to be staked
    **/
-  function stake(address to, uint256 amount) external override(IStakedToken, StakedTokenV2) {
+  function stake(address to, uint256 amount)
+    external
+    override(IStakedToken, StakedTokenV2)
+    noEmergency
+  {
     _stake(msg.sender, to, amount, true);
+  }
+
+  function cooldown() public override(IStakedToken, StakedTokenV2) noEmergency {
+    super.cooldown();
   }
 
   /**
@@ -187,7 +209,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) external override {
+  ) external override noEmergency {
     IERC20WithPermit(address(STAKED_TOKEN)).permit(from, address(this), amount, deadline, v, r, s);
     _stake(from, to, amount, true);
   }
@@ -197,7 +219,11 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param to Address to redeem to
    * @param amount Amount to redeem
    **/
-  function redeem(address to, uint256 amount) external override(IStakedToken, StakedTokenV2) {
+  function redeem(address to, uint256 amount)
+    external
+    override(IStakedToken, StakedTokenV2)
+    noEmergency
+  {
     _redeem(msg.sender, to, amount);
   }
 
@@ -211,7 +237,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address from,
     address to,
     uint256 amount
-  ) external override onlyClaimHelper {
+  ) external override noEmergency onlyClaimHelper {
     _redeem(from, to, amount);
   }
 
@@ -220,7 +246,11 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param to Address to send the claimed rewards
    * @param amount Amount to stake
    **/
-  function claimRewards(address to, uint256 amount) external override(IStakedToken, StakedTokenV2) {
+  function claimRewards(address to, uint256 amount)
+    external
+    override(IStakedToken, StakedTokenV2)
+    noEmergency
+  {
     _claimRewards(msg.sender, to, amount);
   }
 
@@ -234,7 +264,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address from,
     address to,
     uint256 amount
-  ) external override onlyClaimHelper returns (uint256) {
+  ) external override noEmergency onlyClaimHelper returns (uint256) {
     return _claimRewards(from, to, amount);
   }
 
@@ -243,11 +273,19 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
    * @param to Address to stake to
    * @param amount Amount to claim
    **/
-  function claimRewardsAndStake(address to, uint256 amount) external override returns (uint256) {
+  function claimRewardsAndStake(address to, uint256 amount)
+    external
+    override
+    noEmergency
+    returns (uint256)
+  {
     require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
 
-    uint256 userUpdatedRewards =
-      _updateCurrentUnclaimedRewards(msg.sender, balanceOf(msg.sender), true);
+    uint256 userUpdatedRewards = _updateCurrentUnclaimedRewards(
+      msg.sender,
+      balanceOf(msg.sender),
+      true
+    );
     uint256 amountToClaim = (amount > userUpdatedRewards) ? userUpdatedRewards : amount;
 
     if (amountToClaim != 0) {
@@ -268,7 +306,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address from,
     address to,
     uint256 amount
-  ) external override onlyClaimHelper returns (uint256) {
+  ) external override noEmergency onlyClaimHelper returns (uint256) {
     require(REWARD_TOKEN == STAKED_TOKEN, 'REWARD_TOKEN_IS_NOT_STAKED_TOKEN');
 
     uint256 userUpdatedRewards = _updateCurrentUnclaimedRewards(from, balanceOf(from), true);
@@ -292,7 +330,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address to,
     uint256 claimAmount,
     uint256 redeemAmount
-  ) external override {
+  ) external override noEmergency {
     _claimRewards(msg.sender, to, claimAmount);
     _redeem(msg.sender, to, redeemAmount);
   }
@@ -309,7 +347,7 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
     address to,
     uint256 claimAmount,
     uint256 redeemAmount
-  ) external override onlyClaimHelper {
+  ) external override noEmergency onlyClaimHelper {
     _claimRewards(from, to, claimAmount);
     _redeem(from, to, redeemAmount);
   }
@@ -414,8 +452,12 @@ contract StakedTokenV3 is StakedTokenV2, IStakedTokenV3, RoleManager {
 
     uint256 balanceOfUser = balanceOf(to);
 
-    uint256 accruedRewards =
-      _updateUserAssetInternal(to, address(this), balanceOfUser, totalSupply());
+    uint256 accruedRewards = _updateUserAssetInternal(
+      to,
+      address(this),
+      balanceOfUser,
+      totalSupply()
+    );
 
     if (accruedRewards != 0) {
       emit RewardsAccrued(to, accruedRewards);
