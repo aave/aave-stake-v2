@@ -333,7 +333,7 @@ contract StakedTokenV2 is
     if (minimalValidCooldownTimestamp > toCooldownTimestamp) {
       toCooldownTimestamp = 0;
     } else {
-      uint256 fromCooldownTimestamp = (minimalValidCooldownTimestamp > fromCooldownTimestamp)
+      fromCooldownTimestamp = (minimalValidCooldownTimestamp > fromCooldownTimestamp)
         ? block.timestamp
         : fromCooldownTimestamp;
 
