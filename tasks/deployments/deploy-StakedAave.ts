@@ -39,9 +39,20 @@ task(`deploy-${StakedAave}`, `Deploys the ${StakedAave} contract`)
 
     const network = localBRE.network.name as eEthereumNetwork;
 
+    console.log(`\n- ${network} network`);
+
     console.log(`\n- ${StakedAave} deployment`);
 
     console.log(`\tDeploying ${StakedAave} implementation ...`);
+
+    console.log('PARAM', getAaveTokenPerNetwork(network));
+    console.log('PARAM', getAaveTokenPerNetwork(network));
+    console.log('PARAM', getCooldownSecondsPerNetwork(network));
+    console.log('PARAM', getUnstakeWindowPerNetwork(network));
+    console.log('PARAM', getAaveIncentivesVaultPerNetwork(network));
+    console.log('PARAM', getAaveAdminPerNetwork(network));
+    console.log('PARAM', getDistributionDurationPerNetwork(network));
+
     const stakedAaveImpl = await deployStakedAave(
       [
         aaveAddress || getAaveTokenPerNetwork(network),
@@ -54,12 +65,17 @@ task(`deploy-${StakedAave}`, `Deploys the ${StakedAave} contract`)
       ],
       false // disable verify due not supported by current buidler etherscan plugin
     );
+
     await stakedAaveImpl.deployTransaction.wait();
     await registerContractInJsonDb(StakedAaveImpl, stakedAaveImpl);
+
+    console.log('staked aave deployed to', stakedAaveImpl.address);
 
     console.log(`\tDeploying ${StakedAave} Transparent Proxy ...`);
     const stakedAaveProxy = await deployInitializableAdminUpgradeabilityProxy(verify);
     await registerContractInJsonDb(StakedAave, stakedAaveProxy);
 
     console.log(`\tFinished ${StakedAave} proxy and implementation deployment`);
+
+    console.log('StakeAaveProxy deplyed to', stakedAaveProxy.address);
   });

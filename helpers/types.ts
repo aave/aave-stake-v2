@@ -7,6 +7,7 @@ export enum eEthereumNetwork {
   ropsten = 'ropsten',
   main = 'main',
   tenderly = 'tenderly',
+  goerli = 'goerli',
 }
 
 export enum eContractid {
@@ -32,6 +33,8 @@ export enum eContractid {
   MockSelfDestruct = 'SelfdestructTransfer',
   StakedTokenV2Rev3 = 'StakedTokenV2Rev3',
   StakedTokenBptRev2 = 'StakedTokenBptRev2',
+  AaveStakingHelper = 'AaveStakingHelper',
+  StakeUIHelper = 'StakeUIHelper',
 }
 
 export type tEthereumAddress = string;
@@ -47,4 +50,5 @@ export interface iParamsPerNetwork<T> {
   [eEthereumNetwork.kovan]: T;
   [eEthereumNetwork.ropsten]: T;
   [eEthereumNetwork.main]: T;
+  [eEthereumNetwork.goerli]: T;
 }

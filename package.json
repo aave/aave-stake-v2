@@ -11,6 +11,7 @@
     "hardhat": "hardhat",
     "hardhat-kovan": "hardhat --network kovan",
     "hardhat-ropsten": "hardhat --network ropsten",
+    "hardhat-goerli": "hardhat --network goerli",
     "hardhat-main": "hardhat --network main",
     "hardhat:tenderly": "hardhat --network tenderly",
     "hardhat help": "hardhat help",
@@ -31,6 +32,7 @@
     "dev:deployment": "hardhat dev-deployment",
     "ropsten:deployment": "npm run hardhat-ropsten -- common-deployment --verify",
     "kovan:deployment": "npm run hardhat-kovan -- common-deployment --verify",
+    "goerli:deployment": "npm run hardhat-goerli -- common-deployment --verify",
     "main:deployment": "npm run hardhat-main -- common-deployment --verify",
     "prettier:check": "npx prettier -c 'tasks/**/*.ts' 'contracts/**/*.sol' 'helpers/**/*.ts'  'test/**/*.ts'",
     "prettier:write": "prettier --write 'tasks/**/*.ts' 'contracts/**/*.sol' 'helpers/**/*.ts'  'test/**/*.ts'",
@@ -89,7 +91,6 @@
     "David Racero <david.k@aave.com>"
   ],
   "license": "AGPL-3.0",
-  "dependencies": {},
   "keywords": [
     "aave",
     "stake",
@@ -97,5 +98,9 @@
     "safety",
     "module",
     "ethereum"
-  ]
+  ],
+  "dependencies": {
+    "bip39": "^3.0.4",
+    "dotenv": "^16.0.2"
+  }
 }

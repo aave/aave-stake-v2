@@ -12,6 +12,7 @@ import '@nomiclabs/hardhat-etherscan';
 import '@tenderly/hardhat-tenderly';
 
 export const BUIDLEREVM_CHAIN_ID = 31337;
+require('dotenv').config();
 
 const DEFAULT_BLOCK_GAS_LIMIT = 12500000;
 const DEFAULT_GAS_PRICE = 102 * 1000 * 1000 * 1000;
@@ -107,6 +108,7 @@ const config: HardhatUserConfig = {
     kovan: getCommonNetworkConfig(eEthereumNetwork.kovan, 42),
     ropsten: getCommonNetworkConfig(eEthereumNetwork.ropsten, 3),
     main: getCommonNetworkConfig(eEthereumNetwork.main, 1),
+    goerli: getCommonNetworkConfig(eEthereumNetwork.goerli, 5),
     hardhat: {
       hardfork: 'istanbul',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,

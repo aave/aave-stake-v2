@@ -117,3 +117,57 @@ For the proxy-related contracts, we have used the implementation of our friend f
 ## License
 
 The contents of this repository are under the AGPLv3 license.
+
+Deployed Params
+PARAM 0x0B7a69d978DdA361Db5356D4Bd0206496aFbDD96
+PARAM 0x0B7a69d978DdA361Db5356D4Bd0206496aFbDD96
+PARAM 21600
+PARAM 10800
+PARAM 0x0000000000000000000000000000000000000000
+PARAM 0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4
+PARAM 864000
+
+Deployed Contracts
+
+- StakedAaveImpl \*
+
+Network: goerli
+tx: 0xa0d1afbc06ed45b2b676edef14a496ff2816b3f174a2e2b119a0e14197c64433
+contract address: 0xbd885E8EfaE50CBfD43AC7155d8E0b5276aeB8ac
+deployer address: 0x75624dd46bB83FB06D929B2Ea39216E3C64BAdb2
+gas price: 102000000000
+gas used: 2463301
+
+staked aave deployed to 0xbd885E8EfaE50CBfD43AC7155d8E0b5276aeB8ac
+Deploying StakedAave Transparent Proxy ...
+
+- InitializableAdminUpgradeabilityProxy \*
+
+Network: goerli
+tx: 0xcb0091b861d7c47755a4c1b84bac23b5aeb7ef6083c38f897a980af639cec374
+contract address: 0x2D77b7172f61baE7D23116015Dd2eCeDA0e5bCf1
+deployer address: 0x75624dd46bB83FB06D929B2Ea39216E3C64BAdb2
+gas price: 102000000000
+gas used: 551615
+
+**_ AaveStakingHelper _**
+
+Network: goerli
+tx: 0x2c8d5d304d7f9f07992b6fd135443d8b1964cf7e7e900b0a90220a9c5fa981c0
+contract address: 0xCce2EfF6E93838bAb9981874E0e50e4c2D8a0827
+deployer address: 0x75624dd46bB83FB06D929B2Ea39216E3C64BAdb2
+gas price: 102000000000
+gas used: 258205
+
+---
+
+**_ StakeUIHelper _**
+
+Network: goerli
+tx: 0xbef5c043646b05caec9d5b693c7c93bbe2f42085b7290534e69e341b61ecdedd
+contract address: 0x0001eD7aba42a23E352fC0b45f1C0B9fe486fcD7
+deployer address: 0x75624dd46bB83FB06D929B2Ea39216E3C64BAdb2
+gas price: 102000000000
+gas used: 1225325
+
+---
