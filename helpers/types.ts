@@ -32,6 +32,7 @@ export enum eContractid {
   MockSelfDestruct = 'SelfdestructTransfer',
   StakedTokenV2Rev3 = 'StakedTokenV2Rev3',
   StakedTokenBptRev2 = 'StakedTokenBptRev2',
+  StakedAaveV3 = 'StakedAaveV3',
 }
 
 export type tEthereumAddress = string;

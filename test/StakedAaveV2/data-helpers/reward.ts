@@ -13,6 +13,7 @@ import { waitForTx, increaseTime } from '../../../helpers/misc-utils';
 import { SignerWithAddress } from '../../helpers/make-suite';
 import { StakedAaveV2 } from '../../../types/StakedAaveV2';
 import { solidity } from 'ethereum-waffle';
+import { StakedAaveV3 } from '../../../types';
 
 chai.use(solidity);
 
@@ -22,7 +23,7 @@ type AssetConfig = {
 };
 
 export const compareRewardsAtAction = async (
-  stakedAaveV2: StakedAaveV2,
+  stakedAaveV2: StakedAaveV2 | StakedAaveV3,
   userAddress: string,
   actions: () => Promise<ContractTransaction>[],
   shouldReward?: boolean,

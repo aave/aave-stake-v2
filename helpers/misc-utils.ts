@@ -58,6 +58,10 @@ export const timeLatest = async () => {
 export const increaseTime = async (secondsToIncrease: number) =>
   await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
 
+export const setBlocktime = async( time: number) => {
+  await DRE.ethers.provider.send("evm_setNextBlockTimestamp", [time])
+}
+
 export const increaseTimeTenderly = async (secondsToIncrease: number) => {
   if (DRE.network.name.includes('tenderly')) {
     await DRE.ethers.provider.send('evm_increaseTime', [`0x${secondsToIncrease.toString(16)}`]);
