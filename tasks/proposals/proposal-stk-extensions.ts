@@ -21,7 +21,7 @@ task('proposal-stk-extensions', 'Deploy implementations and create proposal')
 
     const {
       AAVE_TOKEN = '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
-      IPFS_HASH = '0x4d4a4bda3036f8da3f6911941df8c185f0e4ec248de44b44253dae5a4798a001', 
+      IPFS_HASH = '0x4d4a4bda3036f8da3f6911941df8c185f0e4ec248de44b44253dae5a4798a001',
       AAVE_GOVERNANCE_V2 = '0xEC568fffba86c094cf06b22134B23074DFE2252c', // mainnet
       AAVE_LONG_EXECUTOR = '0x61910ecd7e8e942136ce7fe7943f956cea1cc2f7', // mainnet
     } = process.env;

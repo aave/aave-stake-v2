@@ -29,7 +29,7 @@ task('propose-extension', 'Create some proposals and votes')
         stkAaveImpl,
         stkBptProxy,
         stkBptImpl,
-        ipfsHash
+        ipfsHash,
       },
       localBRE: any
     ) => {

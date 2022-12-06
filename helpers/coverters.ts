@@ -10,7 +10,7 @@ export const convertToCurrencyDecimals = async (tokenAddress: tEthereumAddress, 
   let decimals = '18';
 
   if (!isEth) {
-    const token = await getIErc20Detailed(tokenAddress);
+    const token = await getIErc20Detailed({ address: tokenAddress });
     decimals = (await token.decimals()).toString();
   }
 
@@ -21,7 +21,7 @@ export const convertToCurrencyUnits = async (tokenAddress: string, amount: strin
 
   let decimals = new BigNumber(18);
   if (!isEth) {
-    const token = await getIErc20Detailed(tokenAddress);
+    const token = await getIErc20Detailed({ address: tokenAddress });
     decimals = new BigNumber(await token.decimals());
   }
   const currencyUnit = new BigNumber(10).pow(decimals);

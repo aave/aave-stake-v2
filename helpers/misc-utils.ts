@@ -4,9 +4,13 @@ import FileSync from 'lowdb/adapters/FileSync';
 import { WAD } from './constants';
 import { Wallet, ContractTransaction } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { iParamsPerNetwork, eEthereumNetwork, tEthereumAddress } from './types';
+import {
+  iParamsPerNetwork,
+  eEthereumNetwork,
+  tEthereumAddress,
+  iEthereumParamsPerNetwork,
+} from './types';
 import { getCurrentBlock } from './contracts-helpers';
-import { time } from 'console';
 
 export const toWad = (value: string | number) => new BigNumber(value).times(WAD).toFixed();
 
@@ -20,10 +24,8 @@ export const setDRE = (_DRE: HardhatRuntimeEnvironment) => {
   DRE = _DRE;
 };
 
-export const getParamPerNetwork = <T>(
-  { kovan, ropsten, main, hardhat }: iParamsPerNetwork<T>,
-  network: eEthereumNetwork
-) => {
+export const getParamPerNetwork = <T>(param: iParamsPerNetwork<T>, network: eEthereumNetwork) => {
+  const { main, ropsten, kovan, hardhat } = param as iEthereumParamsPerNetwork<T>;
   switch (network) {
     case eEthereumNetwork.hardhat:
       return hardhat;

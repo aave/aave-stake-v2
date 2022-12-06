@@ -28,6 +28,7 @@ export const testDeployAaveStakeV1 = async (
 ) => {
   const proxyAdmin = await restWallets[0].getAddress();
   const emissionManager = await deployer.getAddress();
+  const distributionAdmin = await restWallets[1].getAddress();
 
   const stakedToken = aaveToken.address;
   const rewardsToken = aaveToken.address;
@@ -39,12 +40,10 @@ export const testDeployAaveStakeV1 = async (
 
   const aaveIncentivesControllerImplementation = await deployAaveIncentivesController([
     aaveToken.address,
-    vaultOfRewardsAddress,
-    stakedAaveProxy.address,
-    PSM_STAKER_PREMIUM,
     emissionManager,
-    (1000 * 60 * 60).toString(),
   ]);
+
+  const distribution = (1000 * 60 * 60).toString();
 
   const stakedAaveImpl = await deployStakedAave([
     stakedToken,
@@ -75,7 +74,8 @@ export const testDeployAaveStakeV1 = async (
   await insertContractAddressInDb(eContractid.StakedAave, stakedAaveProxy.address);
 
   const peiEncodedInitialize = aaveIncentivesControllerImplementation.interface.encodeFunctionData(
-    'initialize'
+    'initialize',
+    [vaultOfRewardsAddress]
   );
   await aaveIncentivesControllerProxy['initialize(address,address,bytes)'](
     aaveIncentivesControllerImplementation.address,

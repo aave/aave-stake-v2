@@ -6,11 +6,12 @@ import {DistributionTypes} from '../lib/DistributionTypes.sol';
 import {SafeMath} from '../lib/SafeMath.sol';
 
 import {IERC20} from '../interfaces/IERC20.sol';
-import {IAToken} from '../interfaces/IAToken.sol';
+import {IScaledBalanceToken} from '../interfaces/IScaledBalanceToken.sol';
 import {IAaveIncentivesController} from '../interfaces/IAaveIncentivesController.sol';
-import {IStakedAave} from '../interfaces/IStakedAave.sol';
+import {IStakedToken} from '../interfaces/IStakedToken.sol';
 import {VersionedInitializable} from '../utils/VersionedInitializable.sol';
-import {AaveDistributionManager} from './AaveDistributionManager.sol';
+import {AaveDistributionManagerV2} from './AaveDistributionManagerV2.sol';
+import {RoleManager} from '../utils/RoleManager.sol';
 
 /**
  * @title AaveIncentivesController
@@ -20,54 +21,82 @@ import {AaveDistributionManager} from './AaveDistributionManager.sol';
 contract AaveIncentivesController is
   IAaveIncentivesController,
   VersionedInitializable,
-  AaveDistributionManager
+  AaveDistributionManagerV2,
+  RoleManager
 {
   using SafeMath for uint256;
-  uint256 public constant REVISION = 1;
+  uint256 public constant REVISION = 2;
 
-  IStakedAave public immutable PSM;
-
-  IERC20 public immutable REWARD_TOKEN;
-  address public immutable REWARDS_VAULT;
-  uint256 public immutable EXTRA_PSM_REWARD;
+  address public override immutable REWARD_TOKEN;
+  address internal _rewardsVault;
 
   mapping(address => uint256) internal _usersUnclaimedRewards;
 
-  event RewardsAccrued(address indexed user, uint256 amount);
-  event RewardsClaimed(address indexed user, address indexed to, uint256 amount);
+  // this mapping allows whitelisted addresses to claim on behalf of others
+  // useful for contracts that hold tokens to be rewarded but don't have any native logic to claim Liquidity Mining rewards
+  mapping(address => address) internal _authorizedClaimers;
+
+  modifier onlyAuthorizedClaimers(address claimer, address user) {
+    require(_authorizedClaimers[user] == claimer, 'CLAIMER_UNAUTHORIZED');
+    _;
+  }
+  event RewardsVaultUpdated(address indexed vault);
 
   constructor(
     IERC20 rewardToken,
-    address rewardsVault,
-    IStakedAave psm,
-    uint256 extraPsmReward,
-    address emissionManager,
-    uint128 distributionDuration
-  ) public AaveDistributionManager(emissionManager, distributionDuration) {
-    REWARD_TOKEN = rewardToken;
-    REWARDS_VAULT = rewardsVault;
-    PSM = psm;
-    EXTRA_PSM_REWARD = extraPsmReward;
+    address emissionManager
+  ) public AaveDistributionManagerV2(emissionManager) {
+    REWARD_TOKEN = address(rewardToken);
   }
 
   /**
-   * @dev Called by the proxy contract. Not used at the moment, but for the future
+   * @dev Initialize AaveIncentivesController
+   * @param rewardsVault rewards vault to pull funds
    **/
-  function initialize() external initializer {
-    // to unlock possibility to stake on behalf of the user
-    REWARD_TOKEN.approve(address(PSM), type(uint256).max);
+  function initialize(
+    address rewardsVault
+  ) external initializer {
+    _rewardsVault = rewardsVault;
   }
 
-  /**
-   * @dev Called by the corresponding asset on any update that affects the rewards distribution
-   * @param user The address of the user
-   * @param userBalance The balance of the user of the asset in the lending pool
-   * @param totalSupply The total supply of the asset in the lending pool
-   **/
+  /// @inheritdoc IAaveIncentivesController
+  function configureAssets(address[] calldata assets, uint256[] calldata emissionsPerSecond)
+    external
+    override
+    onlyEmissionManager
+  {
+    require(assets.length == emissionsPerSecond.length, 'INVALID_CONFIGURATION');
+
+    DistributionTypes.AssetConfigInput[] memory assetsConfig =
+      new DistributionTypes.AssetConfigInput[](assets.length);
+
+    for (uint256 i = 0; i < assets.length; i++) {
+      assetsConfig[i].underlyingAsset = assets[i];
+      assetsConfig[i].emissionPerSecond = uint104(emissionsPerSecond[i]);
+
+      require(assetsConfig[i].emissionPerSecond == emissionsPerSecond[i], 'INVALID_CONFIGURATION');
+
+      assetsConfig[i].totalStaked = IScaledBalanceToken(assets[i]).scaledTotalSupply();
+    }
+    _configureAssets(assetsConfig);
+  }
+  
+  /// @inheritdoc IAaveIncentivesController
+  function setClaimer(address user, address caller) external override onlyEmissionManager {
+    _authorizedClaimers[user] = caller;
+    emit ClaimerSet(user, caller);
+  }
+
+  /// @inheritdoc IAaveIncentivesController
+  function getClaimer(address user) external view override returns (address) {
+    return _authorizedClaimers[user];
+  }
+
+  /// @inheritdoc IAaveIncentivesController
   function handleAction(
     address user,
-    uint256 userBalance,
-    uint256 totalSupply
+    uint256 totalSupply,
+    uint256 userBalance
   ) external override {
     uint256 accruedRewards = _updateUserAssetInternal(user, msg.sender, userBalance, totalSupply);
     if (accruedRewards != 0) {
@@ -76,11 +105,7 @@ contract AaveIncentivesController is
     }
   }
 
-  /**
-   * @dev Returns the total of rewards of an user, already accrued + not yet accrued
-   * @param user The address of the user
-   * @return The rewards
-   **/
+  /// @inheritdoc IAaveIncentivesController
   function getRewardsBalance(address[] calldata assets, address user)
     external
     view
@@ -93,37 +118,88 @@ contract AaveIncentivesController is
       new DistributionTypes.UserStakeInput[](assets.length);
     for (uint256 i = 0; i < assets.length; i++) {
       userState[i].underlyingAsset = assets[i];
-      (userState[i].stakedByUser, userState[i].totalStaked) = IAToken(assets[i])
+      (userState[i].stakedByUser, userState[i].totalStaked) = IScaledBalanceToken(assets[i])
         .getScaledUserBalanceAndSupply(user);
     }
     unclaimedRewards = unclaimedRewards.add(_getUnclaimedRewards(user, userState));
     return unclaimedRewards;
   }
 
-  /**
-   * @dev Claims reward for an user, on all the assets of the lending pool, accumulating the pending rewards
-   * @param amount Amount of rewards to claim
-   * @param to Address that will be receiving the rewards
-   * @param stake Boolean flag to determined if the claimed rewards should be staked in the Safety Module or not
-   * @return Rewards claimed
-   **/
+/// @inheritdoc IAaveIncentivesController
   function claimRewards(
     address[] calldata assets,
     uint256 amount,
-    address to,
-    bool stake
+    address to
   ) external override returns (uint256) {
+    require(to != address(0), 'INVALID_TO_ADDRESS');
+    return _claimRewards(assets, amount, msg.sender, msg.sender, to);
+  }
+
+  /// @inheritdoc IAaveIncentivesController
+  function claimRewardsOnBehalf(
+    address[] calldata assets,
+    uint256 amount,
+    address user,
+    address to
+  ) external override onlyAuthorizedClaimers(msg.sender, user) returns (uint256) {
+    require(user != address(0), 'INVALID_USER_ADDRESS');
+    require(to != address(0), 'INVALID_TO_ADDRESS');
+    return _claimRewards(assets, amount, msg.sender, user, to);
+  }
+
+  /// @inheritdoc IAaveIncentivesController
+  function getUserUnclaimedRewards(address _user) external override view returns (uint256) {
+    return _usersUnclaimedRewards[_user];
+  }
+
+  /**
+   * @dev returns the revision of the implementation contract
+   */
+  function getRevision() internal pure override returns (uint256) {
+    return REVISION;
+  }
+
+  /**
+   * @dev returns the current rewards vault contract
+   * @return address
+   */
+  function getRewardsVault() external view returns (address) {
+    return _rewardsVault;
+  }
+
+  /**
+   * @dev update the rewards vault address, only allowed by the Rewards admin
+   * @param rewardsVault The address of the rewards vault
+   **/
+  function setRewardsVault(address rewardsVault) external onlyEmissionManager {
+    _rewardsVault = rewardsVault;
+    emit RewardsVaultUpdated(rewardsVault);
+  }
+
+  /**
+   * @dev Claims reward for an user on behalf, on all the assets of the lending pool, accumulating the pending rewards.
+   * @param amount Amount of rewards to claim
+   * @param user Address to check and claim rewards
+   * @param to Address that will be receiving the rewards
+   * @return Rewards claimed
+   **/
+  function _claimRewards(
+    address[] calldata assets,
+    uint256 amount,
+    address claimer,
+    address user,
+    address to
+  ) internal returns (uint256) {
     if (amount == 0) {
       return 0;
     }
-    address user = msg.sender;
     uint256 unclaimedRewards = _usersUnclaimedRewards[user];
 
     DistributionTypes.UserStakeInput[] memory userState =
       new DistributionTypes.UserStakeInput[](assets.length);
     for (uint256 i = 0; i < assets.length; i++) {
       userState[i].underlyingAsset = assets[i];
-      (userState[i].stakedByUser, userState[i].totalStaked) = IAToken(assets[i])
+      (userState[i].stakedByUser, userState[i].totalStaked) = IScaledBalanceToken(assets[i])
         .getScaledUserBalanceAndSupply(user);
     }
 
@@ -140,31 +216,11 @@ contract AaveIncentivesController is
     uint256 amountToClaim = amount > unclaimedRewards ? unclaimedRewards : amount;
     _usersUnclaimedRewards[user] = unclaimedRewards - amountToClaim; // Safe due to the previous line
 
-    if (stake) {
-      amountToClaim = amountToClaim.add(amountToClaim.mul(EXTRA_PSM_REWARD).div(100));
-      REWARD_TOKEN.transferFrom(REWARDS_VAULT, address(this), amountToClaim);
-      PSM.stake(to, amountToClaim);
-    } else {
-      REWARD_TOKEN.transferFrom(REWARDS_VAULT, to, amountToClaim);
-    }
-    emit RewardsClaimed(msg.sender, to, amountToClaim);
+    IERC20(REWARD_TOKEN).transferFrom(_rewardsVault, to, amountToClaim);
+   
+    emit RewardsClaimed(claimer, user, to, amountToClaim);
 
     return amountToClaim;
   }
 
-  /**
-   * @dev returns the unclaimed rewards of the user
-   * @param _user the address of the user
-   * @return the unclaimed user rewards
-   */
-  function getUserUnclaimedRewards(address _user) external view returns (uint256) {
-    return _usersUnclaimedRewards[_user];
-  }
-
-  /**
-   * @dev returns the revision of the implementation contract
-   */
-  function getRevision() internal pure override returns (uint256) {
-    return REVISION;
-  }
 }

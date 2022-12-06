@@ -1,4 +1,4 @@
-import { BigNumberish, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import rawBRE from 'hardhat';
 import { makeSuite, TestEnv, initializeMakeSuite } from '../helpers/make-suite';
 import {
@@ -17,7 +17,6 @@ import {
   RESERVE_CONTROLER,
   REWARDS_VAULT,
   SHORT_EXECUTOR,
-  ZERO_ADDRESS,
   BPOOL_FACTORY,
   CRP_IMPLEMENTATION,
   LONG_EXECUTOR,
@@ -25,15 +24,12 @@ import {
   PROXY_CRP_ADMIN,
 } from '../../helpers/constants';
 import {
-  timeLatest,
   increaseTimeAndMine,
-  increaseTime,
   impersonateAccountsHardhat,
   DRE,
   waitForTx,
 } from '../../helpers/misc-utils';
 import { parseEther } from 'ethers/lib/utils';
-import { tEthereumAddress } from '../../helpers/types';
 import { zeroAddress } from 'ethereumjs-util';
 import { IcrpFactory } from '../../types/IcrpFactory';
 import { MintableErc20 } from '../../types/MintableErc20';
@@ -42,9 +38,6 @@ import { IConfigurableRightsPool } from '../../types/IConfigurableRightsPool';
 import { StakedTokenV3 } from '../../types/StakedTokenV3';
 import { IAaveGovernanceV2 } from '../../types/IAaveGovernanceV2';
 import { IControllerAaveEcosystemReserve } from '../../types/IControllerAaveEcosystemReserve';
-import { parse } from 'path';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
-import { testDeployAaveStakeV1 } from '../helpers/deploy';
 
 const { expect } = require('chai');
 
