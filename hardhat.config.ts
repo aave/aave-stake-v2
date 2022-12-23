@@ -106,6 +106,7 @@ const config: HardhatUserConfig = {
     tenderly: getCommonNetworkConfig(eEthereumNetwork.tenderly, 3030),
     kovan: getCommonNetworkConfig(eEthereumNetwork.kovan, 42),
     ropsten: getCommonNetworkConfig(eEthereumNetwork.ropsten, 3),
+    goerli: getCommonNetworkConfig(eEthereumNetwork.goerli, 5),
     main: getCommonNetworkConfig(eEthereumNetwork.main, 1),
     hardhat: {
       hardfork: 'istanbul',
