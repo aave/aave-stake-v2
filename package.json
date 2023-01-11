@@ -1,6 +1,6 @@
 {
   "name": "@aave/safety-module",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Safety Module for the Aave Protocol",
   "files": [
     "contracts",
