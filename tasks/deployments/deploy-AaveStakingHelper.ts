@@ -33,7 +33,7 @@ task(`deploy-${AaveStakingHelper}`, `Deploys the ${AaveStakingHelper} contract`)
     const aaveToken = getAaveTokenPerNetwork(network);
 
     const stakedAaveHelper = await deployAaveStakingHelper(
-      ['0x2D77b7172f61baE7D23116015Dd2eCeDA0e5bCf1', aaveToken],
+      ['0x3eF3dcB6237963abbD20B1A67916784fcF9807f4', aaveToken],
       true
     );
 

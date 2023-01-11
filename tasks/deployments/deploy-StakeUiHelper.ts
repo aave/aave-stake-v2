@@ -31,7 +31,7 @@ task(`deploy-${StakeUIHelper}`, `Deploys the ${StakeUIHelper} contract`)
     console.log(`\tDeploying ${StakeUIHelper} implementation ...`);
 
     const aaveToken = getAaveTokenPerNetwork(network);
-    const initializableAdminUpgradeabilityProxy = '0x2D77b7172f61baE7D23116015Dd2eCeDA0e5bCf1';
+    const initializableAdminUpgradeabilityProxy = '0x3eF3dcB6237963abbD20B1A67916784fcF9807f4'; // '0x2D77b7172f61baE7D23116015Dd2eCeDA0e5bCf1';
     const aaveOracle = '0xc1c6f3b788FE7F4bB896a2Fad65F5a8c0Ad509C9';
 
     const stakedAaveHelper = await deployStakeUIHelper(

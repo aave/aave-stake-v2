@@ -54,7 +54,7 @@ export const getAaveTokenPerNetwork = (network: eEthereumNetwork): tEthereumAddr
       [eEthereumNetwork.kovan]: '0xe4483afcf0d612c011679C76B61F5b0d27bAF93C',
       [eEthereumNetwork.ropsten]: '0x74dA004A1B81b4d0C79F5820f9FF22647cb1dD95',
       [eEthereumNetwork.main]: '0x9c0435779F5E52CEC404D957C9bAa6f7d674C8bA',
-      [eEthereumNetwork.goerli]: '0x0B7a69d978DdA361Db5356D4Bd0206496aFbDD96',
+      [eEthereumNetwork.goerli]: '0x8D38414592AC67dc42F32a00D322F2319990e8Ac', // '0x0B7a69d978DdA361Db5356D4Bd0206496aFbDD96',
     },
     network
   );
@@ -93,7 +93,7 @@ export const getAaveAdminPerNetwork = (network: eEthereumNetwork): tEthereumAddr
       [eEthereumNetwork.kovan]: '0x8134929c3dcb1b8b82f27f53424b959fb82182f2', // Aave Governance
       [eEthereumNetwork.ropsten]: '0xEd93e49A2d75beA505fD4D1A0Dff745f69F2E997', // Aave Governance
       [eEthereumNetwork.main]: '0x8a2Efd9A790199F4c94c6effE210fce0B4724f52', // Aave Governance
-      [eEthereumNetwork.goerli]: '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4', // Can use second address of deployer 1
+      [eEthereumNetwork.goerli]: '0x75624dd46bB83FB06D929B2Ea39216E3C64BAdb2', // Can use second address of deployer 1
     },
     network
   );
