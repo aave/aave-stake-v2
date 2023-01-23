@@ -10,6 +10,8 @@ import { SelfdestructTransfer } from '../types/SelfdestructTransfer';
 import { IbPool } from '../types/IbPool'; // Balance pool
 import { StakedTokenV2 } from '../types/StakedTokenV2';
 import { StakedTokenV3 } from '../types/StakedTokenV3';
+import { AaveStakingHelper } from '../types/AaveStakingHelper';
+import { StakeUiHelper } from '../types/StakeUiHelper';
 import { Ierc20Detailed } from '../types/Ierc20Detailed';
 import { InitializableAdminUpgradeabilityProxy } from '../types/InitializableAdminUpgradeabilityProxy';
 import { AaveIncentivesController } from '../types/AaveIncentivesController';
@@ -53,6 +55,7 @@ export const deployStakedAave = async (
     emissionManager,
     distributionDuration,
   ];
+
   const instance = await deployContract<StakedAave>(id, args);
   if (verify) {
     await verifyContract(instance.address, args);
@@ -430,5 +433,40 @@ export const deploySelfDestruct = async () => {
   const id = eContractid.MockSelfDestruct;
   const instance = await deployContract<SelfdestructTransfer>(id, []);
   await instance.deployTransaction.wait();
+  return instance;
+};
+
+export const deployAaveStakingHelper = async (
+  [addressStake, addressAave]: [tEthereumAddress, tEthereumAddress],
+  verify?: boolean
+) => {
+  const id = eContractid.AaveStakingHelper;
+  const args: string[] = [addressStake, addressAave];
+
+  const instance = await deployContract<AaveStakingHelper>(id, args);
+  if (verify) {
+    await verifyContract(instance.address, args);
+  }
+  return instance;
+};
+
+export const deployStakeUIHelper = async (
+  [priceOracle, bptPriceFeed, aave, stkAave, bpt, stkBpt]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress
+  ],
+  verify?: boolean
+) => {
+  const id = eContractid.StakeUIHelper;
+  const args: string[] = [priceOracle, bptPriceFeed, aave, stkAave, bpt, stkBpt];
+
+  const instance = await deployContract<StakeUiHelper>(id, args);
+  if (verify) {
+    await verifyContract(instance.address, args);
+  }
   return instance;
 };
