@@ -17,7 +17,7 @@ dotenv.config();
 export const BUIDLEREVM_CHAIN_ID = 31337;
 
 const DEFAULT_BLOCK_GAS_LIMIT = 12500000;
-const HARDFORK = 'istanbul';
+const HARDFORK = 'london';
 const INFURA_KEY = process.env.INFURA_KEY || '';
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
 const MNEMONIC_PATH = "m/44'/60'/0'/0";
@@ -83,14 +83,14 @@ const config: HardhatUserConfig = {
         version: '0.6.12',
         settings: {
           optimizer: { enabled: true, runs: 200 },
-          evmVersion: 'istanbul',
+          evmVersion: 'london',
         },
       },
       {
         version: '0.7.5',
         settings: {
           optimizer: { enabled: true, runs: 200 },
-          evmVersion: 'istanbul',
+          evmVersion: 'london',
         },
       },
     ],
@@ -117,7 +117,7 @@ const config: HardhatUserConfig = {
     goerli: getCommonNetworkConfig(eEthereumNetwork.goerli, 5),
     main: getCommonNetworkConfig(eEthereumNetwork.main, 1),
     hardhat: {
-      hardfork: 'istanbul',
+      hardfork: 'london',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
       gas: DEFAULT_BLOCK_GAS_LIMIT,
       gasPrice: DEFAULT_GAS_PRICE,
