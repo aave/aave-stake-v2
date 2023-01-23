@@ -3,6 +3,7 @@ import { eEthereumNetwork } from './helpers/types';
 import { accounts } from './test-wallets';
 import path from 'path';
 import fs from 'fs';
+import dotenv from 'dotenv';
 import { HardhatUserConfig } from 'hardhat/types';
 
 import '@typechain/hardhat';
@@ -11,15 +12,17 @@ import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-etherscan';
 import '@tenderly/hardhat-tenderly';
 
+dotenv.config();
+
 export const BUIDLEREVM_CHAIN_ID = 31337;
 
 const DEFAULT_BLOCK_GAS_LIMIT = 12500000;
-const DEFAULT_GAS_PRICE = 102 * 1000 * 1000 * 1000;
 const HARDFORK = 'istanbul';
 const INFURA_KEY = process.env.INFURA_KEY || '';
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
 const MNEMONIC_PATH = "m/44'/60'/0'/0";
 const MNEMONIC = process.env.MNEMONIC || '';
+const PRIVATE_KEY = process.env.PRIVATE_KEY || '';
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
 const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
@@ -48,6 +51,17 @@ const mainnetFork = MAINNET_FORK
     }
   : undefined;
 
+// Use of mnemonic over private key if mnemonic is provided
+const accountsToUse =
+  PRIVATE_KEY == ''
+    ? {
+        mnemonic: MNEMONIC,
+        path: MNEMONIC_PATH,
+        initialIndex: 0,
+        count: 20,
+      }
+    : [PRIVATE_KEY];
+
 const getCommonNetworkConfig = (networkName: eEthereumNetwork, networkId: number) => {
   return {
     url: ALCHEMY_KEY
@@ -57,14 +71,8 @@ const getCommonNetworkConfig = (networkName: eEthereumNetwork, networkId: number
       : `https://${networkName}.infura.io/v3/${INFURA_KEY}`,
     hardfork: HARDFORK,
     blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
-    gasPrice: DEFAULT_GAS_PRICE,
     chainId: networkId,
-    accounts: {
-      mnemonic: MNEMONIC,
-      path: MNEMONIC_PATH,
-      initialIndex: 0,
-      count: 20,
-    },
+    accounts: accountsToUse,
   };
 };
 
