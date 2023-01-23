@@ -57,6 +57,7 @@
     "chai": "4.2.0",
     "chai-bignumber": "3.0.0",
     "defender-relay-client": "^1.5.1",
+    "dotenv": "^16.0.3",
     "eth-sig-util": "^3.0.0",
     "ethereum-waffle": "^3.2.1",
     "ethereumjs-util": "^7.0.7",
@@ -91,7 +92,6 @@
     "David Racero <david.k@aave.com>"
   ],
   "license": "AGPL-3.0",
-  "dependencies": {},
   "keywords": [
     "aave",
     "stake",
