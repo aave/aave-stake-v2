@@ -49,4 +49,5 @@ export interface iParamsPerNetwork<T> {
   [eEthereumNetwork.goerli]: T;
   [eEthereumNetwork.ropsten]: T;
   [eEthereumNetwork.main]: T;
+  [eEthereumNetwork.goerli]: T;
 }

@@ -52,7 +52,7 @@ export const getAaveTokenPerNetwork = (network: eEthereumNetwork): tEthereumAddr
       [eEthereumNetwork.coverage]: ZERO_ADDRESS,
       [eEthereumNetwork.hardhat]: ZERO_ADDRESS,
       [eEthereumNetwork.kovan]: '0xe4483afcf0d612c011679C76B61F5b0d27bAF93C',
-      [eEthereumNetwork.goerli]: '0x0B7a69d978DdA361Db5356D4Bd0206496aFbDD96',
+      [eEthereumNetwork.goerli]: '0x8153a21dfeb1f67024aa6c6e611432900ff3dcb9',
       [eEthereumNetwork.ropsten]: '0x74dA004A1B81b4d0C79F5820f9FF22647cb1dD95',
       [eEthereumNetwork.main]: '0x9c0435779F5E52CEC404D957C9bAa6f7d674C8bA',
     },
@@ -64,9 +64,9 @@ export const getCooldownSecondsPerNetwork = (network: eEthereumNetwork): tEthere
     {
       [eEthereumNetwork.coverage]: COOLDOWN_SECONDS,
       [eEthereumNetwork.hardhat]: COOLDOWN_SECONDS,
-      [eEthereumNetwork.kovan]: '21600', // 8h
-      [eEthereumNetwork.goerli]: '21600', // 8h
-      [eEthereumNetwork.ropsten]: '180', // 3m
+      [eEthereumNetwork.kovan]: '21600', // 6h
+      [eEthereumNetwork.goerli]: '180', // 3min
+      [eEthereumNetwork.ropsten]: '180', // 3min
       [eEthereumNetwork.main]: '864000', // 10d
     },
     network
@@ -77,8 +77,8 @@ export const getUnstakeWindowPerNetwork = (network: eEthereumNetwork): tEthereum
     {
       [eEthereumNetwork.coverage]: UNSTAKE_WINDOW,
       [eEthereumNetwork.hardhat]: UNSTAKE_WINDOW,
-      [eEthereumNetwork.kovan]: '10800', // 4h
-      [eEthereumNetwork.goerli]: '10800', // 4h
+      [eEthereumNetwork.kovan]: '10800', // 3h
+      [eEthereumNetwork.goerli]: '240', // 4min
       [eEthereumNetwork.ropsten]: '240', // 4m
       [eEthereumNetwork.main]: '172800', // 2d
     },
