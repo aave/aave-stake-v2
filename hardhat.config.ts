@@ -83,14 +83,14 @@ const config: HardhatUserConfig = {
         version: '0.6.12',
         settings: {
           optimizer: { enabled: true, runs: 200 },
-          evmVersion: 'london',
+          evmVersion: 'istanbul',
         },
       },
       {
         version: '0.7.5',
         settings: {
           optimizer: { enabled: true, runs: 200 },
-          evmVersion: 'london',
+          evmVersion: 'istanbul',
         },
       },
     ],
@@ -120,7 +120,6 @@ const config: HardhatUserConfig = {
       hardfork: 'london',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
       gas: DEFAULT_BLOCK_GAS_LIMIT,
-      gasPrice: DEFAULT_GAS_PRICE,
       chainId: BUIDLEREVM_CHAIN_ID,
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,
