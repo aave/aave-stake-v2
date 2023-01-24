@@ -35,6 +35,8 @@ export const getParamPerNetwork = <T>(
       return ropsten;
     case eEthereumNetwork.main:
       return main;
+    case eEthereumNetwork.goerli:
+      return goerli;
     default:
       return main;
   }

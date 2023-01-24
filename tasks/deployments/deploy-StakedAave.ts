@@ -39,6 +39,7 @@ task(`deploy-${StakedAave}`, `Deploys the ${StakedAave} contract`)
 
     const network = localBRE.network.name as eEthereumNetwork;
 
+    console.log(`\n- ${network} network`);
     console.log(`\n- ${StakedAave} deployment`);
 
     console.log(`\tDeploying ${StakedAave} implementation ...`);
@@ -62,4 +63,5 @@ task(`deploy-${StakedAave}`, `Deploys the ${StakedAave} contract`)
     await registerContractInJsonDb(StakedAave, stakedAaveProxy);
 
     console.log(`\tFinished ${StakedAave} proxy and implementation deployment`);
+    console.log('StakeAaveProxy deployed to', stakedAaveProxy.address);
   });
