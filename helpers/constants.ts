@@ -52,7 +52,7 @@ export const getAaveTokenPerNetwork = (network: eEthereumNetwork): tEthereumAddr
       [eEthereumNetwork.coverage]: ZERO_ADDRESS,
       [eEthereumNetwork.hardhat]: ZERO_ADDRESS,
       [eEthereumNetwork.kovan]: '0xe4483afcf0d612c011679C76B61F5b0d27bAF93C',
-      [eEthereumNetwork.goerli]: '0x8153a21dfeb1f67024aa6c6e611432900ff3dcb9',
+      [eEthereumNetwork.goerli]: '0xE205181Eb3D7415f15377F79aA7769F846cE56DD',
       [eEthereumNetwork.ropsten]: '0x74dA004A1B81b4d0C79F5820f9FF22647cb1dD95',
       [eEthereumNetwork.main]: '0x9c0435779F5E52CEC404D957C9bAa6f7d674C8bA',
     },

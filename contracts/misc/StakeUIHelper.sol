@@ -22,9 +22,6 @@ contract StakeUIHelper is StakeUIHelperI {
   uint256 constant SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
   uint256 constant APY_PRECISION = 10000;
 
-  address constant MOCK_USD_ADDRESS = 0xCCa7d1416518D095E729904aAeA087dBA749A4dC;
-  uint256 internal constant USD_BASE = 1e26;
-
   constructor(
     IPriceOracle priceOracle,
     BPTPriceFeedI bptPriceFeed,
@@ -60,12 +57,8 @@ contract StakeUIHelper is StakeUIHelperI {
     data.distributionPerSecond = generalStakeData.distributionPerSecond;
 
     if (user != address(0)) {
-      UserStakeUIData memory userStakeData = _getUserStakedAssetData(
-        stakeToken,
-        underlyingToken,
-        user,
-        isNonceAvailable
-      );
+      UserStakeUIData memory userStakeData =
+        _getUserStakedAssetData(stakeToken, underlyingToken, user, isNonceAvailable);
 
       data.underlyingTokenUserBalance = userStakeData.underlyingTokenUserBalance;
       data.stakeTokenUserBalance = userStakeData.stakeTokenUserBalance;
@@ -185,11 +178,7 @@ contract StakeUIHelper is StakeUIHelperI {
       uint256
     )
   {
-    return (
-      getStkAaveData(user),
-      emptyData,
-      USD_BASE / PRICE_ORACLE.getAssetPrice(MOCK_USD_ADDRESS)
-    );
+    return (getStkAaveData(user), emptyData, 1);
   }
 
   function getGeneralStakeUIData()
@@ -202,11 +191,7 @@ contract StakeUIHelper is StakeUIHelperI {
       uint256
     )
   {
-    return (
-      getStkGeneralAaveData(),
-      emptyData,
-      USD_BASE / PRICE_ORACLE.getAssetPrice(MOCK_USD_ADDRESS)
-    );
+    return (getStkGeneralAaveData(), emptyData, 1);
   }
 
   function getUserStakeUIData(address user)
@@ -219,10 +204,6 @@ contract StakeUIHelper is StakeUIHelperI {
       uint256
     )
   {
-    return (
-      getStkUserAaveData(user),
-      emptyData,
-      USD_BASE / PRICE_ORACLE.getAssetPrice(MOCK_USD_ADDRESS)
-    );
+    return (getStkUserAaveData(user), emptyData, 1);
   }
 }
