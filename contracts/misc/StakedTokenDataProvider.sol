@@ -197,6 +197,7 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     data.stakedTokenUserBalance = stakedToken.balanceOf(user);
     data.rewardsToClaim = stakedToken.getTotalRewardsBalance(user);
     data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
-    data.userCooldownAmount = uint216(IStakedToken(address(stakedToken)).stakersCooldowns(user));
+    data.userCooldownTimestamp = uint40(IStakedToken(address(stakedToken)).stakersCooldowns(user));
+    data.userCooldownAmount = uint216(data.stakedTokenUserBalance);
   }
 }
