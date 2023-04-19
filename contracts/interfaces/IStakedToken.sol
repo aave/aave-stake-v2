@@ -9,6 +9,8 @@ interface IStakedToken {
     uint256 index;
   }
 
+  function STAKED_TOKEN() external view returns (address);
+
   function totalSupply() external view returns (uint256);
 
   function COOLDOWN_SECONDS() external view returns (uint256);

@@ -3,7 +3,6 @@ pragma solidity 0.7.5;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from '../interfaces/IERC20.sol';
-import {AggregatedStakedAaveV3} from '../interfaces/AggregatedStakedAaveV3.sol';
 import {IStakedToken} from '../interfaces/IStakedToken.sol';
 import {AggregatorInterface} from '../interfaces/AggregatorInterface.sol';
 import {IStakedTokenDataProvider} from '../interfaces/IStakedTokenDataProvider.sol';
@@ -77,19 +76,19 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
       uint256 ethPrice
     )
   {
-    stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
-    stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
+    stkAaveData = _getStakedTokenData(IStakedToken(STAKED_AAVE));
+    stkBptData = _getStakedTokenData(IStakedToken(STAKED_BPT));
     ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
   }
 
   /// @inheritdoc IStakedTokenDataProvider
   function getStkAaveData() external view override returns (StakedTokenData memory stkAaveData) {
-    stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
+    stkAaveData = _getStakedTokenData(IStakedToken(STAKED_AAVE));
   }
 
   /// @inheritdoc IStakedTokenDataProvider
   function getStkBptData() external view override returns (StakedTokenData memory stkBptData) {
-    stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
+    stkBptData = _getStakedTokenData(IStakedToken(STAKED_BPT));
   }
 
   /// @inheritdoc IStakedTokenDataProvider
@@ -105,10 +104,10 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
       uint256 ethPrice
     )
   {
-    stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
-    stkAaveUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_AAVE), user);
-    stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
-    stkBptUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT), user);
+    stkAaveData = _getStakedTokenData(IStakedToken(STAKED_AAVE));
+    stkAaveUserData = _getStakedTokenUserData(IStakedToken(STAKED_AAVE), user);
+    stkBptData = _getStakedTokenData(IStakedToken(STAKED_BPT));
+    stkBptUserData = _getStakedTokenUserData(IStakedToken(STAKED_BPT), user);
     ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
   }
 
@@ -119,8 +118,8 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     override
     returns (StakedTokenData memory stkAaveData, StakedTokenUserData memory stkAaveUserData)
   {
-    stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
-    stkAaveUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_AAVE), user);
+    stkAaveData = _getStakedTokenData(IStakedToken(STAKED_AAVE));
+    stkAaveUserData = _getStakedTokenUserData(IStakedToken(STAKED_AAVE), user);
   }
 
   /// @inheritdoc IStakedTokenDataProvider
@@ -130,8 +129,8 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     override
     returns (StakedTokenData memory stkBptData, StakedTokenUserData memory stkBptUserData)
   {
-    stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
-    stkBptUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT), user);
+    stkBptData = _getStakedTokenData(IStakedToken(STAKED_BPT));
+    stkBptUserData = _getStakedTokenUserData(IStakedToken(STAKED_BPT), user);
   }
 
   /**
@@ -139,7 +138,7 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
    * @param stakedToken The address of the StakedToken (eg. stkAave, stkBptAave)
    * @return data An object with general data of the StakedToken
    */
-  function _getStakedTokenData(AggregatedStakedAaveV3 stakedToken)
+  function _getStakedTokenData(IStakedToken stakedToken)
     internal
     view
     returns (StakedTokenData memory data)
@@ -190,23 +189,14 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
    * @param stakedToken The address of the StakedToken asset
    * @param user The address of the user
    */
-  function _getStakedTokenUserData(AggregatedStakedAaveV3 stakedToken, address user)
+  function _getStakedTokenUserData(IStakedToken stakedToken, address user)
     internal
     view
     returns (StakedTokenUserData memory data)
   {
     data.stakedTokenUserBalance = stakedToken.balanceOf(user);
     data.rewardsToClaim = stakedToken.getTotalRewardsBalance(user);
-    // stkAave
-    if (address(stakedToken) == STAKED_AAVE) {
-      data.underlyingTokenUserBalance = stakedToken.previewRedeem(
-        IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user)
-      );
-      (data.userCooldownTimestamp, data.userCooldownAmount) = stakedToken.stakersCooldowns(user);
-      // stkBptAave
-    } else if (address(stakedToken) == STAKED_BPT) {
-      data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
-      data.userCooldownAmount = uint216(IStakedToken(address(stakedToken)).stakersCooldowns(user));
-    }
+    data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
+    data.userCooldownAmount = uint216(IStakedToken(address(stakedToken)).stakersCooldowns(user));
   }
 }
