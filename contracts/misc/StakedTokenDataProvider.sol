@@ -197,14 +197,14 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
   {
     data.stakedTokenUserBalance = stakedToken.balanceOf(user);
     data.rewardsToClaim = stakedToken.getTotalRewardsBalance(user);
-    // stkAave
-    if (address(stakedToken) == STAKED_AAVE) {
+    // stkBptAave
+    if (address(stakedToken) == STAKED_BPT) {
       data.underlyingTokenUserBalance = stakedToken.previewRedeem(
         IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user)
       );
       (data.userCooldownTimestamp, data.userCooldownAmount) = stakedToken.stakersCooldowns(user);
-      // stkBptAave
-    } else if (address(stakedToken) == STAKED_BPT) {
+      // stkAave
+    } else if (address(stakedToken) == STAKED_AAVE) {
       data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
       data.userCooldownAmount = uint216(IStakedToken(address(stakedToken)).stakersCooldowns(user));
     }
