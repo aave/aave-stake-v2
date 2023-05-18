@@ -199,13 +199,13 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     data.rewardsToClaim = stakedToken.getTotalRewardsBalance(user);
     // stkBptAave
     if (address(stakedToken) == STAKED_BPT) {
-      data.underlyingTokenUserBalance = stakedToken.previewRedeem(
-        IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user)
-      );
+      data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
+      data.stakedTokenRedeemableAmount = stakedToken.previewRedeem(data.stakedTokenUserBalance);
       (data.userCooldownTimestamp, data.userCooldownAmount) = stakedToken.stakersCooldowns(user);
       // stkAave
     } else if (address(stakedToken) == STAKED_AAVE) {
       data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
+      data.stakedTokenRedeemableAmount = data.stakedTokenUserBalance;
       data.userCooldownAmount = uint216(IStakedToken(address(stakedToken)).stakersCooldowns(user));
     }
   }

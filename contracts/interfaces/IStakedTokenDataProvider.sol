@@ -20,6 +20,7 @@ interface IStakedTokenDataProvider {
 
   struct StakedTokenUserData {
     uint256 stakedTokenUserBalance;
+    uint256 stakedTokenRedeemableAmount;
     uint256 underlyingTokenUserBalance;
     uint256 rewardsToClaim;
     uint40 userCooldownTimestamp;
