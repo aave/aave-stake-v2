@@ -145,6 +145,7 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     returns (StakedTokenData memory data)
   {
     data.stakedTokenTotalSupply = stakedToken.totalSupply();
+    data.stakedTokenTotalRedeemableAmount = stakedToken.previewRedeem(data.stakedTokenTotalSupply);
     data.stakeCooldownSeconds = stakedToken.COOLDOWN_SECONDS();
     data.stakeUnstakeWindow = stakedToken.UNSTAKE_WINDOW();
     data.rewardTokenPriceEth = uint256(AggregatorInterface(AAVE_PRICE_FEED).latestAnswer());
@@ -197,16 +198,8 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
   {
     data.stakedTokenUserBalance = stakedToken.balanceOf(user);
     data.rewardsToClaim = stakedToken.getTotalRewardsBalance(user);
-    // stkBptAave
-    if (address(stakedToken) == STAKED_BPT) {
-      data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
-      data.stakedTokenRedeemableAmount = stakedToken.previewRedeem(data.stakedTokenUserBalance);
-      (data.userCooldownTimestamp, data.userCooldownAmount) = stakedToken.stakersCooldowns(user);
-      // stkAave
-    } else if (address(stakedToken) == STAKED_AAVE) {
-      data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
-      data.stakedTokenRedeemableAmount = data.stakedTokenUserBalance;
-      data.userCooldownAmount = uint216(IStakedToken(address(stakedToken)).stakersCooldowns(user));
-    }
+    data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
+    data.stakedTokenRedeemableAmount = stakedToken.previewRedeem(data.stakedTokenUserBalance);
+    (data.userCooldownTimestamp, data.userCooldownAmount) = stakedToken.stakersCooldowns(user);
   }
 }

@@ -9,6 +9,7 @@ pragma experimental ABIEncoderV2;
 interface IStakedTokenDataProvider {
   struct StakedTokenData {
     uint256 stakedTokenTotalSupply;
+    uint256 stakedTokenTotalRedeemableAmount;
     uint256 stakeCooldownSeconds;
     uint256 stakeUnstakeWindow;
     uint256 stakedTokenPriceEth;
