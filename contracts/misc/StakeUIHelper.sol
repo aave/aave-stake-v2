@@ -60,12 +60,8 @@ contract StakeUIHelper is StakeUIHelperI {
     data.distributionPerSecond = generalStakeData.distributionPerSecond;
 
     if (user != address(0)) {
-      UserStakeUIData memory userStakeData = _getUserStakedAssetData(
-        stakeToken,
-        underlyingToken,
-        user,
-        isNonceAvailable
-      );
+      UserStakeUIData memory userStakeData =
+        _getUserStakedAssetData(stakeToken, underlyingToken, user, isNonceAvailable);
 
       data.underlyingTokenUserBalance = userStakeData.underlyingTokenUserBalance;
       data.stakeTokenUserBalance = userStakeData.stakeTokenUserBalance;
