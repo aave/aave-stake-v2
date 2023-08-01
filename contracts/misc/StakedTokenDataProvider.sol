@@ -34,6 +34,12 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
   /// @inheritdoc IStakedTokenDataProvider
   address public immutable override STAKED_BPT;
 
+  /// @inheritdoc IStakedTokenDataProvider
+  address public immutable override STAKED_BPT_WSTETH;
+
+  /// @inheritdoc IStakedTokenDataProvider
+  address public immutable override BPT_STETH_PRICE_FEED;
+
   uint256 private constant SECONDS_PER_YEAR = 365 days;
 
   uint256 private constant APY_PRECISION = 10000;
@@ -47,6 +53,9 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
    * @param ethUsdPriceFeed The address of ETH price feed (USD denominated, with 8 decimals)
    * @param aavePriceFeed The address of AAVE price feed (ETH denominated, with 18 decimals)
    * @param bptPriceFeed The address of StakedBpt price feed (ETH denominated, with 18 decimals)
+   * @param bptWstETH The address of stETH token
+   * @param bptWstETHPriceFeed The address of stEth price feed (ETH denominated, with 18 decimals)
+
    */
   constructor(
     address aave,
@@ -55,7 +64,9 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     address stkBpt,
     address ethUsdPriceFeed,
     address aavePriceFeed,
-    address bptPriceFeed
+    address bptPriceFeed,
+    address bptWstETH,
+    address bptWstETHPriceFeed
   ) public {
     AAVE = aave;
     STAKED_AAVE = stkAave;
@@ -64,6 +75,9 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     ETH_USD_PRICE_FEED = ethUsdPriceFeed;
     AAVE_PRICE_FEED = aavePriceFeed;
     BPT_PRICE_FEED = bptPriceFeed;
+
+    STAKED_BPT_WSTETH = bptWstETH;
+    BPT_STETH_PRICE_FEED = bptWstETHPriceFeed;
   }
 
   /// @inheritdoc IStakedTokenDataProvider
@@ -74,11 +88,13 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     returns (
       StakedTokenData memory stkAaveData,
       StakedTokenData memory stkBptData,
+      StakedTokenData memory stkBptWstETHData,
       uint256 ethPrice
     )
   {
     stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
     stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
+    stkBptWstETHData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH));
     ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
   }
 
@@ -93,6 +109,19 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
   }
 
   /// @inheritdoc IStakedTokenDataProvider
+  function getStkBptWstETHData()
+    external
+    view
+    override
+    returns (
+      // TODO Refactor to a generic
+      StakedTokenData memory stkBptWstETHData
+    )
+  {
+    stkBptWstETHData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH));
+  }
+
+  /// @inheritdoc IStakedTokenDataProvider
   function getAllStakedTokenUserData(address user)
     external
     view
@@ -102,6 +131,8 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
       StakedTokenUserData memory stkAaveUserData,
       StakedTokenData memory stkBptData,
       StakedTokenUserData memory stkBptUserData,
+      StakedTokenData memory stkBptWstETHData,
+      StakedTokenUserData memory stkBptWstETHUserData,
       uint256 ethPrice
     )
   {
@@ -109,6 +140,10 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     stkAaveUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_AAVE), user);
     stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
     stkBptUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT), user);
+
+    stkBptWstETHData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH));
+    stkBptWstETHUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH), user);
+
     ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
   }
 
@@ -134,6 +169,20 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     stkBptUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT), user);
   }
 
+  /// @inheritdoc IStakedTokenDataProvider
+  function getStkBptWstETHUserData(address user)
+    external
+    view
+    override
+    returns (
+      StakedTokenData memory stkBptWstETHData,
+      StakedTokenUserData memory stkBptWstETHUserData
+    )
+  {
+    stkBptWstETHData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH));
+    stkBptWstETHUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH), user);
+  }
+
   /**
    * @notice Returns data of the Staked Token passed as parameter
    * @param stakedToken The address of the StakedToken (eg. stkAave, stkBptAave)
@@ -150,6 +199,7 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     data.stakeUnstakeWindow = stakedToken.UNSTAKE_WINDOW();
     data.rewardTokenPriceEth = uint256(AggregatorInterface(AAVE_PRICE_FEED).latestAnswer());
     data.distributionEnd = stakedToken.DISTRIBUTION_END();
+    data.inPostSlashingPeriod = stakedToken.inPostSlashingPeriod();
 
     data.distributionPerSecond = block.timestamp < data.distributionEnd
       ? stakedToken.assets(address(stakedToken)).emissionPerSecond
