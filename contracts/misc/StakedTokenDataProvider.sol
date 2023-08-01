@@ -108,17 +108,13 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
   }
 
-  /// @inheritdoc IStakedTokenDataProvider
-  function getStkBptWstETHData()
+  function getStakedAssetData(address stakedAsset)
     external
     view
     override
-    returns (
-      // TODO Refactor to a generic
-      StakedTokenData memory stkBptWstETHData
-    )
+    returns (StakedTokenData memory)
   {
-    stkBptWstETHData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH));
+    return _getStakedTokenData(AggregatedStakedAaveV3(stakedAsset));
   }
 
   /// @inheritdoc IStakedTokenDataProvider
@@ -183,6 +179,18 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     stkBptWstETHUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH), user);
   }
 
+  function getStakedUserData(address user, address stakedAsset)
+    external
+    view
+    override
+    returns (StakedTokenData memory, StakedTokenUserData memory)
+  {
+    return (
+      _getStakedTokenData(AggregatedStakedAaveV3(stakedAsset)),
+      _getStakedTokenUserData(AggregatedStakedAaveV3(stakedAsset), user)
+    );
+  }
+
   /**
    * @notice Returns data of the Staked Token passed as parameter
    * @param stakedToken The address of the StakedToken (eg. stkAave, stkBptAave)
@@ -214,6 +222,13 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
       // stkBptAave
     } else if (address(stakedToken) == STAKED_BPT) {
       data.stakedTokenPriceEth = uint256(AggregatorInterface(BPT_PRICE_FEED).latestAnswer());
+      data.stakeApy = _calculateApy(
+        data.distributionPerSecond * data.rewardTokenPriceEth,
+        data.stakedTokenTotalSupply * data.stakedTokenPriceEth
+      );
+    } else if (address(stakedToken) == STAKED_BPT_WSTETH) {
+      // stkBptWstETH
+      data.stakedTokenPriceEth = uint256(AggregatorInterface(BPT_STETH_PRICE_FEED).latestAnswer());
       data.stakeApy = _calculateApy(
         data.distributionPerSecond * data.rewardTokenPriceEth,
         data.stakedTokenTotalSupply * data.stakedTokenPriceEth

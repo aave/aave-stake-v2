@@ -48,8 +48,8 @@ interface IStakedTokenDataProvider {
   function BPT_PRICE_FEED() external returns (address);
 
   /**
-   * @notice Return the address of the BPT price feed, ETH denominated
-   * @return The address of the BPT price feed, ETH denominated, expressed with 18 decimals
+   * @notice Return the address of the bptWstETH price feed, ETH denominated
+   * @return The address of the bptWstETH price feed, ETH denominated, expressed with 18 decimals
    */
   function BPT_STETH_PRICE_FEED() external returns (address);
 
@@ -77,11 +77,9 @@ interface IStakedTokenDataProvider {
    */
   function STAKED_BPT() external returns (address);
 
-  // fooo
-
   /**
-   * @notice Return the address of the stETH token
-   * @return The address of the stETH token
+   * @notice Return the address of the bptWstETH token
+   * @return The address of the bptWstETH token
    */
   function STAKED_BPT_WSTETH() external returns (address);
 
@@ -95,7 +93,7 @@ interface IStakedTokenDataProvider {
    * @notice Returns data of all Staked Tokens
    * @return stkAaveData An object with StkAave data
    * @return stkBptData An object with StkBpt data
-   * @return stkBptWstETH An object with stkBptWstETH data
+   * @return stkBptWstETHData An object with stkBptWstETHData data
    * @return ethPrice The price of ETH, USD denominated (expressed with 8 decimals)
    */
   function getAllStakedTokenData()
@@ -104,7 +102,7 @@ interface IStakedTokenDataProvider {
     returns (
       StakedTokenData memory stkAaveData,
       StakedTokenData memory stkBptData,
-      StakedTokenData memory stkBptWstETH,
+      StakedTokenData memory stkBptWstETHData,
       uint256 ethPrice
     );
 
@@ -119,12 +117,6 @@ interface IStakedTokenDataProvider {
    * @return stkBptData An object with StkBpt data
    */
   function getStkBptData() external view returns (StakedTokenData memory stkBptData);
-
-  /**
-   * @notice Returns data of Staked Bpt Aave
-   * @return stkBptWstETHData An object with StkBpt data
-   */
-  function getStkBptWstETHData() external view returns (StakedTokenData memory stkBptWstETHData);
 
   /**
    * @notice Returns user data of all Staked Tokens
@@ -185,4 +177,27 @@ interface IStakedTokenDataProvider {
       StakedTokenData memory stkBptWstETHData,
       StakedTokenUserData memory stkBptWstETHUserData
     );
+
+  /**
+   * @notice Returns data of Staked assets
+   * @param stakedAsset The address of the stakedAsset
+   * @return stakedAssetData An object with staked asset data
+   */
+
+  function getStakedAssetData(address stakedAsset)
+    external
+    view
+    returns (StakedTokenData memory stakedAssetData);
+
+  /**
+   * @notice Returns user data of Staked user
+   * @param user The address of the user
+   * @param stakedAsset The address of the staked asset
+   * @return stakedTokenData An object with staked token data
+   * @return stakedUserData An object with user data of staked token
+   */
+  function getStakedUserData(address user, address stakedAsset)
+    external
+    view
+    returns (StakedTokenData memory stakedTokenData, StakedTokenUserData memory stakedUserData);
 }
