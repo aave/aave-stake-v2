@@ -8,6 +8,7 @@ export enum eEthereumNetwork {
   main = 'main',
   tenderly = 'tenderly',
   goerli = 'goerli',
+  sepolia = 'sepolia',
 }
 
 export enum eContractid {
@@ -35,6 +36,7 @@ export enum eContractid {
   StakedTokenBptRev2 = 'StakedTokenBptRev2',
   AaveStakingHelper = 'AaveStakingHelper',
   StakeUIHelper = 'StakeUIHelper',
+  StakedTokenDataProvider = 'StakedTokenDataProvider',
 }
 
 export type tEthereumAddress = string;

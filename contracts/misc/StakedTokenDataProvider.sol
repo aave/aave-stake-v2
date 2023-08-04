@@ -7,6 +7,7 @@ import {AggregatedStakedAaveV3} from '../interfaces/AggregatedStakedAaveV3.sol';
 import {IStakedToken} from '../interfaces/IStakedToken.sol';
 import {AggregatorInterface} from '../interfaces/AggregatorInterface.sol';
 import {IStakedTokenDataProvider} from '../interfaces/IStakedTokenDataProvider.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title StakedTokenDataProvider
@@ -100,7 +101,10 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
 
   /// @inheritdoc IStakedTokenDataProvider
   function getStkAaveData() external view override returns (StakedTokenData memory stkAaveData) {
+    console.log('get DATA', STAKED_AAVE);
     stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
+
+    // console.log('bar DATA', stkAaveData);
   }
 
   /// @inheritdoc IStakedTokenDataProvider
@@ -201,6 +205,7 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     view
     returns (StakedTokenData memory data)
   {
+    console.log('hello');
     data.stakedTokenTotalSupply = stakedToken.totalSupply();
     data.stakedTokenTotalRedeemableAmount = stakedToken.previewRedeem(data.stakedTokenTotalSupply);
     data.stakeCooldownSeconds = stakedToken.COOLDOWN_SECONDS();
@@ -234,6 +239,10 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
         data.stakedTokenTotalSupply * data.stakedTokenPriceEth
       );
     }
+  }
+
+  function foo() public view returns (string memory) {
+    return 'bar';
   }
 
   /**

@@ -12,6 +12,7 @@ import { StakedTokenV2 } from '../types/StakedTokenV2';
 import { StakedTokenV3 } from '../types/StakedTokenV3';
 import { AaveStakingHelper } from '../types/AaveStakingHelper';
 import { StakeUiHelper } from '../types/StakeUiHelper';
+import { StakedTokenDataProvider } from '../types/StakedTokenDataProvider';
 import { Ierc20Detailed } from '../types/Ierc20Detailed';
 import { InitializableAdminUpgradeabilityProxy } from '../types/InitializableAdminUpgradeabilityProxy';
 import { AaveIncentivesController } from '../types/AaveIncentivesController';
@@ -465,6 +466,58 @@ export const deployStakeUIHelper = async (
   const args: string[] = [priceOracle, bptPriceFeed, aave, stkAave, bpt, stkBpt];
 
   const instance = await deployContract<StakeUiHelper>(id, args);
+  if (verify) {
+    await verifyContract(instance.address, args);
+  }
+  return instance;
+};
+
+export const getStakedTokenDataProvider = getContractFactory<StakedTokenDataProvider>(
+  eContractid.StakedTokenDataProvider
+);
+
+export const deployStakedTokenDataProvider = async (
+  [
+    aaveToken,
+    stkAaveAddress,
+    bptToken,
+    stkBptToken,
+    ethUsdPriceFeed,
+    aaveOracleAddress,
+    bptPriceFeed,
+
+    bptWstETH,
+    bptWstETHPriceFeed,
+  ]: [
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress,
+    tEthereumAddress
+  ],
+  verify?: boolean
+) => {
+  const id = eContractid.StakedTokenDataProvider;
+  const args: string[] = [
+    aaveToken,
+    stkAaveAddress,
+    bptToken,
+    stkBptToken,
+    ethUsdPriceFeed,
+    aaveOracleAddress,
+    bptPriceFeed,
+
+    bptWstETH,
+    bptWstETHPriceFeed,
+  ];
+
+  console.log('args', args);
+
+  const instance = await deployContract<StakedTokenDataProvider>(id, args);
   if (verify) {
     await verifyContract(instance.address, args);
   }

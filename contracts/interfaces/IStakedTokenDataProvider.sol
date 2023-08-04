@@ -83,12 +83,6 @@ interface IStakedTokenDataProvider {
    */
   function STAKED_BPT_WSTETH() external returns (address);
 
-  // /**
-  //  * @notice Return the address of the Staked ETH token
-  //  * @return The address of the StkBPT token
-  //  */
-  // function STAKED_STETH() external returns (address);
-
   /**
    * @notice Returns data of all Staked Tokens
    * @return stkAaveData An object with StkAave data
