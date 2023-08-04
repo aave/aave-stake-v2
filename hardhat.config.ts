@@ -28,6 +28,8 @@ const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
 const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
 const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '12369243');
 
+console.log('MAINNET_FORK', MAINNET_FORK);
+
 // Prevent to load scripts before compilation and typechain
 if (!SKIP_LOAD) {
   ['misc', 'migrations', 'deployments', 'proposals'].forEach((folder) => {
@@ -46,7 +48,7 @@ const mainnetFork = MAINNET_FORK
   ? {
       blockNumber: FORKING_BLOCK,
       url: ALCHEMY_KEY
-        ? `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`
+        ? `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}` //`https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`
         : `https://main.infura.io/v3/${INFURA_KEY}`,
     }
   : undefined;
@@ -116,6 +118,7 @@ const config: HardhatUserConfig = {
     ropsten: getCommonNetworkConfig(eEthereumNetwork.ropsten, 3),
     goerli: getCommonNetworkConfig(eEthereumNetwork.goerli, 5),
     main: getCommonNetworkConfig(eEthereumNetwork.main, 1),
+    sepolia: getCommonNetworkConfig(eEthereumNetwork.sepolia, 11155111),
     hardhat: {
       hardfork: 'london',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
