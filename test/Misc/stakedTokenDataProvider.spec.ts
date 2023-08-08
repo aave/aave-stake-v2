@@ -5,24 +5,25 @@ import { deployStakedTokenDataProvider } from '../../helpers/contracts-accessors
 import { network, ethers } from 'hardhat';
 const { expect } = require('chai');
 
+import {
+  STK_WHALE,
+  BPT_WHALE,
+  STK_BPT,
+  AAVE_TOKEN,
+  AAVE_BPT_POOL_TOKEN,
+  STK_WSTEH,
+  STK_WSTEH_WHALE,
+  ETH_USD_PRICE_FEED,
+  AAVE_ORACLE,
+  BPT_PRICE_FEED,
+  COLLECTOR,
+  STAKED_AAVE,
+} from '../../helpers/constants';
+
 import { SHORT_EXECUTOR } from '../../helpers/constants';
 
 rawBRE.run('set-dre').then(async () => {
   let stakedDataProvider;
-  const STK_WHALE = '0xaFDAbFb6227507fF6522b8a242168F6b5F353a6E';
-  const BPT_WHALE = '0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3';
-  const STK_BPT = '0xa1116930326d21fb917d5a27f1e9943a9595fb47';
-  const AAVE_TOKEN = '0x9c0435779F5E52CEC404D957C9bAa6f7d674C8bA';
-  const AAVE_BPT_POOL_TOKEN = '0x41a08648c3766f9f9d85598ff102a08f4ef84f84';
-
-  const STK_WSTEH = '0xa1116930326d21fb917d5a27f1e9943a9595fb47'; // todo change for actual token
-  const STK_WSTEH_WHALE = '0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3';
-
-  const STAKED_AAVE = '0x4da27a545c0c5b758a6ba100e3a049001de870f5';
-  const ETH_USD_PRICE_FEED = '0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419';
-  const AAVE_ORACLE = '0x6Df09E975c830ECae5bd4eD9d90f3A95a4f88012';
-  const BPT_PRICE_FEED = '0x0De156f178a20114eeec0eBF71d7772064476b0D';
-  const COLLECTOR = '0x464c71f6c2f760dda6093dcb91c24c39e5d6e18c';
 
   makeSuite('Deploy stake ui provider', async (testEnv: TestEnv) => {
     beforeEach(async () => {
