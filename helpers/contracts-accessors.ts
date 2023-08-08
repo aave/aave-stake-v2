@@ -514,9 +514,6 @@ export const deployStakedTokenDataProvider = async (
     bptWstETH,
     bptWstETHPriceFeed,
   ];
-
-  console.log('args', args);
-
   const instance = await deployContract<StakedTokenDataProvider>(id, args);
   if (verify) {
     await verifyContract(instance.address, args);

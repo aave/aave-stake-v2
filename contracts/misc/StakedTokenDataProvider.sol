@@ -205,7 +205,6 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     view
     returns (StakedTokenData memory data)
   {
-    console.log('hello');
     data.stakedTokenTotalSupply = stakedToken.totalSupply();
     data.stakedTokenTotalRedeemableAmount = stakedToken.previewRedeem(data.stakedTokenTotalSupply);
     data.stakeCooldownSeconds = stakedToken.COOLDOWN_SECONDS();

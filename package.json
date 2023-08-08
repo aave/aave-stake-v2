@@ -23,7 +23,7 @@
     "test-pei": "npm run test test/__setup.spec.ts test/AaveIncentivesController/*.spec.ts",
     "test-psi": "npm run test test/__setup.spec.ts test/StakedAave/*.spec.ts",
     "test-psi2": "npm run test test/__setup.spec.ts test/StakedAaveV2/*.spec.ts",
-    "test-data-providers": "hardhat test test/Misc/stakedTokenDataProvider.fork.ts",
+    "test-data-providers": "hardhat test test/Misc/stakedTokenDataProvider.spec.ts",
     "test-bpt": "npm run compile:force:quiet && FORKING_BLOCK=11730175 MAINNET_FORK=true hardhat test test/StakedBPT/create-bpt-and-stakebpt.fork.ts",
     "test-proposal": "MAINNET_FORK=true hardhat test ./test-fork/stakingExtensionProposal.spec.ts",
     "test-proposal:tenderly": "TENDERLY=true npm run hardhat:tenderly -- test ./test-fork/stakingExtensionProposal.spec.ts",
