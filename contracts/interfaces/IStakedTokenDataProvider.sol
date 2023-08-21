@@ -42,18 +42,6 @@ interface IStakedTokenDataProvider {
   function AAVE_PRICE_FEED() external returns (address);
 
   /**
-   * @notice Return the address of the BPT price feed, ETH denominated
-   * @return The address of the BPT price feed, ETH denominated, expressed with 18 decimals
-   */
-  function BPT_PRICE_FEED() external returns (address);
-
-  /**
-   * @notice Return the address of the bptWstETH price feed, ETH denominated
-   * @return The address of the bptWstETH price feed, ETH denominated, expressed with 18 decimals
-   */
-  function BPT_STETH_PRICE_FEED() external returns (address);
-
-  /**
    * @notice Return the address of the AAVE token
    * @return The address of the AAVE token
    */
@@ -66,132 +54,67 @@ interface IStakedTokenDataProvider {
   function STAKED_AAVE() external returns (address);
 
   /**
-   * @notice Return the address of the BPT token
-   * @return The address of the BPT token
-   */
-  function BPT() external returns (address);
-
-  /**
-   * @notice Return the address of the Staked BPT token
-   * @return The address of the StkBPT token
-   */
-  function STAKED_BPT() external returns (address);
-
-  /**
-   * @notice Return the address of the bptWstETH token
-   * @return The address of the bptWstETH token
-   */
-  function STAKED_BPT_WSTETH() external returns (address);
-
-  /**
-   * @notice Returns data of all Staked Tokens
-   * @return stkAaveData An object with StkAave data
-   * @return stkBptData An object with StkBpt data
-   * @return stkBptWstETHData An object with stkBptWstETHData data
-   * @return ethPrice The price of ETH, USD denominated (expressed with 8 decimals)
-   */
-  function getAllStakedTokenData()
-    external
-    view
-    returns (
-      StakedTokenData memory stkAaveData,
-      StakedTokenData memory stkBptData,
-      StakedTokenData memory stkBptWstETHData,
-      uint256 ethPrice
-    );
-
-  /**
-   * @notice Returns data of Staked Aave
-   * @return stkAaveData An object with StkAave data
-   */
-  function getStkAaveData() external view returns (StakedTokenData memory stkAaveData);
-
-  /**
-   * @notice Returns data of Staked Bpt Aave
-   * @return stkBptData An object with StkBpt data
-   */
-  function getStkBptData() external view returns (StakedTokenData memory stkBptData);
-
-  /**
-   * @notice Returns user data of all Staked Tokens
-   * @param user The address of the user
-   * @return stkAaveData An object with StkAave data
-   * @return stkAaveUserData An object with user data of StkAave
-   * @return stkBptData An object with StkBpt data
-   * @return stkBptUserData An object with user data of StkBpt
-   * @return stkBptWstETHData An object with stkBptWstETHData data
-   * @return stkBptWstETHUserData An object with user data of StkBpt
-   * @return ethPrice The price of ETH, USD denominated (expressed with 8 decimals)
-   */
-  function getAllStakedTokenUserData(address user)
-    external
-    view
-    returns (
-      StakedTokenData memory stkAaveData,
-      StakedTokenUserData memory stkAaveUserData,
-      StakedTokenData memory stkBptData,
-      StakedTokenUserData memory stkBptUserData,
-      StakedTokenData memory stkBptWstETHData,
-      StakedTokenUserData memory stkBptWstETHUserData,
-      uint256 ethPrice
-    );
-
-  /**
-   * @notice Returns user data of Staked Aave
-   * @param user The address of the user
-   * @return stkAaveData An object with StkAave data
-   * @return stkAaveUserData An object with user data of StkAave
-   */
-  function getStkAaveUserData(address user)
-    external
-    view
-    returns (StakedTokenData memory stkAaveData, StakedTokenUserData memory stkAaveUserData);
-
-  /**
-   * @notice Returns user data of Staked Bpt Aave
-   * @param user The address of the user
-   * @return stkBptData An object with StkBpt data
-   * @return stkBptUserData An object with user data of StkBpt
-   */
-  function getStkBptAaveUserData(address user)
-    external
-    view
-    returns (StakedTokenData memory stkBptData, StakedTokenUserData memory stkBptUserData);
-
-  /**
-   * @notice Returns user data of Staked Bpt Aave
-   * @param user The address of the user
-   * @return stkBptWstETHData An object with StkBpt data
-   * @return stkBptWstETHUserData An object with user data of StkBpt
-   */
-  function getStkBptWstETHUserData(address user)
-    external
-    view
-    returns (
-      StakedTokenData memory stkBptWstETHData,
-      StakedTokenUserData memory stkBptWstETHUserData
-    );
-
-  /**
    * @notice Returns data of Staked assets
    * @param stakedAsset The address of the stakedAsset
+   * @param oracleAddress The address of the oracle
    * @return stakedAssetData An object with staked asset data
    */
-
-  function getStakedAssetData(address stakedAsset)
+  function getStakedAssetData(address stakedAsset, address oracleAddress)
     external
     view
     returns (StakedTokenData memory stakedAssetData);
 
   /**
-   * @notice Returns user data of Staked user
-   * @param user The address of the user
-   * @param stakedAsset The address of the staked asset
-   * @return stakedTokenData An object with staked token data
-   * @return stakedUserData An object with user data of staked token
+   * @notice Retrieves staked token data and user-specific data for a given user, staked asset, and its associated oracle.
+   * @param user The address of the user for whom the data is to be fetched.
+   * @param stakedAsset The address representing the staked token.
+   * @param oracleAddress The address representing the oracle associated with the staked token.
+   * @return stakedTokenData `StakedTokenData` struct with details about the staked asset.
+   * @return stakedUserData `StakedTokenUserData` struct containing user-specific details related to the staked asset.
    */
-  function getStakedUserData(address user, address stakedAsset)
+  function getStakedUserData(
+    address user,
+    address stakedAsset,
+    address oracleAddress
+  )
     external
     view
     returns (StakedTokenData memory stakedTokenData, StakedTokenUserData memory stakedUserData);
+
+  /**
+   * @notice Retrieves data for a batch of staked assets given their addresses and the addresses of their associated oracles.
+   * @param stakedTokens An array of addresses representing the staked tokens.
+   * @param oracleAddresses An array of addresses representing the oracles associated with the staked tokens.
+   * @return stakedData An array containing data about the staked assets.
+   * @return prices An array containing the latest price data from the oracles for the staked tokens.
+   * @return ethPrice An array containing the latest ETH price for the staked tokens.
+   */
+  function getStakedAssetDataBatch(
+    address[] calldata stakedTokens,
+    address[] calldata oracleAddresses
+  )
+    external
+    view
+    returns (
+      StakedTokenData[] memory stakedData,
+      uint256[] memory prices,
+      uint256[] memory ethPrice
+    );
+
+  /**
+   * @notice Retrieves data for a batch of staked users and their assets given the addresses of staked tokens, associated oracles, and users.
+   * @param stakedTokens An array of addresses representing the staked tokens.
+   * @param oracleAddresses An array of addresses representing the oracles associated with the staked tokens.
+   * @param userAddresses An array of addresses representing the users whose data should be retrieved.
+   * @return stkAaveData An array containing data about the staked assets.
+   * @return stakedUserData An array containing user-specific data about the staked assets.
+   */
+  function getStakedUserDataBatch(
+    address[] calldata stakedTokens,
+    address[] calldata oracleAddresses,
+    address[] calldata userAddresses
+  )
+    external
+    view
+    returns (StakedTokenData[] memory stkAaveData, StakedTokenUserData[] memory stakedUserData);
 }

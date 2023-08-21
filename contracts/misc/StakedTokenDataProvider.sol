@@ -20,25 +20,10 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
   address public immutable override AAVE_PRICE_FEED;
 
   /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override BPT_PRICE_FEED;
-
-  /// @inheritdoc IStakedTokenDataProvider
   address public immutable override AAVE;
 
   /// @inheritdoc IStakedTokenDataProvider
   address public immutable override STAKED_AAVE;
-
-  /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override BPT;
-
-  /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override STAKED_BPT;
-
-  /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override STAKED_BPT_WSTETH;
-
-  /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override BPT_STETH_PRICE_FEED;
 
   uint256 private constant SECONDS_PER_YEAR = 365 days;
 
@@ -46,147 +31,98 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
 
   /**
    * @dev Constructor
-   * @param aave The address of the AAVE token
+   * @param aave The address of the StkAAVE token
    * @param stkAave The address of the StkAAVE token
-   * @param bpt The address of the BPT AAVE / ETH token
-   * @param stkBpt The address of the StkBptAAVE token
    * @param ethUsdPriceFeed The address of ETH price feed (USD denominated, with 8 decimals)
    * @param aavePriceFeed The address of AAVE price feed (ETH denominated, with 18 decimals)
-   * @param bptPriceFeed The address of StakedBpt price feed (ETH denominated, with 18 decimals)
-   * @param bptWstETH The address of stETH token
-   * @param bptWstETHPriceFeed The address of stEth price feed (ETH denominated, with 18 decimals)
-
    */
   constructor(
     address aave,
     address stkAave,
-    address bpt,
-    address stkBpt,
     address ethUsdPriceFeed,
-    address aavePriceFeed,
-    address bptPriceFeed,
-    address bptWstETH,
-    address bptWstETHPriceFeed
+    address aavePriceFeed
   ) public {
     AAVE = aave;
     STAKED_AAVE = stkAave;
-    BPT = bpt;
-    STAKED_BPT = stkBpt;
     ETH_USD_PRICE_FEED = ethUsdPriceFeed;
     AAVE_PRICE_FEED = aavePriceFeed;
-    BPT_PRICE_FEED = bptPriceFeed;
-
-    STAKED_BPT_WSTETH = bptWstETH;
-    BPT_STETH_PRICE_FEED = bptWstETHPriceFeed;
   }
 
   /// @inheritdoc IStakedTokenDataProvider
-  function getAllStakedTokenData()
+  function getStakedAssetDataBatch(
+    address[] calldata stakedTokens,
+    address[] calldata oracleAddresses
+  )
     external
     view
     override
     returns (
-      StakedTokenData memory stkAaveData,
-      StakedTokenData memory stkBptData,
-      StakedTokenData memory stkBptWstETHData,
-      uint256 ethPrice
+      StakedTokenData[] memory,
+      uint256[] memory,
+      uint256[] memory
     )
   {
-    stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
-    stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
-    stkBptWstETHData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH));
-    ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
+    require(stakedTokens.length == oracleAddresses.length, 'Arrays must be of the same length');
+
+    StakedTokenData[] memory stakedData = new StakedTokenData[](stakedTokens.length);
+    uint256[] memory prices = new uint256[](oracleAddresses.length);
+    uint256[] memory ethPrice = new uint256[](stakedTokens.length);
+
+    for (uint256 i = 0; i < stakedTokens.length; i++) {
+      stakedData[i] = _getStakedTokenData(
+        AggregatedStakedAaveV3(stakedTokens[i]),
+        oracleAddresses[i]
+      );
+      prices[i] = uint256(AggregatorInterface(oracleAddresses[i]).latestAnswer());
+      ethPrice[i] = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
+    }
+    return (stakedData, prices, ethPrice);
   }
 
   /// @inheritdoc IStakedTokenDataProvider
-  function getStkAaveData() external view override returns (StakedTokenData memory stkAaveData) {
-    stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
+  function getStakedUserDataBatch(
+    address[] calldata stakedTokens,
+    address[] calldata oracleAddresses,
+    address[] calldata userAddresses
+  ) external view override returns (StakedTokenData[] memory, StakedTokenUserData[] memory) {
+    require(
+      stakedTokens.length == oracleAddresses.length && stakedTokens.length == userAddresses.length,
+      'All arrays must be of the same length'
+    );
+    StakedTokenData[] memory stakedData = new StakedTokenData[](stakedTokens.length);
+    StakedTokenUserData[] memory userData = new StakedTokenUserData[](userAddresses.length);
+
+    for (uint256 i = 0; i < stakedTokens.length; i++) {
+      stakedData[i] = _getStakedTokenData(
+        AggregatedStakedAaveV3(stakedTokens[i]),
+        oracleAddresses[i]
+      );
+      userData[i] = _getStakedTokenUserData(
+        AggregatedStakedAaveV3(stakedTokens[i]),
+        userAddresses[i]
+      );
+    }
+    return (stakedData, userData);
   }
 
   /// @inheritdoc IStakedTokenDataProvider
-  function getStkBptData() external view override returns (StakedTokenData memory stkBptData) {
-    stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
-  }
-
-  function getStakedAssetData(address stakedAsset)
+  function getStakedAssetData(address stakedAsset, address oracleAddress)
     external
     view
     override
     returns (StakedTokenData memory)
   {
-    return _getStakedTokenData(AggregatedStakedAaveV3(stakedAsset));
+    return _getStakedTokenData(AggregatedStakedAaveV3(stakedAsset), oracleAddress);
   }
 
   /// @inheritdoc IStakedTokenDataProvider
-  function getAllStakedTokenUserData(address user)
-    external
-    view
-    override
-    returns (
-      StakedTokenData memory stkAaveData,
-      StakedTokenUserData memory stkAaveUserData,
-      StakedTokenData memory stkBptData,
-      StakedTokenUserData memory stkBptUserData,
-      StakedTokenData memory stkBptWstETHData,
-      StakedTokenUserData memory stkBptWstETHUserData,
-      uint256 ethPrice
-    )
-  {
-    stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
-    stkAaveUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_AAVE), user);
-    stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
-    stkBptUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT), user);
-
-    stkBptWstETHData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH));
-    stkBptWstETHUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH), user);
-
-    ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
-  }
-
-  /// @inheritdoc IStakedTokenDataProvider
-  function getStkAaveUserData(address user)
-    external
-    view
-    override
-    returns (StakedTokenData memory stkAaveData, StakedTokenUserData memory stkAaveUserData)
-  {
-    stkAaveData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_AAVE));
-    stkAaveUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_AAVE), user);
-  }
-
-  /// @inheritdoc IStakedTokenDataProvider
-  function getStkBptAaveUserData(address user)
-    external
-    view
-    override
-    returns (StakedTokenData memory stkBptData, StakedTokenUserData memory stkBptUserData)
-  {
-    stkBptData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT));
-    stkBptUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT), user);
-  }
-
-  /// @inheritdoc IStakedTokenDataProvider
-  function getStkBptWstETHUserData(address user)
-    external
-    view
-    override
-    returns (
-      StakedTokenData memory stkBptWstETHData,
-      StakedTokenUserData memory stkBptWstETHUserData
-    )
-  {
-    stkBptWstETHData = _getStakedTokenData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH));
-    stkBptWstETHUserData = _getStakedTokenUserData(AggregatedStakedAaveV3(STAKED_BPT_WSTETH), user);
-  }
-
-  function getStakedUserData(address user, address stakedAsset)
-    external
-    view
-    override
-    returns (StakedTokenData memory, StakedTokenUserData memory)
-  {
+  function getStakedUserData(
+    address user,
+    address stakedAsset,
+    address oracleAddress
+  ) external view override returns (StakedTokenData memory, StakedTokenUserData memory) {
     return (
-      _getStakedTokenData(AggregatedStakedAaveV3(stakedAsset)),
+      _getStakedTokenData(AggregatedStakedAaveV3(stakedAsset), oracleAddress),
       _getStakedTokenUserData(AggregatedStakedAaveV3(stakedAsset), user)
     );
   }
@@ -196,7 +132,7 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
    * @param stakedToken The address of the StakedToken (eg. stkAave, stkBptAave)
    * @return data An object with general data of the StakedToken
    */
-  function _getStakedTokenData(AggregatedStakedAaveV3 stakedToken)
+  function _getStakedTokenData(AggregatedStakedAaveV3 stakedToken, address oracleAddress)
     internal
     view
     returns (StakedTokenData memory data)
@@ -219,16 +155,9 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
       // assumes AAVE and stkAAVE have the same value
       data.stakeApy = _calculateApy(data.distributionPerSecond, data.stakedTokenTotalSupply);
 
-      // stkBptAave
-    } else if (address(stakedToken) == STAKED_BPT) {
-      data.stakedTokenPriceEth = uint256(AggregatorInterface(BPT_PRICE_FEED).latestAnswer());
-      data.stakeApy = _calculateApy(
-        data.distributionPerSecond * data.rewardTokenPriceEth,
-        data.stakedTokenTotalSupply * data.stakedTokenPriceEth
-      );
-    } else if (address(stakedToken) == STAKED_BPT_WSTETH) {
-      // stkBptWstETH
-      data.stakedTokenPriceEth = uint256(AggregatorInterface(BPT_STETH_PRICE_FEED).latestAnswer());
+      // other wrapped assets
+    } else {
+      data.stakedTokenPriceEth = uint256(AggregatorInterface(oracleAddress).latestAnswer());
       data.stakeApy = _calculateApy(
         data.distributionPerSecond * data.rewardTokenPriceEth,
         data.stakedTokenTotalSupply * data.stakedTokenPriceEth

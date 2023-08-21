@@ -477,23 +477,7 @@ export const getStakedTokenDataProvider = getContractFactory<StakedTokenDataProv
 );
 
 export const deployStakedTokenDataProvider = async (
-  [
-    aaveToken,
-    stkAaveAddress,
-    bptToken,
-    stkBptToken,
-    ethUsdPriceFeed,
-    aaveOracleAddress,
-    bptPriceFeed,
-
-    bptWstETH,
-    bptWstETHPriceFeed,
-  ]: [
-    tEthereumAddress,
-    tEthereumAddress,
-    tEthereumAddress,
-    tEthereumAddress,
-    tEthereumAddress,
+  [aaveAddress, stkAaveAddress, ethUsdPriceFeed, aaveOracleAddress]: [
     tEthereumAddress,
     tEthereumAddress,
     tEthereumAddress,
@@ -502,18 +486,7 @@ export const deployStakedTokenDataProvider = async (
   verify?: boolean
 ) => {
   const id = eContractid.StakedTokenDataProvider;
-  const args: string[] = [
-    aaveToken,
-    stkAaveAddress,
-    bptToken,
-    stkBptToken,
-    ethUsdPriceFeed,
-    aaveOracleAddress,
-    bptPriceFeed,
-
-    bptWstETH,
-    bptWstETHPriceFeed,
-  ];
+  const args: string[] = [aaveAddress, stkAaveAddress, ethUsdPriceFeed, aaveOracleAddress];
   const instance = await deployContract<StakedTokenDataProvider>(id, args);
   if (verify) {
     await verifyContract(instance.address, args);
