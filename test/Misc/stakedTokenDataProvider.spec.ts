@@ -164,11 +164,11 @@ rawBRE.run('set-dre').then(async () => {
       expect(postSlashWhaleData[0].inPostSlashingPeriod).to.equal(true);
     });
 
-    it('should get stakeduser data across various assets and return ', async () => {
+    it('should get stkAave stakeduser data across and return correct contract data ', async () => {
       const stakedUserBatch = await stakedDataProvider.getStakedUserDataBatch(
         [STAKED_AAVE, STK_BPT],
         [AAVE_ORACLE, BPT_PRICE_FEED],
-        [STK_WHALE, BPT_WHALE]
+        STK_WHALE
       );
 
       const stakedTokenAaveContract = await ethers.getContractAt(
@@ -181,12 +181,22 @@ rawBRE.run('set-dre').then(async () => {
       expect(stakedUserBatch[0].length).to.equal(2);
       expect(stakedUserBatch[1].length).to.equal(2);
 
-      // check aave data
       const stkAaveBalance = await stakedTokenAaveContract.balanceOf(STK_WHALE);
       const sktAaveRewards = await stakedTokenAaveContract.getTotalRewardsBalance(STK_WHALE);
 
       expect(stakedUserBatch[1][0].stakedTokenUserBalance.eq(stkAaveBalance)).to.be.true;
       expect(stakedUserBatch[1][0].rewardsToClaim.eq(sktAaveRewards)).to.be.true;
+    });
+
+    it('should read bpt data and return correct contract data ', async () => {
+      const stakedUserBatch = await stakedDataProvider.getStakedUserDataBatch(
+        [STAKED_AAVE, STK_BPT],
+        [AAVE_ORACLE, BPT_PRICE_FEED],
+        BPT_WHALE
+      );
+      const stakedTokenBPTContract = await ethers.getContractAt('AggregatedStakedAaveV3', STK_BPT);
+
+      expect(stakedUserBatch[1].length).to.equal(2);
 
       // check bpt
       const stkBPTBalance = await stakedTokenBPTContract.balanceOf(BPT_WHALE);
@@ -210,7 +220,6 @@ rawBRE.run('set-dre').then(async () => {
 
       expect(stakedAssetsBatch[0].length).to.equal(2);
       expect(stakedAssetsBatch[1].length).to.equal(2);
-      expect(stakedAssetsBatch[2].length).to.equal(2);
 
       const stakedAavePrice = BigNumber.from(stakedAssetsBatch[1][0]);
       const stakedBptPrice = BigNumber.from(stakedAssetsBatch[1][1]);

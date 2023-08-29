@@ -31,7 +31,7 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
 
   /**
    * @dev Constructor
-   * @param aave The address of the StkAAVE token
+   * @param aave The address of the AAVE token
    * @param stkAave The address of the StkAAVE token
    * @param ethUsdPriceFeed The address of ETH price feed (USD denominated, with 8 decimals)
    * @param aavePriceFeed The address of AAVE price feed (ETH denominated, with 18 decimals)
@@ -59,22 +59,20 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     returns (
       StakedTokenData[] memory,
       uint256[] memory,
-      uint256[] memory
+      uint256
     )
   {
     require(stakedTokens.length == oracleAddresses.length, 'Arrays must be of the same length');
 
     StakedTokenData[] memory stakedData = new StakedTokenData[](stakedTokens.length);
     uint256[] memory prices = new uint256[](oracleAddresses.length);
-    uint256[] memory ethPrice = new uint256[](stakedTokens.length);
-
+    uint256 ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
     for (uint256 i = 0; i < stakedTokens.length; i++) {
       stakedData[i] = _getStakedTokenData(
         AggregatedStakedAaveV3(stakedTokens[i]),
         oracleAddresses[i]
       );
       prices[i] = uint256(AggregatorInterface(oracleAddresses[i]).latestAnswer());
-      ethPrice[i] = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
     }
     return (stakedData, prices, ethPrice);
   }
@@ -83,24 +81,18 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
   function getStakedUserDataBatch(
     address[] calldata stakedTokens,
     address[] calldata oracleAddresses,
-    address[] calldata userAddresses
+    address userAddress
   ) external view override returns (StakedTokenData[] memory, StakedTokenUserData[] memory) {
-    require(
-      stakedTokens.length == oracleAddresses.length && stakedTokens.length == userAddresses.length,
-      'All arrays must be of the same length'
-    );
+    require(stakedTokens.length == oracleAddresses.length, 'All arrays must be of the same length');
     StakedTokenData[] memory stakedData = new StakedTokenData[](stakedTokens.length);
-    StakedTokenUserData[] memory userData = new StakedTokenUserData[](userAddresses.length);
+    StakedTokenUserData[] memory userData = new StakedTokenUserData[](stakedTokens.length);
 
     for (uint256 i = 0; i < stakedTokens.length; i++) {
       stakedData[i] = _getStakedTokenData(
         AggregatedStakedAaveV3(stakedTokens[i]),
         oracleAddresses[i]
       );
-      userData[i] = _getStakedTokenUserData(
-        AggregatedStakedAaveV3(stakedTokens[i]),
-        userAddresses[i]
-      );
+      userData[i] = _getStakedTokenUserData(AggregatedStakedAaveV3(stakedTokens[i]), userAddress);
     }
     return (stakedData, userData);
   }

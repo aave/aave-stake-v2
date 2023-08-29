@@ -16,8 +16,8 @@ interface IStakedTokenDataProvider {
     uint256 rewardTokenPriceEth;
     uint256 stakeApy;
     uint128 distributionPerSecond;
-    uint256 distributionEnd;
     bool inPostSlashingPeriod;
+    uint256 distributionEnd;
   }
 
   struct StakedTokenUserData {
@@ -56,7 +56,7 @@ interface IStakedTokenDataProvider {
   /**
    * @notice Returns data of Staked assets
    * @param stakedAsset The address of the stakedAsset
-   * @param oracleAddress The address of the oracle
+   * @param oracleAddress The address of the oracle denominated in 18 decimals
    * @return stakedAssetData An object with staked asset data
    */
   function getStakedAssetData(address stakedAsset, address oracleAddress)
@@ -68,7 +68,7 @@ interface IStakedTokenDataProvider {
    * @notice Retrieves staked token data and user-specific data for a given user, staked asset, and its associated oracle.
    * @param user The address of the user for whom the data is to be fetched.
    * @param stakedAsset The address representing the staked token.
-   * @param oracleAddress The address representing the oracle associated with the staked token.
+   * @param oracleAddress The address representing the oracle associated with the staked token denominated in 18 decimals.
    * @return stakedTokenData `StakedTokenData` struct with details about the staked asset.
    * @return stakedUserData `StakedTokenUserData` struct containing user-specific details related to the staked asset.
    */
@@ -84,10 +84,10 @@ interface IStakedTokenDataProvider {
   /**
    * @notice Retrieves data for a batch of staked assets given their addresses and the addresses of their associated oracles.
    * @param stakedTokens An array of addresses representing the staked tokens.
-   * @param oracleAddresses An array of addresses representing the oracles associated with the staked tokens.
+   * @param oracleAddresses An array of addresses representing the oracles associated with the staked tokens denominated as 18 decimals.
    * @return stakedData An array containing data about the staked assets.
    * @return prices An array containing the latest price data from the oracles for the staked tokens.
-   * @return ethPrice An array containing the latest ETH price for the staked tokens.
+   * @return ethPrice A uint256 with the latest ETH price for the staked tokens.
    */
   function getStakedAssetDataBatch(
     address[] calldata stakedTokens,
@@ -98,23 +98,23 @@ interface IStakedTokenDataProvider {
     returns (
       StakedTokenData[] memory stakedData,
       uint256[] memory prices,
-      uint256[] memory ethPrice
+      uint256 ethPrice
     );
 
   /**
    * @notice Retrieves data for a batch of staked users and their assets given the addresses of staked tokens, associated oracles, and users.
    * @param stakedTokens An array of addresses representing the staked tokens.
-   * @param oracleAddresses An array of addresses representing the oracles associated with the staked tokens.
-   * @param userAddresses An array of addresses representing the users whose data should be retrieved.
-   * @return stkAaveData An array containing data about the staked assets.
+   * @param oracleAddresses An array of addresses representing the oracles associated with the staked tokens denominated as 18 decimals.
+   * @param userAddress An addresses representing the user whose data should be retrieved.
+   * @return stakedTokenData An array containing data about the staked assets.
    * @return stakedUserData An array containing user-specific data about the staked assets.
    */
   function getStakedUserDataBatch(
     address[] calldata stakedTokens,
     address[] calldata oracleAddresses,
-    address[] calldata userAddresses
+    address userAddress
   )
     external
     view
-    returns (StakedTokenData[] memory stkAaveData, StakedTokenUserData[] memory stakedUserData);
+    returns (StakedTokenData[] memory stakedTokenData, StakedTokenUserData[] memory stakedUserData);
 }
